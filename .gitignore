@@ -13,10 +13,10 @@ __pycache__/
 DSCD_수업내용/
 
 # 과거 작업물
-1_SkinAnalysis/
-2_Cosmetic_Crawling/
-3_Recommendation/embedding_old/
-3_Recommendation/embedding_pipeline/embedding_results/
-3_Recommendation/embedding_test/
-3_Recommendation/kg_pipeline/output
-4_DB/
+cosmetic_crawling/
+model/skin_analysis
+model/recommendation/embedding_old/
+model/recommendation/embedding_pipeline/embedding_results/
+model/recommendation/embedding_test/
+model/recommendation/kg_pipeline/output
+DB/
