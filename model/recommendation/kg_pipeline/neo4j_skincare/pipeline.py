@@ -4,12 +4,12 @@ import pandas as pd
 import pymysql
 import json
 # config.py
-from config import OUTPUT_DIR, RETRIEVAL_TOPK_PER_CATEGORY, driver
-from graph.load_graph import create_user_session
-from rerank.hard_filter import hard_filter
-from rerank.soft_score import soft_score
-from routine.routine_builder import build_routines, build_value_routines
-from services.user_data import (
+from model.recommendation.kg_pipeline.neo4j_skincare.config import OUTPUT_DIR, RETRIEVAL_TOPK_PER_CATEGORY, driver
+from model.recommendation.kg_pipeline.neo4j_skincare.graph.load_graph import create_user_session
+from model.recommendation.kg_pipeline.neo4j_skincare.rerank.hard_filter import hard_filter
+from model.recommendation.kg_pipeline.neo4j_skincare.rerank.soft_score import soft_score
+from model.recommendation.kg_pipeline.neo4j_skincare.routine.routine_builder import build_routines, build_value_routines
+from model.recommendation.kg_pipeline.neo4j_skincare.services.user_data import (
     _load_candidates_from_embedding,
     _load_product_catalog,
     _load_user_context,
@@ -18,7 +18,7 @@ from services.user_data import (
     _print_run_context,
     _product_detail_map,
 )
-from services.reco_policy import (
+from model.recommendation.kg_pipeline.neo4j_skincare.services.reco_policy import (
     _attach_all_in_one_to_routines,
     _build_price_map,
 )

@@ -3,7 +3,7 @@ from typing import Optional
 
 import pymysql
 
-from config import (
+from model.recommendation.kg_pipeline.neo4j_skincare.config import (
     MYSQL_DB,
     MYSQL_HOST,
     MYSQL_PASSWORD,

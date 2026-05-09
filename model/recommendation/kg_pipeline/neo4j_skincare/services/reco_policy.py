@@ -2,7 +2,7 @@ from typing import Any
 
 import pandas as pd
 
-from services.user_data import _norm_brand_name_key
+from model.recommendation.kg_pipeline.neo4j_skincare.services.user_data import _norm_brand_name_key
 
 
 def _build_price_map(reranked: pd.DataFrame) -> dict[str, Any]:

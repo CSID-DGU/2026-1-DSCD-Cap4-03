@@ -5,7 +5,7 @@ from typing import Any
 import pandas as pd
 import pymysql
 
-from config import MYSQL_DB, MYSQL_HOST, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER, SLOT_ORDER, driver
+from model.recommendation.kg_pipeline.neo4j_skincare.config import MYSQL_DB, MYSQL_HOST, MYSQL_PASSWORD, MYSQL_PORT, MYSQL_USER, SLOT_ORDER, driver
 
 HF1_BATCH_QUERY = """
 UNWIND $product_keys AS pk

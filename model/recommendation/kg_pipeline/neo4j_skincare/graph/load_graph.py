@@ -1,8 +1,8 @@
-﻿import re
+﻿﻿import re
 import pandas as pd
 import pymysql
 
-from config import (
+from model.recommendation.kg_pipeline.neo4j_skincare.config import (
     driver,
     MYSQL_HOST,
     MYSQL_PORT,
@@ -10,7 +10,7 @@ from config import (
     MYSQL_PASSWORD,
     MYSQL_DB,
 )
-from data.rule_ingredients import CONFLICT_RULES
+from model.recommendation.kg_pipeline.neo4j_skincare.data.rule_ingredients import CONFLICT_RULES
 
 
 def _safe_float(value, default=0.0):

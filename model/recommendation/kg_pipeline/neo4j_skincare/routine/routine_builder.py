@@ -2,8 +2,8 @@ import heapq
 
 import pandas as pd
 
-from config import AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS, SLOT_ORDER, driver
-from routine.conflict_checker import check_am_pm, check_conflicts
+from model.recommendation.kg_pipeline.neo4j_skincare.config import AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS, SLOT_ORDER, driver
+from model.recommendation.kg_pipeline.neo4j_skincare.routine.conflict_checker import check_am_pm, check_conflicts
 
 # 
 SLOT_TOPK_QUERY = """

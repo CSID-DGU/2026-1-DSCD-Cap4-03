@@ -1,4 +1,4 @@
-﻿from config import driver
+﻿﻿from model.recommendation.kg_pipeline.neo4j_skincare.config import driver
 
 # 성분 충돌
 CONFLICT_QUERY = """
