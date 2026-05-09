@@ -1,0 +1,22 @@
+﻿# 가상환경
+.venv/
+.venv311/
+
+# 파이썬 캐시 파일
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+
+
+# 수업관련 문서
+DSCD_수업내용/
+
+# 과거 작업물
+1_SkinAnalysis/
+2_Cosmetic_Crawling/
+3_Recommendation/embedding_old/
+3_Recommendation/embedding_pipeline/embedding_results/
+3_Recommendation/embedding_test/
+3_Recommendation/kg_pipeline/output
+4_DB/
