@@ -1,4 +1,5 @@
 import heapq
+from typing import Any
 
 import pandas as pd
 
@@ -23,6 +24,108 @@ def _top_b(items: list[tuple[float, list[dict]]], b: int) -> list[tuple[float, l
         return sorted(items, key=lambda x: x[0], reverse=True)
     return heapq.nlargest(b, items, key=lambda x: x[0])
 
+
+def _norm_category(v: Any) -> str:
+    base = " ".join(str(v or "").strip().lower().split())
+    aliases = {
+        "toner": "toner+toner pads",
+        "toners": "toner+toner pads",
+        "toner pads": "toner+toner pads",
+        "toner pad": "toner+toner pads",
+        "toner + toner pads": "toner+toner pads",
+        "essence": "essences/ampoules/serums",
+        "essences": "essences/ampoules/serums",
+        "ampoule": "essences/ampoules/serums",
+        "ampoules": "essences/ampoules/serums",
+        "serum": "essences/ampoules/serums",
+        "serums": "essences/ampoules/serums",
+        "essence/ampoule/serum": "essences/ampoules/serums",
+        "cream/gel": "cream/gel",
+        "face moisturizers": "cream/gel",
+        "all in one": "all-in-one",
+    }
+    return aliases.get(base, base)
+
+
+def _resolve_slot_budget(slot_budget_map: dict[str, float] | None, category: str) -> float | None:
+    if not slot_budget_map:
+        return None
+    cat_norm = _norm_category(category)
+    for k, v in slot_budget_map.items():
+        if _norm_category(k) == cat_norm:
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def _has_budget_constraint(
+    total_budget_min: float | None,
+    total_budget_max: float | None,
+    slot_budget_min_map: dict[str, float] | None,
+    slot_budget_max_map: dict[str, float] | None,
+) -> bool:
+    return any(
+        [
+            total_budget_min is not None,
+            total_budget_max is not None,
+            bool(slot_budget_min_map),
+            bool(slot_budget_max_map),
+        ]
+    )
+
+
+def _item_price_allowed(
+    item: dict,
+    total_budget_min: float | None,
+    total_budget_max: float | None,
+    slot_budget_min_map: dict[str, float] | None,
+    slot_budget_max_map: dict[str, float] | None,
+) -> bool:
+    price = _safe_price(item.get("price"))
+    if price >= 1e12 and _has_budget_constraint(
+        total_budget_min, total_budget_max, slot_budget_min_map, slot_budget_max_map
+    ):
+        return False
+
+    category = str(item.get("category") or "")
+    slot_min = _resolve_slot_budget(slot_budget_min_map, category)
+    slot_max = _resolve_slot_budget(slot_budget_max_map, category)
+
+    if slot_min is not None and price < slot_min:
+        return False
+    if slot_max is not None and price > slot_max:
+        return False
+    if total_budget_max is not None and price > float(total_budget_max):
+        return False
+    return True
+
+
+def _routine_total_price(products: list[dict]) -> float | None:
+    total = 0.0
+    for p in products:
+        price = _safe_price(p.get("price"))
+        if price >= 1e12:
+            return None
+        total += price
+    return total
+
+
+def _routine_budget_allowed(
+    products: list[dict],
+    total_budget_min: float | None,
+    total_budget_max: float | None,
+) -> bool:
+    total = _routine_total_price(products)
+    if total is None:
+        return total_budget_min is None and total_budget_max is None
+    if total_budget_min is not None and total < float(total_budget_min):
+        return False
+    if total_budget_max is not None and total > float(total_budget_max):
+        return False
+    return True
+
 # Routine Builder
 def build_routines(
     reranked: pd.DataFrame,
@@ -30,6 +133,10 @@ def build_routines(
     session_id: str,
     top_n: int = 3,
     beam_width: int = 150,
+    total_budget_min: float | None = None,
+    total_budget_max: float | None = None,
+    slot_budget_min_map: dict[str, float] | None = None,
+    slot_budget_max_map: dict[str, float] | None = None,
 ) -> list[dict]:
     # 성별에 따른 SLOT
     slots = SLOT_ORDER[gender]
@@ -53,9 +160,25 @@ def build_routines(
             for r in rows:
                 r["S_rerank"] = score_map.get(str(r["product_key"]).strip().lower(), 0.0)
 
+            rows = [
+                r
+                for r in rows
+                if _item_price_allowed(
+                    r,
+                    total_budget_min=total_budget_min,
+                    total_budget_max=total_budget_max,
+                    slot_budget_min_map=slot_budget_min_map,
+                    slot_budget_max_map=slot_budget_max_map,
+                )
+            ]
             rows.sort(key=lambda x: x["S_rerank"], reverse=True)
-            rows = rows[:3] if slot_type == "optional" else rows[:5]
-            if not rows:
+            if _has_budget_constraint(total_budget_min, total_budget_max, slot_budget_min_map, slot_budget_max_map):
+                rows = rows[:5] if slot_type == "optional" else rows[:12]
+            else:
+                rows = rows[:3] if slot_type == "optional" else rows[:5]
+            if slot_type == "optional":
+                rows = [None] + rows
+            elif not rows:
                 rows = [None]
             slot_pools.append(rows)
 
@@ -72,6 +195,9 @@ def build_routines(
                     cand_next.append((score, partial))
                     continue
                 new_partial = partial + [item]
+                new_total = _routine_total_price(new_partial)
+                if total_budget_max is not None and (new_total is None or new_total > float(total_budget_max)):
+                    continue
                 new_score = score + float(item.get("S_rerank", 0.0))
                 cand_next.append((new_score, new_partial))
         beam = _top_b(cand_next, beam_width)
@@ -80,6 +206,8 @@ def build_routines(
     skipped_conflict = 0
     for approx_score, products in beam:
         if not products:
+            continue
+        if not _routine_budget_allowed(products, total_budget_min, total_budget_max):
             continue
 
         product_keys = [p["product_key"] for p in products]
@@ -131,6 +259,10 @@ def build_value_routines(
     session_id: str,
     top_n: int = 1,
     beam_width: int = 500,
+    total_budget_min: float | None = None,
+    total_budget_max: float | None = None,
+    slot_budget_min_map: dict[str, float] | None = None,
+    slot_budget_max_map: dict[str, float] | None = None,
 ) -> list[dict]:
     slots = SLOT_ORDER[gender]
     all_keys = reranked["product_key"].tolist()
@@ -154,10 +286,23 @@ def build_value_routines(
                 r["S_rerank"] = score_map.get(str(r["product_key"]).strip().lower(), 0.0)
                 r["_price"] = _safe_price(r.get("price"))
 
+            rows = [
+                r
+                for r in rows
+                if _item_price_allowed(
+                    r,
+                    total_budget_min=total_budget_min,
+                    total_budget_max=total_budget_max,
+                    slot_budget_min_map=slot_budget_min_map,
+                    slot_budget_max_map=slot_budget_max_map,
+                )
+            ]
             # price-first candidate pool
             rows.sort(key=lambda x: (x["_price"], -x["S_rerank"]))
             rows = rows[:3] if slot_type == "optional" else rows[:12]
-            if not rows:
+            if slot_type == "optional":
+                rows = [None] + rows
+            elif not rows:
                 rows = [None]
             slot_pools.append(rows)
 
@@ -175,6 +320,8 @@ def build_value_routines(
                     continue
                 new_partial = partial + [item]
                 new_total = total_price + float(item.get("_price", 1e12))
+                if total_budget_max is not None and new_total > float(total_budget_max):
+                    continue
                 cand_next.append((new_total, new_partial))
         beam = sorted(cand_next, key=lambda x: x[0])[:beam_width]
 
@@ -183,6 +330,8 @@ def build_value_routines(
     skipped_conflict = 0
     for total_price, products in beam:
         if not products:
+            continue
+        if not _routine_budget_allowed(products, total_budget_min, total_budget_max):
             continue
 
         product_keys = [p["product_key"] for p in products]

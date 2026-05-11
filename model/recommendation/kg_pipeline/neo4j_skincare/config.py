@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from neo4j import GraphDatabase
 import os
 
@@ -9,13 +9,16 @@ NEO4J_PASS = "cap4cap4"
 
 driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
 KG_ROOT = Path(__file__).resolve().parent
+KG_PIPELINE_ROOT = KG_ROOT.parent
+RECOMMENDATION_ROOT = KG_PIPELINE_ROOT.parent
+MODEL_ROOT = RECOMMENDATION_ROOT.parent
+PROJECT_ROOT = MODEL_ROOT.parent
 
 # Data directories (local paths)
-EMBEDDING_RESULT_DIR = PROJECT_ROOT / "3_Recomendation" / "2_Embedding_results"
-CRAWLING_DATA_DIR = PROJECT_ROOT / "2_Cosmetic_Crawling" / "data"
-OUTPUT_DIR = KG_ROOT.parent / "output"
+EMBEDDING_RESULT_DIR = RECOMMENDATION_ROOT / "embedding_pipeline" / "embedding_results"
+CRAWLING_DATA_DIR = PROJECT_ROOT / "cosmetic_crawling" / "data"
+OUTPUT_DIR = KG_PIPELINE_ROOT / "output"
 
 # 성별에 따른 스킨케어 루틴 SLOT
 SLOT_ORDER = {

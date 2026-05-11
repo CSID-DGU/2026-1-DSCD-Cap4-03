@@ -1,8 +1,15 @@
 from typing import Any
+from pathlib import Path
+import sys
 import time
 import pandas as pd
 import pymysql
 import json
+
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 # config.py
 from model.recommendation.kg_pipeline.neo4j_skincare.config import OUTPUT_DIR, RETRIEVAL_TOPK_PER_CATEGORY, driver
 from model.recommendation.kg_pipeline.neo4j_skincare.graph.load_graph import create_user_session
@@ -210,6 +217,10 @@ def _build_value_with_expand(
     start_beam: int = 500,
     step: int = 100,
     max_beam: int = 1500,
+    total_budget_min: float | None = None,
+    total_budget_max: float | None = None,
+    slot_budget_min_map: dict[str, float] | None = None,
+    slot_budget_max_map: dict[str, float] | None = None,
 ) -> list[dict[str, Any]]:
     beam = max(start_beam, 1)
     while beam <= max_beam:
@@ -219,6 +230,10 @@ def _build_value_with_expand(
             session_id,
             top_n=top_n,
             beam_width=beam,
+            total_budget_min=total_budget_min,
+            total_budget_max=total_budget_max,
+            slot_budget_min_map=slot_budget_min_map,
+            slot_budget_max_map=slot_budget_max_map,
         )
         if value_candidates:
             if beam > start_beam:
@@ -227,6 +242,80 @@ def _build_value_with_expand(
         beam += step
     print(f"[warn][value] no value routine found up to beam={max_beam}")
     return []
+
+
+def _safe_price(value: Any) -> float | None:
+    if value is None or str(value) == "nan":
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _norm_category_name(value: Any) -> str:
+    base = " ".join(str(value or "").strip().lower().split())
+    aliases = {
+        "toner": "toner+toner pads",
+        "toners": "toner+toner pads",
+        "toner pads": "toner+toner pads",
+        "toner pad": "toner+toner pads",
+        "toner + toner pads": "toner+toner pads",
+        "essence": "essences/ampoules/serums",
+        "essences": "essences/ampoules/serums",
+        "ampoule": "essences/ampoules/serums",
+        "ampoules": "essences/ampoules/serums",
+        "serum": "essences/ampoules/serums",
+        "serums": "essences/ampoules/serums",
+        "essence/ampoule/serum": "essences/ampoules/serums",
+        "face moisturizers": "cream/gel",
+        "all in one": "all-in-one",
+    }
+    return aliases.get(base, base)
+
+
+def _resolve_slot_budget_value(budget_map: dict[str, float] | None, category: Any) -> float | None:
+    if not budget_map:
+        return None
+    category_norm = _norm_category_name(category)
+    for k, v in budget_map.items():
+        if _norm_category_name(k) == category_norm:
+            try:
+                return float(v)
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def _routine_budget_ok(
+    routine: dict[str, Any],
+    price_map: dict[str, Any],
+    total_budget_min: float | None,
+    total_budget_max: float | None,
+    slot_budget_min_map: dict[str, float] | None,
+    slot_budget_max_map: dict[str, float] | None,
+) -> bool:
+    total_price = 0.0
+    for p in routine.get("products", []):
+        price = _safe_price(p.get("price"))
+        if price is None:
+            price = _safe_price(price_map.get(_norm_brand_name_key(p.get("brand"), p.get("name"))))
+        if price is None:
+            return not any([total_budget_min, total_budget_max, slot_budget_min_map, slot_budget_max_map])
+
+        slot_min = _resolve_slot_budget_value(slot_budget_min_map, p.get("category"))
+        slot_max = _resolve_slot_budget_value(slot_budget_max_map, p.get("category"))
+        if slot_min is not None and price < slot_min:
+            return False
+        if slot_max is not None and price > slot_max:
+            return False
+        total_price += price
+
+    if total_budget_min is not None and total_price < float(total_budget_min):
+        return False
+    if total_budget_max is not None and total_price > float(total_budget_max):
+        return False
+    return True
 
 
 
@@ -253,6 +342,8 @@ def run_pipeline(
     candidates = _load_candidates_from_embedding(ctx.get("image_id"), ctx.get("image_name"), ctx["gender"])
     _print_run_context(ctx, user_id=user_id, candidates=candidates)
     session_id = f"user::{user_id}::image::{ctx['image_id']}"
+    effective_total_budget_max = total_budget_max if total_budget_max is not None else total_budget
+    effective_slot_budget_max_map = slot_budget_max_map if slot_budget_max_map is not None else slot_budget_map
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     with driver.session() as s:
         s.execute_write(
@@ -313,7 +404,16 @@ def run_pipeline(
             ~reranked["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
         ].copy()
         beam_top_n = 8 if top_n is None else max(int(top_n), 2)
-        best_candidates = build_routines(reranked_for_routine, ctx["gender"], session_id, top_n=beam_top_n)
+        best_candidates = build_routines(
+            reranked_for_routine,
+            ctx["gender"],
+            session_id,
+            top_n=beam_top_n,
+            total_budget_min=total_budget_min,
+            total_budget_max=effective_total_budget_max,
+            slot_budget_min_map=slot_budget_min_map,
+            slot_budget_max_map=effective_slot_budget_max_map,
+        )
         value_candidates = _build_value_with_expand(
             reranked_for_routine,
             ctx["gender"],
@@ -322,6 +422,10 @@ def run_pipeline(
             start_beam=500,
             step=100,
             max_beam=1500,
+            total_budget_min=total_budget_min,
+            total_budget_max=effective_total_budget_max,
+            slot_budget_min_map=slot_budget_min_map,
+            slot_budget_max_map=effective_slot_budget_max_map,
         )
         routines = []
         if best_candidates:
@@ -360,7 +464,7 @@ def run_pipeline(
         bool(slot_budget_max_map),
     ])
 
-    if has_budget_input and (filtered.empty or len(routines) == 0):
+    if has_budget_input and not strict_budget and (filtered.empty or len(routines) == 0):
         filtered_fb, _ = hard_filter(
             candidates,
             session_id,
@@ -429,6 +533,23 @@ def run_pipeline(
         routines = _attach_all_in_one_to_routines(routines, all_in_one_pick)
     if len(routines) >= 2 and str(routines[0].get("products")) == str(routines[1].get("products")):
         routines = routines[:1]
+    if strict_budget and has_budget_input and routines:
+        before_budget_check = len(routines)
+        routines = [
+            r
+            for r in routines
+            if _routine_budget_ok(
+                r,
+                price_map=price_map,
+                total_budget_min=total_budget_min,
+                total_budget_max=effective_total_budget_max,
+                slot_budget_min_map=slot_budget_min_map,
+                slot_budget_max_map=effective_slot_budget_max_map,
+            )
+        ]
+        dropped_budget_routines = before_budget_check - len(routines)
+        if dropped_budget_routines > 0:
+            print(f"[budget] dropped {dropped_budget_routines} routine(s) exceeding strict budget")
     failure_reason = None
     session_status = "SUCCESS"
     if len(routines) == 0:
@@ -509,7 +630,7 @@ def run_pipeline(
         ai_brand = brand_kor_map.get(ai_pk, all_in_one_pick.get("Brand"))
         ai_score = all_in_one_pick.get("S_rerank")
         ai_price = all_in_one_pick.get("price")
-        ai_price_txt = f"{int(float(ai_price)):,} KRW" if ai_price is not None and str(ai_price) != "nan" else "N/A"
+        ai_price_txt = f"{int(float(ai_price)):,}원" if ai_price is not None and str(ai_price) != "nan" else "N/A"
         print("\n[All-In-One Standalone]")
         print(f"  All-In-One           -> {ai_brand} - {ai_name} | S={ai_score} | price={ai_price_txt} (included in routines)")
     for i, r in enumerate(routines, 1):
@@ -523,7 +644,7 @@ def run_pipeline(
             else:
                 total_price += float(pv)
 
-        total_price_txt = "N/A" if price_missing else f"{int(total_price):,} KRW"
+        total_price_txt = "N/A" if price_missing else f"{int(total_price):,}원"
         if price_missing:
             budget_state = "N/A"
         elif total_budget_min is not None and total_price < float(total_budget_min):
@@ -540,7 +661,7 @@ def run_pipeline(
         for p in r["products"]:
             k = _norm_brand_name_key(p.get("brand"), p.get("name"))
             price = price_map.get(k)
-            price_txt = f"{int(float(price)):,} KRW" if price is not None and str(price) != "nan" else "N/A"
+            price_txt = f"{int(float(price)):,}원" if price is not None and str(price) != "nan" else "N/A"
             pk = str(p.get("product_key") or "").strip().lower()
             disp_name = name_kor_map.get(pk, p.get("name"))
             disp_brand = brand_kor_map.get(pk, p.get("brand"))
