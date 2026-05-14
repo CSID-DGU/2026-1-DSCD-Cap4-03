@@ -1,4 +1,5 @@
 from typing import Any
+import json
 from pathlib import Path
 import sys
 import time
@@ -48,7 +49,10 @@ def _insert_recommendation_results(
     routines: list[dict[str, Any]],
     reranked: pd.DataFrame,
     strict_budget: bool,
+    total_budget_min: float | None,
     total_budget_max: float | None,
+    slot_budget_min_map: dict[str, float] | None,
+    slot_budget_max_map: dict[str, float] | None,
     session_status: str,
     failure_reason: str | None,
     budget_check_passed: bool,
@@ -61,15 +65,19 @@ def _insert_recommendation_results(
                 """
                 INSERT INTO RECOMMENDATION_SESSION (
                     user_id, image_id, result_id, strict_budget,
-                    total_budget, budget_check_passed, session_status, failure_reason
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    total_budget_min, total_budget_max, slot_budget_min_json, slot_budget_max_json,
+                    budget_check_passed, session_status, failure_reason
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     user_id,
                     session_meta["image_id"],
                     session_meta["result_id"],
                     1 if strict_budget else 0,
+                    int(total_budget_min) if total_budget_min is not None else None,
                     int(total_budget_max) if total_budget_max is not None else None,
+                    json.dumps(slot_budget_min_map, ensure_ascii=False) if slot_budget_min_map else None,
+                    json.dumps(slot_budget_max_map, ensure_ascii=False) if slot_budget_max_map else None,
                     1 if budget_check_passed else 0,
                     session_status,
                     failure_reason,
@@ -116,13 +124,14 @@ def _insert_recommendation_results(
                 cur.execute(
                     """
                     INSERT INTO RECOMMENDATION_ROUTINE (
-                        session_id, routine_rank, ampm_mode, routine_score,
+                        session_id, routine_rank, routine_label, ampm_mode, routine_score,
                         has_conflict, conflict_pairs
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         rec_session_id,
                         ridx,
+                        str(routine.get("routine_label") or "").replace(" Routine", "") or None,
                         routine.get("am_pm_label"),
                         float(routine.get("total_score", 0.0)),
                         1 if rule_conflicts else 0,
@@ -326,7 +335,7 @@ def run_pipeline(
     top_n: int | None = None,
     total_budget: float | None = None,
     slot_budget_map: dict[str, float] | None = None,
-    strict_budget: bool = True,
+    strict_budget: bool = False,
     total_budget_min: float | None = None,
     total_budget_max: float | None = None,
     slot_budget_min_map: dict[str, float] | None = None,
@@ -336,6 +345,7 @@ def run_pipeline(
     candidates = _load_candidates_from_embedding(ctx.get("image_id"), ctx.get("image_name"), ctx["gender"])
     _print_run_context(ctx, user_id=user_id, candidates=candidates)
     session_id = f"user::{user_id}::image::{ctx['image_id']}"
+    strict_budget = False
     effective_total_budget_max = total_budget_max if total_budget_max is not None else total_budget
     effective_slot_budget_max_map = slot_budget_max_map if slot_budget_max_map is not None else slot_budget_map
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -458,7 +468,7 @@ def run_pipeline(
         bool(slot_budget_max_map),
     ])
 
-    if has_budget_input and not strict_budget and (filtered.empty or len(routines) == 0):
+    if has_budget_input and (filtered.empty or len(routines) == 0):
         filtered_fb, _ = hard_filter(
             candidates,
             session_id,
@@ -520,14 +530,14 @@ def run_pipeline(
                 reranked = reranked_fb
                 price_map = _build_price_map(reranked)
                 fallback_applied = True
-                print("[fallback] budget constraint failed (empty candidates/routines), switched to no-budget best/value selection")
+                print("[fallback] ?? ??? ?? ??? ?? ?? ?? ?? ?? ??? ??? ?????.")
 
     # Best/Value are built by separate engines above
     if ctx.get("gender") == "male":
         routines = _attach_all_in_one_to_routines(routines, all_in_one_pick)
     if len(routines) >= 2 and str(routines[0].get("products")) == str(routines[1].get("products")):
         routines = routines[:1]
-    if strict_budget and has_budget_input and routines:
+    if has_budget_input and routines:
         before_budget_check = len(routines)
         routines = [
             r
@@ -558,7 +568,7 @@ def run_pipeline(
         else:
             failure_reason = "NO_ROUTINE_AFTER_BUILD"
         session_status = "FAILED"
-    budget_check_passed = session_status == "SUCCESS"
+    budget_check_passed = session_status == "SUCCESS" and not fallback_applied
     rerank_changed = len(drop_log) > 0
     rec_session_id = None
     save_error = None
@@ -571,7 +581,10 @@ def run_pipeline(
                 routines=routines,
                 reranked=reranked,
                 strict_budget=strict_budget,
+                total_budget_min=total_budget_min,
                 total_budget_max=total_budget_max,
+                slot_budget_min_map=slot_budget_min_map,
+                slot_budget_max_map=effective_slot_budget_max_map,
                 session_status=session_status,
                 failure_reason=failure_reason,
                 budget_check_passed=budget_check_passed,

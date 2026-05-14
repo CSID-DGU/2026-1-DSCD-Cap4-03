@@ -22,3 +22,4 @@ model/recommendation/embedding_test/
 model/recommendation/kg_pipeline/output
 model/recommendation/kg_pipeline/llm
 DB/
+DEVELOPMENT_FLOW.md
