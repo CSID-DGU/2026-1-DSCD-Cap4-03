@@ -2,12 +2,11 @@ import json
 import random
 from collections import defaultdict
 from pathlib import Path
-from torchvision import transforms
+
 import numpy as np
 import torch
-from PIL import Image, ImageFilter
+from PIL import Image
 from torch.utils.data import Dataset, DataLoader
-from torchvision import transforms
 
 from config import (
     TASK_NAMES, NUM_CLASSES,
@@ -25,17 +24,14 @@ DEVICE_MAP = {
 }
 
 
-# ── 피부 이미지 전용 Gaussian Noise ─────────────────────────────────────────
+# ── Augmentation ───────────────────────────────────────────────────────────────
+
 class RandomGaussianNoise:
     """
-    PIL Image에 가우시안 노이즈를 추가
-    피부 센서 노이즈 및 저조도 촬영 환경을 모사
-
-    Args:
-        p     : 적용 확률
-        mean  : 노이즈 평균 (보통 0)
-        std   : 노이즈 표준편차 (0~255 스케일). 5~15 권장
+    Adds Gaussian noise to a PIL Image.
+    Simulates sensor noise and low-light shooting conditions.
     """
+
     def __init__(self, p: float = 0.3, mean: float = 0.0, std: float = 8.0):
         self.p    = p
         self.mean = mean
@@ -46,14 +42,16 @@ class RandomGaussianNoise:
             return img
         arr   = np.array(img, dtype=np.float32)
         noise = np.random.normal(self.mean, self.std, arr.shape).astype(np.float32)
-        arr   = np.clip(arr + noise, 0, 255).astype(np.uint8)
-        return Image.fromarray(arr)
+        return Image.fromarray(np.clip(arr + noise, 0, 255).astype(np.uint8))
 
     def __repr__(self):
         return f"RandomGaussianNoise(p={self.p}, mean={self.mean}, std={self.std})"
 
 
+# ── JSON Parsing Helpers ────────────────────────────────────────────────────────
+
 def _find_value(obj, keys):
+    """Recursively search for any of the given keys in a nested dict/list."""
     if isinstance(obj, dict):
         for k, v in obj.items():
             if k in keys:
@@ -76,8 +74,7 @@ def _parse_bbox(val):
         return [int(v) for v in val]
     if isinstance(val, dict):
         if all(k in val for k in ["x1", "y1", "x2", "y2"]):
-            return [int(val["x1"]), int(val["y1"]),
-                    int(val["x2"]), int(val["y2"])]
+            return [int(val["x1"]), int(val["y1"]), int(val["x2"]), int(val["y2"])]
         if all(k in val for k in ["x", "y", "w", "h"]):
             x1, y1 = int(val["x"]), int(val["y"])
             return [x1, y1, x1 + int(val["w"]), y1 + int(val["h"])]
@@ -86,23 +83,22 @@ def _parse_bbox(val):
 
 def _extract_bbox(json_obj: dict):
     for key in ["bbox", "b_box", "box", "rect", "rectangle", "face_bbox", "roi"]:
-        val = _find_value(json_obj, [key])
-        if val is not None:
-            bbox = _parse_bbox(val)
-            if bbox is not None:
-                return bbox
+        val  = _find_value(json_obj, [key])
+        bbox = _parse_bbox(val)
+        if bbox is not None:
+            return bbox
     return None
 
 
 def _acne_count_to_grade(count: int) -> int:
-    if count == 0:    return 0
-    elif count <= 3:  return 1
-    elif count <= 7:  return 2
-    else:             return 3
+    if count == 0:   return 0
+    elif count <= 3: return 1
+    elif count <= 7: return 2
+    else:            return 3
 
 
 def _extract_acne(json_obj: dict) -> int:
-    ann = json_obj.get("annotations", {})
+    ann        = json_obj.get("annotations", {})
     acne_count = ann.get("acne_count", json_obj.get("acne_count", None))
     if acne_count is not None:
         try:
@@ -123,9 +119,10 @@ def _extract_acne(json_obj: dict) -> int:
 def extract_task_label(json_obj: dict, task_name: str) -> int:
     if task_name == "acne":
         return _extract_acne(json_obj)
+
     value = _find_value(
         json_obj,
-        [task_name, "grade", "label", "class", "target", "score", "severity"]
+        [task_name, "grade", "label", "class", "target", "score", "severity"],
     )
     if isinstance(value, dict):
         for subk in ["grade", "label", "class", "score", "severity", task_name]:
@@ -136,10 +133,13 @@ def extract_task_label(json_obj: dict, task_name: str) -> int:
         value = int(value)
     except Exception:
         value = 0
+
     if task_name in GRADE_REMAP:
         value = GRADE_REMAP[task_name].get(value, value)
     return max(0, min(value, NUM_CLASSES[task_name] - 1))
 
+
+# ── Filename Parsing ───────────────────────────────────────────────────────────
 
 def _is_front_image(image_key: str) -> bool:
     parts = image_key.split("_")
@@ -166,57 +166,19 @@ def _facepart_idx_from_json_path(json_path: str):
         return None
 
 
+# ── Dataset ────────────────────────────────────────────────────────────────────
+
 class SkinDataset(Dataset):
 
-    def __init__(self, img_dir, label_dir,
-                 train=True, img_size=224, local_crop_size=224):
+    def __init__(self, img_dir, label_dir, train=True, img_size=224, local_crop_size=224):
         self.img_dir         = Path(img_dir)
         self.label_dir       = Path(label_dir)
         self.train           = train
         self.img_size        = img_size
         self.local_crop_size = local_crop_size
+        self.aug             = None  # set to transforms.Compose([...]) to enable
 
-        # ── augmentation────────────────────────────────────────────────
-        """
-        if self.train:
-            self.aug = transforms.Compose([
-                # --- Geometry ---
-                transforms.RandomHorizontalFlip(p=0.5),
-                transforms.RandomVerticalFlip(p=0.05),
-                transforms.RandomRotation(degrees=8),
-
-                # --- Color ---
-                transforms.ColorJitter(
-                    brightness=0.1,
-                    contrast=0.1,
-                    saturation=0.05,
-                    hue=0.02,
-                ),
-
-                # --- Blur ---
-                transforms.RandomApply([
-                    transforms.GaussianBlur(kernel_size=3, sigma=(0.1, 1.0))
-                ], p=0.2),
-
-                # --- Noise ---
-                transforms.RandomApply([
-                    transforms.Lambda(
-                        lambda x: Image.fromarray(
-                            np.clip(
-                                np.array(x, dtype=np.float32)
-                                + np.random.normal(0.0, 5.0, np.array(x).shape),
-                                0, 255
-                            ).astype(np.uint8)
-                        )
-                    )
-                ], p=0.2),
-            ])
-        else:
-            self.aug = None
-            """
-        self.aug = None
-
-        # 1. 이미지 인덱스
+        # 1. Build image index (front-view only)
         self.image_map = {}
         for ext in ["*.jpg", "*.jpeg", "*.png", "*.JPG", "*.JPEG", "*.PNG"]:
             for p in self.img_dir.rglob(ext):
@@ -224,7 +186,7 @@ class SkinDataset(Dataset):
                 if _is_front_image(key):
                     self.image_map[key] = str(p)
 
-        # 2. JSON 인덱스
+        # 2. Build JSON index: prefix → {fp_idx: json_path}
         self.json_map = defaultdict(dict)
         for jp in self.label_dir.rglob("*.json"):
             stem   = jp.stem
@@ -234,7 +196,7 @@ class SkinDataset(Dataset):
             if fp_idx is not None:
                 self.json_map[prefix][fp_idx] = str(jp)
 
-        # 3. JSON 파싱 → 캐시
+        # 3. Parse JSONs and build cached samples
         self.samples     = []
         self.label_cache = []
         self.bbox_cache  = []
@@ -245,9 +207,7 @@ class SkinDataset(Dataset):
             if not fp_json_map:
                 continue
 
-            label_map = {}
-            bbox_map  = {}
-
+            label_map, bbox_map = {}, {}
             for fp_idx, json_path in fp_json_map.items():
                 with open(json_path, "r", encoding="utf-8") as f:
                     ann = json.load(f)
@@ -271,13 +231,9 @@ class SkinDataset(Dataset):
         label_map = self.label_cache[idx]
         bbox_map  = self.bbox_cache[idx]
 
-        img = Image.open(img_path).convert("RGB")
+        img             = Image.open(img_path).convert("RGB")
+        local_imgs_raw  = build_local_crops(img, bbox_map, self.local_crop_size)
 
-        # 1. 원본 이미지에서 bbox 기준으로 crop → 좌표 정확
-        local_imgs_raw = build_local_crops(img, bbox_map, self.local_crop_size)
-
-        # 2. crop 후 aug 적용 (full + 각 local 독립적으로)
-        #    GaussianNoise는 PIL 단계에서 적용되므로 tensor 변환 전에 처리됨
         if self.aug is not None:
             full_img   = self.aug(resize_pil(img, self.img_size))
             local_imgs = [self.aug(crop) for crop in local_imgs_raw]
@@ -285,13 +241,11 @@ class SkinDataset(Dataset):
             full_img   = resize_pil(img, self.img_size)
             local_imgs = local_imgs_raw
 
-        full_tensor   = to_normalized_tensor(full_img)
-        local_tensors = local_crops_to_tensor(local_imgs)
         device_name, device_id = _parse_device_info(image_key)
 
         return {
-            "full_face":   full_tensor,
-            "local_crops": local_tensors,
+            "full_face":   to_normalized_tensor(full_img),
+            "local_crops": local_crops_to_tensor(local_imgs),
             "labels": {
                 t: torch.tensor(label_map[t], dtype=torch.long)
                 for t in TASK_NAMES
@@ -305,10 +259,7 @@ class SkinDataset(Dataset):
 
 
 class TestDataset(Dataset):
-    """
-    bbox 없음 → FACEPART_BBOX 고정 좌표로 crop.
-    fp=0(acne) 은 None → 전체 이미지.
-    """
+    """Inference-only dataset using fixed FACEPART_BBOX coordinates."""
 
     def __init__(self, img_dir, img_size=224, local_crop_size=224):
         self.imgs = [
@@ -336,6 +287,8 @@ class TestDataset(Dataset):
         )
 
 
+# ── Collate & Loader ───────────────────────────────────────────────────────────
+
 def collate_fn(batch):
     return {
         "full_face":   torch.stack([b["full_face"]   for b in batch]),
@@ -352,20 +305,26 @@ def collate_fn(batch):
     }
 
 
-def build_loader(img_dir, label_dir, train=True,
-                 batch_size=16, img_size=224,
-                 local_crop_size=224, num_workers=8):
-    ds = SkinDataset(img_dir, label_dir,
-                     train=train, img_size=img_size,
-                     local_crop_size=local_crop_size)
-    return DataLoader(ds, batch_size=batch_size, shuffle=train,
-                      num_workers=num_workers, pin_memory=True,
-                      drop_last=train, collate_fn=collate_fn)
+def build_loader(
+    img_dir, label_dir, train=True,
+    batch_size=16, img_size=224, local_crop_size=224, num_workers=8,
+) -> DataLoader:
+    ds = SkinDataset(
+        img_dir, label_dir,
+        train=train, img_size=img_size, local_crop_size=local_crop_size,
+    )
+    return DataLoader(
+        ds, batch_size=batch_size, shuffle=train,
+        num_workers=num_workers, pin_memory=True,
+        drop_last=train, collate_fn=collate_fn,
+    )
 
 
-def build_test_loader(img_dir, batch_size=16, img_size=224,
-                      local_crop_size=224, num_workers=8):
-    ds = TestDataset(img_dir, img_size=img_size,
-                     local_crop_size=local_crop_size)
-    return DataLoader(ds, batch_size=batch_size, shuffle=False,
-                      num_workers=num_workers, pin_memory=True)
+def build_test_loader(
+    img_dir, batch_size=16, img_size=224, local_crop_size=224, num_workers=8,
+) -> DataLoader:
+    ds = TestDataset(img_dir, img_size=img_size, local_crop_size=local_crop_size)
+    return DataLoader(
+        ds, batch_size=batch_size, shuffle=False,
+        num_workers=num_workers, pin_memory=True,
+    )
