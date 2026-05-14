@@ -1,0 +1,198 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.rh-page {
+  min-height: 100vh;
+  background: #f5f3ff;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.rh-banner {
+  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
+  padding: 64px 24px 52px;
+}
+.rh-banner-inner { max-width: 1080px; margin: 0 auto; }
+.rh-badge {
+  display: inline-block;
+  background: #7c3aed; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 14px; letter-spacing: 1px;
+}
+.rh-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 800; color: #1a1a2e; margin-bottom: 8px;
+}
+.rh-sub { font-size: 14px; color: #6b7280; }
+
+.rh-body {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* 공통 섹션 */
+.rh-new-section,
+.rh-saved-section {
+  background: #fff;
+  border-radius: 24px;
+  padding: 28px 28px;
+  box-shadow: 0 2px 14px rgba(124,58,237,0.07);
+}
+.rh-section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 17px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px;
+}
+.rh-section-sub { font-size: 13px; color: #9ca3af; margin-bottom: 20px; }
+
+/* 분석 결과 없을 때 */
+.rh-no-result {
+  text-align: center; padding: 32px; color: #9ca3af; font-size: 13px;
+}
+.rh-no-result p { margin-bottom: 16px; }
+.rh-btn-primary {
+  background: #7c3aed; color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 700;
+  padding: 12px 28px; border-radius: 24px; border: none; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.3); transition: all 0.18s;
+}
+.rh-btn-primary:hover { transform: translateY(-2px); }
+
+/* 분석 결과 카드 리스트 */
+.rh-result-list { display: flex; flex-direction: column; gap: 12px; }
+
+.rh-result-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: #faf8ff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1.5px solid #ede9fe;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.rh-result-card:hover {
+  border-color: #a855f7;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.12);
+  transform: translateY(-1px);
+}
+.rh-result-card-left { position: relative; flex-shrink: 0; }
+.rh-result-thumb {
+  width: 64px; height: 64px;
+  border-radius: 12px; object-fit: cover;
+  border: 2px solid #ddd6fe;
+}
+.rh-latest-badge {
+  position: absolute; top: -6px; right: -6px;
+  background: #7c3aed; color: #fff;
+  font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px;
+}
+.rh-result-info { flex: 1; min-width: 0; }
+.rh-result-date { font-size: 11px; color: #9ca3af; font-weight: 600; margin-bottom: 3px; }
+.rh-result-type {
+  font-family: 'Sora', sans-serif;
+  font-size: 14px; font-weight: 700; color: #7c3aed; margin-bottom: 4px;
+}
+.rh-result-comment {
+  font-size: 12px; color: #6b7280; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.rh-result-cta { flex-shrink: 0; }
+.rh-select-btn {
+  background: #7c3aed; color: #fff;
+  font-size: 12px; font-weight: 700;
+  padding: 9px 16px; border-radius: 20px;
+  white-space: nowrap;
+  transition: all 0.18s;
+}
+.rh-result-card:hover .rh-select-btn {
+  background: #6d28d9;
+}
+
+/* 빈 상태 */
+.rh-empty {
+  text-align: center; padding: 40px; color: #9ca3af; font-size: 13px;
+}
+
+/* 저장된 루틴 */
+.rh-saved-list { display: flex; flex-direction: column; gap: 16px; }
+
+.rh-saved-card {
+  background: #faf8ff;
+  border-radius: 18px;
+  padding: 20px;
+  border: 1.5px solid #ede9fe;
+}
+.rh-saved-card-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+  margin-bottom: 16px;
+}
+.rh-type-badge {
+  font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px;
+}
+.rh-type-badge.best { background: #fef3c7; color: #b45309; }
+.rh-type-badge.budget { background: #dcfce7; color: #16a34a; }
+.rh-saved-meta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: #9ca3af;
+}
+.rh-saved-cost { color: #7c3aed; font-weight: 700; font-family: 'Sora', sans-serif; }
+
+/* 제품 가로 스크롤 */
+.rh-saved-products {
+  display: flex; gap: 12px;
+  overflow-x: auto; padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+.rh-saved-products::-webkit-scrollbar { height: 3px; }
+.rh-saved-products::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 2px; }
+
+.rh-saved-product {
+  flex: 0 0 120px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; cursor: pointer;
+  background: #fff; border-radius: 14px;
+  border: 1.5px solid #ede9fe; padding: 12px 8px;
+  transition: transform 0.18s;
+  text-align: center;
+}
+.rh-saved-product:hover { transform: translateY(-2px); }
+.rh-saved-step {
+  font-size: 9px; font-weight: 700; color: #fff;
+  background: #7c3aed; padding: 2px 7px; border-radius: 8px;
+  letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.rh-saved-img {
+  width: 64px; height: 64px;
+  object-fit: cover; border-radius: 10px; margin-bottom: 4px;
+}
+.rh-saved-brand { font-size: 9px; color: #9ca3af; font-weight: 600; text-transform: uppercase; }
+.rh-saved-name {
+  font-size: 11px; font-weight: 700; color: #1a1a2e; line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.rh-saved-price {
+  font-family: 'Sora', sans-serif;
+  font-size: 12px; font-weight: 700; color: #7c3aed;
+}
+
+.rh-view-btn {
+  width: 100%;
+  background: #f5f3ff; border: 1.5px solid #ddd6fe; color: #7c3aed;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 700;
+  padding: 11px; border-radius: 12px; cursor: pointer;
+  transition: all 0.18s;
+}
+.rh-view-btn:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
