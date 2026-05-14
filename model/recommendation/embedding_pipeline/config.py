@@ -1,4 +1,4 @@
-﻿# config.py
+# config.py
 from __future__ import annotations
 
 import os
@@ -32,8 +32,12 @@ MAX_QUERY_METRICS = int(os.getenv("EMBED_MAX_QUERY_METRICS", "4"))
 # CPU 실행 시 발열/쓰로틀링을 줄이기 위한 기본 배치 크기
 BATCH_SIZE = int(os.getenv("EMBED_BATCH_SIZE", "16"))
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "3_Recomendation" / "embedding_final" / "embedding_results"
+PIPELINE_ROOT = Path(__file__).resolve().parent
+RECOMMENDATION_ROOT = PIPELINE_ROOT.parent
+MODEL_ROOT = RECOMMENDATION_ROOT.parent
+PROJECT_ROOT = MODEL_ROOT.parent
+
+DEFAULT_OUTPUT_DIR = PIPELINE_ROOT / "embedding_results"
 
 # DB upload
 AUTO_UPLOAD_RECOMMENDATION_CANDIDATE = os.getenv("EMBED_AUTO_UPLOAD_CANDIDATE", "1") == "1" # ON

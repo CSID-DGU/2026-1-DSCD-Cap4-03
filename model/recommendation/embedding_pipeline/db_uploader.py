@@ -13,18 +13,12 @@ CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS RECOMMENDATION_CANDIDATE (
     candidate_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     image_id INT NOT NULL,
-    user_id INT NULL,
     rank_in_category INT NOT NULL,
     product_id BIGINT NOT NULL,
     query_category VARCHAR(100) NOT NULL,
-    brand VARCHAR(255) NOT NULL,
-    product_name VARCHAR(255) NOT NULL,
-    category VARCHAR(100) NULL,
-    `function` VARCHAR(100) NULL,
     score DECIMAL(12,8) NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     KEY idx_recommendation_candidate_image (image_id),
-    KEY idx_recommendation_candidate_user (user_id),
     KEY idx_recommendation_candidate_product (product_id),
     KEY idx_recommendation_candidate_category (query_category),
     KEY idx_recommendation_candidate_rank (rank_in_category)
@@ -34,22 +28,16 @@ CREATE TABLE IF NOT EXISTS RECOMMENDATION_CANDIDATE (
 
 INSERT_SQL = """
 INSERT INTO RECOMMENDATION_CANDIDATE (
-    image_id, user_id, rank_in_category, product_id, query_category,
-    brand, product_name, category, `function`, score
-) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    image_id, rank_in_category, product_id, query_category, score
+) VALUES (%s, %s, %s, %s, %s)
 """
 
 
 REQUIRED_COLUMNS = [
     "image_id",
-    "user_id",
     "rank_in_category",
     "product_id",
     "query_category",
-    "brand",
-    "product_name",
-    "category",
-    "function",
     "score",
 ]
 
@@ -74,34 +62,27 @@ def _normalize_candidate_rows(df: pd.DataFrame) -> list[tuple]:
             raise ValueError(f"Missing required column: {col}")
 
     rows["image_id"] = pd.to_numeric(rows["image_id"], errors="coerce")
-    rows["user_id"] = pd.to_numeric(rows["user_id"], errors="coerce")
     rows["rank_in_category"] = pd.to_numeric(rows["rank_in_category"], errors="coerce")
     rows["product_id"] = pd.to_numeric(rows["product_id"], errors="coerce")
     rows["score"] = pd.to_numeric(rows["score"], errors="coerce")
 
-    for col in ["query_category", "brand", "product_name", "category", "function"]:
+    for col in ["query_category"]:
         rows[col] = rows[col].map(lambda v: None if pd.isna(v) or str(v).strip() == "" else str(v).strip())
 
-    rows = rows.dropna(subset=["image_id", "rank_in_category", "product_id", "query_category", "brand", "product_name", "score"]).copy()
+    rows = rows.dropna(subset=["image_id", "rank_in_category", "product_id", "query_category", "score"]).copy()
     if rows.empty:
         return []
 
     rows["image_id"] = rows["image_id"].astype(int)
     rows["rank_in_category"] = rows["rank_in_category"].astype(int)
     rows["product_id"] = rows["product_id"].astype(int)
-    rows["user_id"] = rows["user_id"].astype("Int64")
 
     return [
         (
             int(r.image_id),
-            None if pd.isna(r.user_id) else int(r.user_id),
             int(r.rank_in_category),
             int(r.product_id),
             r.query_category,
-            r.brand,
-            r.product_name,
-            r.category,
-            r.function,
             float(r.score),
         )
         for r in rows.itertuples(index=False)

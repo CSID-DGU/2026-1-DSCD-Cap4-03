@@ -1,4 +1,4 @@
-﻿# corpus_builder.py
+# corpus_builder.py
 from __future__ import annotations
 
 import pandas as pd
