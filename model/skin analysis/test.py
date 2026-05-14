@@ -1,29 +1,44 @@
+# test.py 
 """
-출력 CSV:
-  image, {metric}_pred, {metric}_conf, {metric}_score, {metric}_prob_0 ... prob_N
+input.json 형식:
+    {
+        "image_id":    1,
+        "user_id":     123,
+        "image_path":  "/path/to/image.jpg",
+        "uploaded_at": "2026-05-14 14:00:00"
+    }
+
+출력 JSON (raw_{user_id}_{분석시각}.json):
+    image_id, user_id, analyzed_at,
+    {metric}_grade, {metric}_score, {metric}_prob_0 ... prob_N
 """
 
 import os
+import json
 import argparse
-from pathlib import Path
+from datetime import datetime
 
 import torch
-import pandas as pd
 import numpy as np
+from PIL import Image
 
-from config  import DATA, TASK_NAMES, NUM_CLASSES, BASE_DIR
-from dataset import build_test_loader
-from model   import SkinModel
-from utils   import get_device, ensure_dir, build_logger, now_kst
+from config   import TASK_NAMES, NUM_CLASSES, BASE_DIR, FACEPART_BBOX
+from model    import SkinModel
+from utils    import ensure_dir, build_logger, now_kst
+from img_crop import (
+    resize_pil, to_normalized_tensor,
+    local_crops_to_tensor, build_local_crops,
+)
 
+# ── 지표별 landmark 매핑 ───────────────────────────────────────────────────────
 MAP_KEYS = {
     "acne":         ["acne"],
     "dryness":      ["lip_dryness"],
     "sagging":      ["chin_sagging"],
-    "pore":         ["l_cheek_pore",         "r_cheek_pore"],
-    "pigmentation": ["forehead_pigmentation", "l_cheek_pigmentation", "r_cheek_pigmentation"],
-    "wrinkle":      ["forehead_wrinkle",      "glabellus_wrinkle",
-                     "l_perocular_wrinkle",   "r_perocular_wrinkle"],
+    "pore":         ["l_cheek_pore",          "r_cheek_pore"],
+    "pigmentation": ["forehead_pigmentation",  "l_cheek_pigmentation", "r_cheek_pigmentation"],
+    "wrinkle":      ["forehead_wrinkle",       "glabellus_wrinkle",
+                     "l_perocular_wrinkle",    "r_perocular_wrinkle"],
 }
 
 METRIC_NUM_CLASSES = {
@@ -32,8 +47,10 @@ METRIC_NUM_CLASSES = {
 }
 
 
+# ── 헬퍼 함수 ─────────────────────────────────────────────────────────────────
+
 def aggregate_max(probs_dict, landmarks):
-    """pred(argmax) 가 가장 높은 landmark 선택. 동점이면 conf 기준."""
+    """argmax가 가장 높은 landmark 선택. 동점이면 conf 기준. probs Tensor 반환."""
     best_pred, best_conf, best_probs = -1, -1.0, None
     for lm in landmarks:
         probs = probs_dict[lm]
@@ -41,107 +58,136 @@ def aggregate_max(probs_dict, landmarks):
         conf  = float(probs[pred].item())
         if pred > best_pred or (pred == best_pred and conf > best_conf):
             best_pred, best_conf, best_probs = pred, conf, probs
-    return best_pred, best_conf, best_probs
+    return best_probs
 
 
-def expected_score(probs):
-    """Σ(i / (K-1) × prob_i) — 0~1 연속값."""
-    probs = np.asarray(probs, dtype=np.float32)
-    K = len(probs)
-    if K <= 1:
+def expected_grade(probs_np, n_cls):
+    """Σ(i × prob_i) 반올림 — 이산확률기댓값 정수."""
+    s = np.arange(n_cls, dtype=np.float32)
+    return int(round(float((probs_np * s).sum())))
+
+
+def expected_score(probs_np, n_cls):
+    """Σ(i / (K-1) × prob_i) — 0~1 정규화 연속값."""
+    if n_cls <= 1:
         return 0.0
-    s = np.arange(K, dtype=np.float32) / float(K - 1)
-    return float((probs * s).sum())
+    s = np.arange(n_cls, dtype=np.float32) / float(n_cls - 1)
+    return float((probs_np * s).sum())
 
+
+def preprocess(image_path: str, img_size: int, local_crop_size: int, device):
+    """
+    PIL 이미지 1장 → full_face (1,3,H,W), local_crops (1,N_fp,3,h,w)
+    TestDataset.__getitem__과 동일한 전처리
+    """
+    img = Image.open(image_path).convert("RGB")
+
+    full_img    = resize_pil(img, img_size)
+    local_imgs  = build_local_crops(img, FACEPART_BBOX, local_crop_size)
+
+    full_tensor   = to_normalized_tensor(full_img).unsqueeze(0).to(device)
+    local_tensors = local_crops_to_tensor(local_imgs).unsqueeze(0).to(device)
+
+    return full_tensor, local_tensors
+
+
+# ── 인자 파싱 ─────────────────────────────────────────────────────────────────
 
 def parse_args():
-    RUN_ID     = now_kst().strftime("%y%m%d_%H")
-    RESULT_DIR = os.path.join(BASE_DIR, "result", RUN_ID)
+    RUN_ID  = now_kst().strftime("%y%m%d_%H")
+    OUT_DIR = os.path.join(BASE_DIR, "results", RUN_ID)
     p = argparse.ArgumentParser()
-    p.add_argument("--ckpt",            required=True)
-    p.add_argument("--img_dir",         default=DATA["valid_img"])
-    p.add_argument("--out_dir",         default=os.path.join(RESULT_DIR, "test"))
+    p.add_argument("--ckpt",            required=True, help="체크포인트 경로")
+    p.add_argument("--input",           required=True, help="input.json 경로")
+    p.add_argument("--out_dir",         default=OUT_DIR)
     p.add_argument("--img_size",        type=int, default=224)
     p.add_argument("--local_crop_size", type=int, default=224)
-    p.add_argument("--batch_size",      type=int, default=16)
-    p.add_argument("--num_workers",     type=int, default=8)
+    p.add_argument("--gpu",             type=int, default=0)
     return p.parse_args()
 
 
+# ── 메인 추론 ─────────────────────────────────────────────────────────────────
+
 @torch.no_grad()
 def run(args):
-    device = get_device()
-    now    = now_kst().strftime("%y%m%d_%H")
+    device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
     ensure_dir(args.out_dir)
+    now    = now_kst().strftime("%y%m%d_%H%M")
     logger = build_logger(args.out_dir, name="test", run_id=now)
 
-    logger.info(f"ckpt            : {args.ckpt}")
-    logger.info(f"img_dir         : {args.img_dir}")
-    logger.info(f"img_size        : {args.img_size}")
-    logger.info(f"local_crop_size : {args.local_crop_size}")
-    logger.info(f"device          : {device}")
+    # ── input.json 읽기 ────────────────────────────────────────────────────────
+    with open(args.input, "r", encoding="utf-8") as f:
+        record = json.load(f)
 
-    # ── Model ──────────────────────────────
-    model = SkinModel().to(device)
-    model.load_state_dict(torch.load(args.ckpt, map_location=device), strict=False)
+    image_id   = record["image_id"]
+    user_id    = record["user_id"]
+    image_path = record["image_path"]
+    # 서버 배포 시 아래 두 줄로 교체:
+    # import requests; from io import BytesIO
+    # image = Image.open(BytesIO(requests.get(record["image_url"]).content)).convert("RGB")
+
+    logger.info(f"ckpt       : {args.ckpt}")
+    logger.info(f"image_id   : {image_id}")
+    logger.info(f"user_id    : {user_id}")
+    logger.info(f"image_path : {image_path}")
+    logger.info(f"device     : {device}")
+
+    # ── 모델 로드 ──────────────────────────────────────────────────────────────
+    model = SkinModel(
+        freeze_backbone=False,
+        use_checkpoint=False,
+    ).to(device)
+    model.load_state_dict(
+        torch.load(args.ckpt, map_location=device, weights_only=False),
+        strict=False,  # decoder.norm 키 불일치 무시
+    )
     model.eval()
     logger.info("model loaded")
 
-    # ── Data ───────────────────────────────
-    # TestDataset 이 FACEPART_BBOX 고정 좌표로 local crop 생성
-    loader = build_test_loader(
-        args.img_dir,
-        batch_size      = args.batch_size,
-        img_size        = args.img_size,
-        local_crop_size = args.local_crop_size,
-        num_workers     = args.num_workers,
+    # ── 전처리 ────────────────────────────────────────────────────────────────
+    full_face, local_crops = preprocess(
+        image_path, args.img_size, args.local_crop_size, device
     )
-    logger.info(f"test samples: {len(loader.dataset)}")
+    logger.info(f"full_face   : {tuple(full_face.shape)}")
+    logger.info(f"local_crops : {tuple(local_crops.shape)}")
 
-    # ── Inference ──────────────────────────
-    rows = []
-    for imgs, local_crops, paths in loader:
-        imgs        = imgs.to(device)
-        local_crops = local_crops.to(device)
-        out         = model(imgs, local_crops)
+    # ── 추론 ──────────────────────────────────────────────────────────────────
+    out = model(full_face, local_crops)
 
-        for i in range(imgs.size(0)):
-            row = {"image": Path(paths[i]).name}
+    probs_dict = {
+        t: torch.softmax(out[t][0], dim=0).cpu()
+        for t in TASK_NAMES
+    }
 
-            probs_dict = {
-                t: torch.softmax(out[t][i], dim=0)
-                for t in TASK_NAMES
-            }
+    # ── 결과 구성 ─────────────────────────────────────────────────────────────
+    analyzed_at = datetime.now().strftime("%Y-%m-%d %H:%M")
+    file_id     = f"{user_id}_{now}"   # 예: 123_260514_142414
 
-            for metric, landmarks in MAP_KEYS.items():
-                pred, conf, probs = aggregate_max(probs_dict, landmarks)
-                n_cls = METRIC_NUM_CLASSES[metric]
-                score = expected_score(probs.cpu().numpy())
+    raw = {
+        "image_id":    image_id,
+        "user_id":     user_id,
+        "analyzed_at": analyzed_at,
+    }
 
-                row[f"{metric}_pred"]  = pred
-                row[f"{metric}_conf"]  = round(conf, 6)
-                row[f"{metric}_score"] = round(score, 6)
-                for c in range(n_cls):
-                    row[f"{metric}_prob_{c}"] = round(float(probs[c].item()), 6)
+    for metric, landmarks in MAP_KEYS.items():
+        probs    = aggregate_max(probs_dict, landmarks)
+        n_cls    = METRIC_NUM_CLASSES[metric]
+        probs_np = probs.numpy()
 
-            rows.append(row)
+        raw[f"{metric}_grade"] = expected_grade(probs_np, n_cls)
+        raw[f"{metric}_score"] = round(expected_score(probs_np, n_cls), 6)
+        for c in range(n_cls):
+            raw[f"{metric}_prob_{c}"] = round(float(probs[c].item()), 6)
 
-    # ── 컬럼 순서 ──────────────────────────
-    cols = ["image"]
-    for metric in MAP_KEYS:
-        n_cls = METRIC_NUM_CLASSES[metric]
-        cols += [f"{metric}_pred", f"{metric}_conf", f"{metric}_score"]
-        cols += [f"{metric}_prob_{c}" for c in range(n_cls)]
+    # ── JSON 저장 ─────────────────────────────────────────────────────────────
+    raw_path = os.path.join(args.out_dir, f"{file_id}.json")
+    with open(raw_path, "w", encoding="utf-8") as f:
+        json.dump(raw, f, ensure_ascii=False, indent=2)
 
-    df       = pd.DataFrame(rows, columns=cols)
-    out_path = os.path.join(args.out_dir, f"predictions_{now}.csv")
-    df.to_csv(out_path, index=False, encoding="utf-8-sig")
+    logger.info(f"saved → {raw_path}")
+    print(json.dumps(raw, indent=2, ensure_ascii=False))
 
-    logger.info(f"columns : {len(df.columns)}")
-    logger.info(f"rows    : {len(df)}")
-    logger.info(f"[DONE] saved → {out_path}")
-    print(df.head(3).to_string())
-    return df
+    return raw
 
 
 if __name__ == "__main__":
