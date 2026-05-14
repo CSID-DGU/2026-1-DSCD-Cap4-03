@@ -15,20 +15,19 @@ def _safe(fn, a, b, **kw):
 def task_metrics(y_true, y_pred) -> dict:
     yt = np.array(y_true)
     yp = np.array(y_pred)
+    return {
+        "exact_acc": float(np.mean(yt == yp)),
+        "ad_acc":    float(np.mean(np.abs(yt - yp) <= 1)),
+        "mae":       float(np.mean(np.abs(yt - yp))),
+        "rmse":      float(np.sqrt(_safe(mean_squared_error, yt, yp))),
+        "qwk":       _safe(cohen_kappa_score, yt, yp, weights="quadratic")
+                     if len(np.unique(yt)) > 1 else 0.0,
+        "corr":      _safe(lambda a, b: pearsonr(a, b)[0], yt, yp)
+                     if len(np.unique(yt)) > 1 else 0.0,
+    }
 
-    acc  = float(np.mean(yt == yp))
-    mae  = float(np.mean(np.abs(yt - yp)))
-    w1   = float(np.mean(np.abs(yt - yp) <= 1))
-    rmse = float(np.sqrt(_safe(mean_squared_error, yt, yp)))
-    qwk  = _safe(cohen_kappa_score, yt, yp, weights="quadratic") \
-           if len(np.unique(yt)) > 1 else 0.0
-    corr = _safe(lambda a, b: pearsonr(a, b)[0], yt, yp) \
-           if len(np.unique(yt)) > 1 else 0.0
 
-    return dict(acc=acc, mae=mae, w1=w1, rmse=rmse, qwk=qwk, corr=corr)
-
-
-def compute_all_metrics(all_t: dict, all_p: dict) -> tuple:
+def compute_all_metrics(all_t: dict, all_p: dict) -> tuple[dict, dict]:
     task_m = {t: task_metrics(all_t[t], all_p[t]) for t in TASK_NAMES}
     keys   = task_m[TASK_NAMES[0]].keys()
     mean_m = {k: float(np.mean([task_m[t][k] for t in TASK_NAMES])) for k in keys}
