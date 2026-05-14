@@ -4,14 +4,13 @@ import sys
 import time
 import pandas as pd
 import pymysql
-import json
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 # config.py
-from model.recommendation.kg_pipeline.neo4j_skincare.config import OUTPUT_DIR, RETRIEVAL_TOPK_PER_CATEGORY, driver
+from model.recommendation.kg_pipeline.neo4j_skincare.config import OUTPUT_DIR, driver
 from model.recommendation.kg_pipeline.neo4j_skincare.graph.load_graph import create_user_session
 from model.recommendation.kg_pipeline.neo4j_skincare.rerank.hard_filter import hard_filter
 from model.recommendation.kg_pipeline.neo4j_skincare.rerank.soft_score import soft_score
@@ -23,7 +22,6 @@ from model.recommendation.kg_pipeline.neo4j_skincare.services.user_data import (
     _mysql_connect,
     _norm_brand_name_key,
     _print_run_context,
-    _product_detail_map,
 )
 from model.recommendation.kg_pipeline.neo4j_skincare.services.reco_policy import (
     _attach_all_in_one_to_routines,
@@ -49,17 +47,10 @@ def _insert_recommendation_results(
     candidates: pd.DataFrame,
     routines: list[dict[str, Any]],
     reranked: pd.DataFrame,
-    top_n: int,
     strict_budget: bool,
-    total_budget: float | None,
-    slot_budget_map: dict[str, float] | None,
-    total_budget_min: float | None,
     total_budget_max: float | None,
-    slot_budget_min_map: dict[str, float] | None,
-    slot_budget_max_map: dict[str, float] | None,
     session_status: str,
     failure_reason: str | None,
-    rerank_changed: bool,
     budget_check_passed: bool,
 ) -> int:
     print(f"[save] start session insert: routines={len(routines)}, reranked_rows={len(reranked)}, candidate_rows={len(candidates)}")
@@ -69,39 +60,16 @@ def _insert_recommendation_results(
             cur.execute(
                 """
                 INSERT INTO RECOMMENDATION_SESSION (
-                    user_id, image_id, result_id, gender, query_text, query_version,
-                    retrieval_topk, rerank_topn, routine_topn, rerank_applied,
-                    rerank_changed, rerank_summary, price_filter_json, strict_budget,
+                    user_id, image_id, result_id, strict_budget,
                     total_budget, budget_check_passed, session_status, failure_reason
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     user_id,
                     session_meta["image_id"],
                     session_meta["result_id"],
-                    session_meta["gender"],
-                    json.dumps(session_meta["skin_data"], ensure_ascii=False),
-                    "pipeline_db_v1",
-                    RETRIEVAL_TOPK_PER_CATEGORY,
-                    len(reranked),
-                    top_n,
-                    1,
-                    1 if rerank_changed else 0,
-                    f"reranked={len(reranked)}, routines={len(routines)}",
-                    json.dumps(
-                        {
-                            "total_budget": total_budget,
-                            "slot_budget_map": slot_budget_map or {},
-                            "total_budget_min": total_budget_min,
-                            "total_budget_max": total_budget_max,
-                            "slot_budget_min_map": slot_budget_min_map or {},
-                            "slot_budget_max_map": slot_budget_max_map or {},
-                            "strict_budget": strict_budget,
-                        },
-                        ensure_ascii=False,
-                    ),
                     1 if strict_budget else 0,
-                    int((total_budget_max if total_budget_max is not None else total_budget)) if (total_budget_max is not None or total_budget is not None) else None,
+                    int(total_budget_max) if total_budget_max is not None else None,
                     1 if budget_check_passed else 0,
                     session_status,
                     failure_reason,
@@ -138,28 +106,27 @@ def _insert_recommendation_results(
                     pid = int(hit[0])
                     key_map[k] = pid
                     key_map_norm[_norm_brand_name_key(brand, name)] = pid
-            detail_product_ids = list(set(key_map.values()))
-            print(f"[save] loading product detail map: product_ids={len(detail_product_ids)}")
-            detail_map = _product_detail_map(detail_product_ids)
-            print(f"[save] loaded product detail map: rows={len(detail_map)}")
             print(f"[save] inserting routines/items: routine_count={len(routines)}")
             for ridx, routine in enumerate(routines, start=1):
-                conflicts = routine.get("conflict_log", [])
+                rule_conflicts = routine.get("rule_conflict_log", [])
+                smiles_conflicts = routine.get("smiles_conflict_log", [])
+                conflict_notes = []
+                conflict_notes.extend([f"[RULE] {line}" for line in rule_conflicts])
+                conflict_notes.extend([f"[SMILES] {line}" for line in smiles_conflicts])
                 cur.execute(
                     """
                     INSERT INTO RECOMMENDATION_ROUTINE (
                         session_id, routine_rank, ampm_mode, routine_score,
-                        has_conflict, conflict_pairs, summary_text
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        has_conflict, conflict_pairs
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
                     """,
                     (
                         rec_session_id,
                         ridx,
                         routine.get("am_pm_label"),
                         float(routine.get("total_score", 0.0)),
-                        1 if conflicts else 0,
-                        "; ".join(conflicts) if conflicts else None,
-                        f"slot_count={routine.get('slot_count', 0)}",
+                        1 if rule_conflicts else 0,
+                        "; ".join(conflict_notes) if conflict_notes else None,
                     ),
                 )
                 routine_id = int(cur.lastrowid)
@@ -175,32 +142,18 @@ def _insert_recommendation_results(
                         hit = product_catalog.get(_norm_brand_name_key(brand, name))
                         if hit:
                             product_id = int(hit[0])
-                    meta = detail_map.get(product_id, {})
                     cur.execute(
                         """
                         INSERT INTO RECOMMENDATION_ITEM (
-                            routine_id, slot_order, slot_id, ampm_time, category,
-                            product_id, source_type, brand_name, product_name,
-                            product_score, product_function, product_pros, product_cons,
-                            ingredients, key_ingredient_functions
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            routine_id, slot_order, category, product_id, product_score
+                        ) VALUES (%s, %s, %s, %s, %s)
                         """,
                         (
                             routine_id,
                             sidx,
-                            f"slot_{sidx}",
-                            routine.get("am_pm_label"),
                             p.get("category"),
                             product_id,
-                            "PRODUCT",
-                            p.get("brand"),
-                            p.get("name"),
                             float(p.get("S_rerank", 0.0)),
-                            meta.get("product_function"),
-                            meta.get("pros_text"),
-                            meta.get("cons_text"),
-                            meta.get("ingredients"),
-                            meta.get("key_ingredient_functions"),
                         ),
                     )
     finally:
@@ -316,6 +269,47 @@ def _routine_budget_ok(
     if total_budget_max is not None and total_price > float(total_budget_max):
         return False
     return True
+
+
+def _format_price_text(price: Any) -> str:
+    if price is None or str(price) == "nan":
+        return "N/A"
+    return f"{int(float(price)):,}원"
+
+
+def _print_am_pm_details(routine: dict[str, Any]) -> None:
+    label = routine.get("am_pm_label")
+    if label == "am+pm":
+        return
+
+    if label in {"pm_only", "check_required"}:
+        pm_hits = routine.get("am_hit_details", [])
+        if pm_hits:
+            print("  pm_only products:")
+            for hit in pm_hits:
+                print(f"    - {hit['brand']} - {hit['product_name']} | ingredient={hit['ingredient']}")
+
+    if label in {"am_only", "check_required"}:
+        am_hits = routine.get("pm_hit_details", [])
+        if am_hits:
+            print("  am_only products:")
+            for hit in am_hits:
+                print(f"    - {hit['brand']} - {hit['product_name']} | ingredient={hit['ingredient']}")
+
+
+def _print_conflict_details(routine: dict[str, Any]) -> None:
+    rule_logs = routine.get("rule_conflict_log", [])
+    smiles_logs = routine.get("smiles_conflict_log", [])
+
+    if rule_logs:
+        print("  rule conflicts:")
+        for line in rule_logs:
+            print(f"    - {line}")
+
+    if smiles_logs:
+        print("  smiles warnings:")
+        for line in smiles_logs:
+            print(f"    - {line}")
 
 
 
@@ -576,17 +570,10 @@ def run_pipeline(
                 candidates=candidates,
                 routines=routines,
                 reranked=reranked,
-                top_n=top_n,
                 strict_budget=strict_budget,
-                total_budget=total_budget,
-                slot_budget_map=slot_budget_map,
-                total_budget_min=total_budget_min,
                 total_budget_max=total_budget_max,
-                slot_budget_min_map=slot_budget_min_map,
-                slot_budget_max_map=slot_budget_max_map,
                 session_status=session_status,
                 failure_reason=failure_reason,
-                rerank_changed=rerank_changed,
                 budget_check_passed=budget_check_passed,
             )
             print(f"Saved recommendation session_id={rec_session_id}")
@@ -630,7 +617,7 @@ def run_pipeline(
         ai_brand = brand_kor_map.get(ai_pk, all_in_one_pick.get("Brand"))
         ai_score = all_in_one_pick.get("S_rerank")
         ai_price = all_in_one_pick.get("price")
-        ai_price_txt = f"{int(float(ai_price)):,}원" if ai_price is not None and str(ai_price) != "nan" else "N/A"
+        ai_price_txt = _format_price_text(ai_price)
         print("\n[All-In-One Standalone]")
         print(f"  All-In-One           -> {ai_brand} - {ai_name} | S={ai_score} | price={ai_price_txt} (included in routines)")
     for i, r in enumerate(routines, 1):
@@ -644,7 +631,7 @@ def run_pipeline(
             else:
                 total_price += float(pv)
 
-        total_price_txt = "N/A" if price_missing else f"{int(total_price):,}원"
+        total_price_txt = "N/A" if price_missing else f"{int(total_price):,}₩"
         if price_missing:
             budget_state = "N/A"
         elif total_budget_min is not None and total_price < float(total_budget_min):
@@ -661,16 +648,16 @@ def run_pipeline(
         for p in r["products"]:
             k = _norm_brand_name_key(p.get("brand"), p.get("name"))
             price = price_map.get(k)
-            price_txt = f"{int(float(price)):,}원" if price is not None and str(price) != "nan" else "N/A"
+            price_txt = _format_price_text(price)
             pk = str(p.get("product_key") or "").strip().lower()
             disp_name = name_kor_map.get(pk, p.get("name"))
             disp_brand = brand_kor_map.get(pk, p.get("brand"))
             print(f"  {p['category']:20s} -> {disp_brand} - {disp_name} | S={p['S_rerank']} | price={price_txt}")
-        if r["conflict_log"]:
-            print("  conflicts:", "; ".join(r["conflict_log"]))
+        _print_conflict_details(r)
+        _print_am_pm_details(r)
     return routines
 
 if __name__ == "__main__":
-    # First run only: load_all()
-    # load_all()
+    # First setup only: run `python -u -B -m ...graph.load_graph --mode static`
+    # Dynamic user-session graph data is created per recommendation request.
     run_pipeline(user_id=1, image_id=None, top_n=3)

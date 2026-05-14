@@ -202,18 +202,17 @@ def _load_candidates_from_embedding(
     query = """
     SELECT
         e.query_category,
-        COALESCE(e.category, p.category) AS category,
-        e.brand AS Brand,
+        p.category AS category,
+        p.brand_name AS Brand,
         COALESCE(p.brand_name_kor, p.brand_name) AS brand_name_kor,
-        e.product_name,
+        p.product_name,
         COALESCE(p.product_name_kor, p.product_name) AS product_name_kor,
         e.score,
-        COALESCE(e.product_id, p.product_id) AS product_id,
+        e.product_id,
         e.rank_in_category
     FROM RECOMMENDATION_CANDIDATE e
-    LEFT JOIN PRODUCT p
-      ON LOWER(TRIM(p.brand_name)) = LOWER(TRIM(e.brand))
-     AND LOWER(TRIM(p.product_name)) = LOWER(TRIM(e.product_name))
+    JOIN PRODUCT p
+      ON p.product_id = e.product_id
     WHERE e.image_id = %s
     ORDER BY query_category, rank_in_category
     """

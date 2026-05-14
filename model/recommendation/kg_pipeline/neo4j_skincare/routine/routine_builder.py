@@ -6,6 +6,9 @@ import pandas as pd
 from model.recommendation.kg_pipeline.neo4j_skincare.config import AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS, SLOT_ORDER, driver
 from model.recommendation.kg_pipeline.neo4j_skincare.routine.conflict_checker import check_am_pm, check_conflicts
 
+SMILES_CONFLICT_PENALTY = 0.1
+SMILES_CONFLICT_PENALTY_CAP = 0.3
+
 # 
 SLOT_TOPK_QUERY = """
 MATCH (p:Product)-[:IN_CATEGORY]->(cat:Category)
@@ -126,6 +129,11 @@ def _routine_budget_allowed(
         return False
     return True
 
+
+def _smiles_penalty(conflict: dict) -> float:
+    count = int(conflict.get("smiles_conflict_count", 0) or 0)
+    return min(count * SMILES_CONFLICT_PENALTY, SMILES_CONFLICT_PENALTY_CAP)
+
 # Routine Builder
 def build_routines(
     reranked: pd.DataFrame,
@@ -218,7 +226,7 @@ def build_routines(
             continue
 
         am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        total_score = float(approx_score)
+        total_score = float(approx_score) - _smiles_penalty(conflict)
 
         routines.append(
             {
@@ -226,7 +234,12 @@ def build_routines(
                 "total_score": round(total_score, 4),
                 "am_pm_label": am_pm["am_pm_label"],
                 "conflict_log": conflict["conflict_log"],
+                "rule_conflict_log": conflict.get("rule_conflict_log", []),
+                "smiles_conflict_log": conflict.get("smiles_conflict_log", []),
                 "am_avoid_hits": am_pm["am_avoid_hits"],
+                "pm_avoid_hits": am_pm.get("pm_avoid_hits", []),
+                "am_hit_details": am_pm.get("am_hit_details", []),
+                "pm_hit_details": am_pm.get("pm_hit_details", []),
                 "slot_count": len(products),
             }
         )
@@ -341,7 +354,7 @@ def build_value_routines(
             continue
 
         am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        total_score = sum(float(p.get("S_rerank", 0.0)) for p in products)
+        total_score = sum(float(p.get("S_rerank", 0.0)) for p in products) - _smiles_penalty(conflict)
 
         candidate_routines.append(
             {
@@ -349,7 +362,12 @@ def build_value_routines(
                 "total_score": round(float(total_score), 4),
                 "am_pm_label": am_pm["am_pm_label"],
                 "conflict_log": conflict["conflict_log"],
+                "rule_conflict_log": conflict.get("rule_conflict_log", []),
+                "smiles_conflict_log": conflict.get("smiles_conflict_log", []),
                 "am_avoid_hits": am_pm["am_avoid_hits"],
+                "pm_avoid_hits": am_pm.get("pm_avoid_hits", []),
+                "am_hit_details": am_pm.get("am_hit_details", []),
+                "pm_hit_details": am_pm.get("pm_hit_details", []),
                 "slot_count": len(products),
                 "_total_price": float(total_price),
             }
@@ -369,4 +387,3 @@ def build_value_routines(
         r2.pop("_total_price", None)
         out.append(r2)
     return out
-

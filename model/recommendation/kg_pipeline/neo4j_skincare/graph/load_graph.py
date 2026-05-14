@@ -1,4 +1,5 @@
 import re
+import argparse
 from pathlib import Path
 import sys
 
@@ -18,6 +19,9 @@ from model.recommendation.kg_pipeline.neo4j_skincare.config import (
     MYSQL_DB,
 )
 from model.recommendation.kg_pipeline.neo4j_skincare.data.rule_ingredients import CONFLICT_RULES
+
+
+LOAD_BATCH_SIZE = 500
 
 
 def _safe_float(value, default=0.0):
@@ -55,28 +59,52 @@ def parse_severity(query_text: str) -> dict:
     }
 
 
+def _batched_rows(rows: list[dict], batch_size: int = LOAD_BATCH_SIZE):
+    for start in range(0, len(rows), batch_size):
+        yield rows[start:start + batch_size]
+
+
+def ensure_constraints(tx):
+    statements = [
+        "CREATE CONSTRAINT product_key_unique IF NOT EXISTS FOR (p:Product) REQUIRE p.product_key IS UNIQUE",
+        "CREATE CONSTRAINT ingredient_name_unique IF NOT EXISTS FOR (i:Ingredient) REQUIRE i.name IS UNIQUE",
+        "CREATE CONSTRAINT concern_name_unique IF NOT EXISTS FOR (c:Concern) REQUIRE c.name IS UNIQUE",
+        "CREATE CONSTRAINT skintype_name_unique IF NOT EXISTS FOR (s:SkinType) REQUIRE s.name IS UNIQUE",
+        "CREATE CONSTRAINT category_name_unique IF NOT EXISTS FOR (c:Category) REQUIRE c.name IS UNIQUE",
+        "CREATE CONSTRAINT rule_id_unique IF NOT EXISTS FOR (r:Rule) REQUIRE r.rule_id IS UNIQUE",
+        "CREATE CONSTRAINT usersession_id_unique IF NOT EXISTS FOR (u:UserSession) REQUIRE u.session_id IS UNIQUE",
+    ]
+    for stmt in statements:
+        tx.run(stmt)
+
+
 def load_products(tx, hwahae: pd.DataFrame):
     q = """
-    MERGE (p:Product {product_key: $product_key})
-    SET   p.brand    = $brand,
-          p.name     = $name,
-          p.category = $category,
-          p.function = $function,
-          p.price    = $price
-    WITH p
-    MERGE (cat:Category {name: $category})
+    UNWIND $rows AS row
+    MERGE (p:Product {product_key: row.product_key})
+    SET   p.brand    = row.brand,
+          p.name     = row.name,
+          p.category = row.category,
+          p.function = row.function,
+          p.price    = row.price
+    WITH p, row
+    MERGE (cat:Category {name: row.category})
     MERGE (p)-[:IN_CATEGORY]->(cat)
     """
+    rows = []
     for _, row in hwahae.iterrows():
-        tx.run(
-            q,
-            product_key=f"{row['brand_name']}::{row['product_name']}",
-            brand=row["brand_name"],
-            name=row["product_name"],
-            category=row["category"],
-            function=row.get("function", ""),
-            price=_safe_float_or_none(row.get("price")),
+        rows.append(
+            {
+                "product_key": f"{row['brand_name']}::{row['product_name']}",
+                "brand": row["brand_name"],
+                "name": row["product_name"],
+                "category": row["category"],
+                "function": row.get("function", ""),
+                "price": _safe_float_or_none(row.get("price")),
+            }
         )
+    for batch in _batched_rows(rows):
+        tx.run(q, rows=batch)
 
 
 def load_ingredients(tx, inci_product: pd.DataFrame, inci_ingredient: pd.DataFrame):
@@ -91,79 +119,128 @@ def load_ingredients(tx, inci_product: pd.DataFrame, inci_ingredient: pd.DataFra
     }
 
     q_ing = """
-    MERGE (i:Ingredient {name: $name})
-    SET   i.irritation     = $irritation,
-          i.comedogenicity = $comedogenicity,
-          i.function_raw   = $function,
-          i.rating         = $rating
+    UNWIND $rows AS row
+    MERGE (i:Ingredient {name: row.name})
+    SET   i.irritation     = row.irritation,
+          i.comedogenicity = row.comedogenicity,
+          i.function_raw   = row.function,
+          i.rating         = row.rating
     """
     q_contains = """
-    MATCH (p:Product    {product_key: $product_key})
-    MATCH (i:Ingredient {name: $ing_name})
-    MERGE (p)-[:CONTAINS]->(i)
+    UNWIND $rows AS row
+    MATCH (p:Product    {product_key: row.product_key})
+    MATCH (i:Ingredient {name: row.ing_name})
+    MERGE (p)-[r:CONTAINS]->(i)
+    SET r.order = row.ingredient_order
     """
 
-    seen_ings = set()
+    ingredient_rows = []
+    for ing_name, meta in ing_meta.items():
+        ingredient_rows.append({"name": ing_name, **meta})
+    for batch in _batched_rows(ingredient_rows):
+        tx.run(q_ing, rows=batch)
+
+    contains_rows = []
     for _, row in inci_product.iterrows():
-        product_key = f"{row['brand_name']}::{row['product_name']}"
-        ing_name = row["Ingredient"]
-
-        meta = ing_meta.get(
-            ing_name,
-            {"irritation": 0.0, "comedogenicity": 0.0, "function": "", "rating": ""},
+        contains_rows.append(
+            {
+                "product_key": f"{row['brand_name']}::{row['product_name']}",
+                "ing_name": row["Ingredient"],
+                "ingredient_order": int(row["ingredient_order"]),
+            }
         )
-        if ing_name not in seen_ings:
-            tx.run(q_ing, name=ing_name, **meta)
-            seen_ings.add(ing_name)
-
-        tx.run(q_contains, product_key=product_key, ing_name=ing_name)
+    for batch in _batched_rows(contains_rows):
+        tx.run(q_contains, rows=batch)
 
 
-FUNCTION_TO_CONCERN = {
-    "Hydration": "dryness",
-    "Moisturizing": "dryness",
-    "Soothing": "dryness",
-    "Pores": "pore",
-    "Exfoliation": "pore",
-    "Anti-Aging": "wrinkle",
-    "Firming": "sagging",
-    "Brightening": "pigmentation",
-    "Blemishes": "acne",
+FUNCTION_KEYWORD_TO_CONCERN = {
+    # dryness / hydration
+    "moisturizer": ("dryness", 1.0),
+    "moisturizing": ("dryness", 1.0),
+    "humectant": ("dryness", 1.0),
+    "emollient": ("dryness", 0.9),
+    "skin conditioning": ("dryness", 0.8),
+    "soothing": ("dryness", 0.7),
+    "hydration": ("dryness", 1.0),
+    # pore / texture / sebum
+    "astringent": ("pore", 0.8),
+    "sebum": ("pore", 0.9),
+    "oil control": ("pore", 0.9),
+    "exfoliant": ("pore", 0.8),
+    "exfoliation": ("pore", 0.8),
+    "keratolytic": ("pore", 0.8),
+    "surfactant/cleansing": ("pore", 0.5),
+    "cleansing": ("pore", 0.5),
+    # wrinkle / aging
+    "anti-aging": ("wrinkle", 1.0),
+    "anti aging": ("wrinkle", 1.0),
+    "antioxidant": ("wrinkle", 0.8),
+    "wrinkle": ("wrinkle", 1.0),
+    # sagging / elasticity
+    "firming": ("sagging", 0.9),
+    "lifting": ("sagging", 0.9),
+    "tightening": ("sagging", 0.8),
+    "elasticity": ("sagging", 0.8),
+    # pigmentation / tone
+    "brightening": ("pigmentation", 1.0),
+    "whitening": ("pigmentation", 1.0),
+    "bleaching": ("pigmentation", 0.9),
+    "tone up": ("pigmentation", 0.8),
+    # acne / blemish
+    "anti-acne": ("acne", 1.0),
+    "anti acne": ("acne", 1.0),
+    "anti-blemish": ("acne", 0.9),
+    "blemish": ("acne", 0.9),
+    "anti-inflammatory": ("acne", 0.8),
 }
 
-FUNCTION_WEIGHT = {
-    "Hydration": 1.0,
-    "Moisturizing": 0.9,
-    "Soothing": 0.7,
-    "Pores": 1.0,
-    "Exfoliation": 0.8,
-    "Anti-Aging": 1.0,
-    "Firming": 0.9,
-    "Brightening": 1.0,
-    "Blemishes": 1.0,
-}
+
+def _function_matches_to_concerns(function_text: str) -> list[tuple[str, float]]:
+    """
+    Convert raw ingredient function text into concern links using keyword rules.
+
+    The source DB stores INCI-style role labels such as
+    "moisturizer/humectant" or "surfactant/cleansing", so we use substring
+    matching instead of exact function-name matching.
+    """
+    text = str(function_text or "").strip().lower()
+    if not text:
+        return []
+
+    matches: list[tuple[str, float]] = []
+    seen: set[str] = set()
+    for keyword, (concern, weight) in FUNCTION_KEYWORD_TO_CONCERN.items():
+        if keyword in text and concern not in seen:
+            matches.append((concern, weight))
+            seen.add(concern)
+    return matches
 
 
 def load_concerns(tx, inci_ingredient: pd.DataFrame):
-    q_concern = "MERGE (:Concern {name: $name})"
+    q_concern = "UNWIND $rows AS row MERGE (:Concern {name: row.name})"
     q_helps = """
-    MATCH (i:Ingredient {name: $ing_name})
-    MATCH (c:Concern    {name: $concern})
+    UNWIND $rows AS row
+    MATCH (i:Ingredient {name: row.ing_name})
+    MATCH (c:Concern    {name: row.concern})
     MERGE (i)-[r:HELPS]->(c)
-    SET r.weight = $weight
+    SET r.weight = row.weight
     """
+    concern_names: set[str] = set()
+    help_rows: list[dict] = []
     for _, row in inci_ingredient.iterrows():
-        for fn in str(row.get("Function", "")).split(","):
-            fn = fn.strip()
-            concern = FUNCTION_TO_CONCERN.get(fn)
-            if concern:
-                tx.run(q_concern, name=concern)
-                tx.run(
-                    q_helps,
-                    ing_name=row["Ingredient"],
-                    concern=concern,
-                    weight=FUNCTION_WEIGHT.get(fn, 0.5),
-                )
+        for concern, weight in _function_matches_to_concerns(row.get("Function", "")):
+            concern_names.add(concern)
+            help_rows.append(
+                {
+                    "ing_name": row["Ingredient"],
+                    "concern": concern,
+                    "weight": weight,
+                }
+            )
+    for batch in _batched_rows([{"name": name} for name in sorted(concern_names)]):
+        tx.run(q_concern, rows=batch)
+    for batch in _batched_rows(help_rows):
+        tx.run(q_helps, rows=batch)
 
 
 IRRITATION_THRESHOLD = 2
@@ -172,76 +249,86 @@ COMEDOGENIC_THRESHOLD = 2
 
 def load_skintypes(tx, inci_ingredient: pd.DataFrame):
     skin_types = ["dry", "oily", "combination", "sensitive", "normal"]
-    for st in skin_types:
-        tx.run("MERGE (:SkinType {name: $name})", name=st)
+    tx.run("UNWIND $rows AS row MERGE (:SkinType {name: row.name})", rows=[{"name": st} for st in skin_types])
 
     q_irritates = """
-    MATCH (i:Ingredient {name: $ing_name})
-    MATCH (s:SkinType   {name: $skin_type})
+    UNWIND $rows AS row
+    MATCH (i:Ingredient {name: row.ing_name})
+    MATCH (s:SkinType   {name: row.skin_type})
     MERGE (i)-[r:IRRITATES]->(s)
-    SET r.score = $score
+    SET r.score = row.score
     """
     q_suits = """
-    MATCH (i:Ingredient {name: $ing_name})
-    MATCH (s:SkinType   {name: $skin_type})
+    UNWIND $rows AS row
+    MATCH (i:Ingredient {name: row.ing_name})
+    MATCH (s:SkinType   {name: row.skin_type})
     MERGE (i)-[:SUITS]->(s)
     """
 
+    irritates_rows: list[dict] = []
+    suits_rows: list[dict] = []
     for _, row in inci_ingredient.iterrows():
         ing = row["Ingredient"]
         irr = _safe_float(row.get("Irritation"), default=0.0)
         comed = _safe_float(row.get("Comedogenicity"), default=0.0)
 
         if irr >= IRRITATION_THRESHOLD:
-            tx.run(q_irritates, ing_name=ing, skin_type="sensitive", score=irr)
+            irritates_rows.append({"ing_name": ing, "skin_type": "sensitive", "score": irr})
         if comed >= COMEDOGENIC_THRESHOLD:
             for st in ("oily", "combination"):
-                tx.run(q_irritates, ing_name=ing, skin_type=st, score=comed)
+                irritates_rows.append({"ing_name": ing, "skin_type": st, "score": comed})
 
         if irr < IRRITATION_THRESHOLD and comed < COMEDOGENIC_THRESHOLD:
             for st in skin_types:
-                tx.run(q_suits, ing_name=ing, skin_type=st)
+                suits_rows.append({"ing_name": ing, "skin_type": st})
+    for batch in _batched_rows(irritates_rows):
+        tx.run(q_irritates, rows=batch)
+    for batch in _batched_rows(suits_rows):
+        tx.run(q_suits, rows=batch)
 
 
 def load_conflicts(tx, conflict_pairs: pd.DataFrame):
     q = """
-    MATCH (a:Ingredient {name: $a})
-    MATCH (b:Ingredient {name: $b})
+    UNWIND $rows AS row
+    MATCH (a:Ingredient {name: row.a})
+    MATCH (b:Ingredient {name: row.b})
     MERGE (a)-[r:CONFLICTS]->(b)
-    SET r.source = $source
+    SET r.source = row.source
     """
 
+    rows: list[dict] = []
     for _, row in conflict_pairs.iterrows():
-        tx.run(
-            q,
-            a=row["Ingredient1"],
-            b=row["Ingredient2"],
-            source="smiles",
-        )
+        rows.append({"a": row["Ingredient1"], "b": row["Ingredient2"], "source": "smiles"})
 
     for ing, rules in CONFLICT_RULES.items():
         for bad_ing in rules["bad"]:
-            tx.run(q, a=ing, b=bad_ing, source="rule")
+            rows.append({"a": ing, "b": bad_ing, "source": "rule"})
+    for batch in _batched_rows(rows):
+        tx.run(q, rows=batch)
 
 
 def load_rules(tx):
-    for ing, rules in CONFLICT_RULES.items():
-        rule_id = f"rule::{ing}"
-        tx.run(
-            """
-            MERGE (r:Rule {rule_id: $rule_id})
-            SET r.ingredient = $ing,
-                r.bad_with = $bad,
-                r.good_with = $good
-            WITH r
-            MATCH (i:Ingredient {name: $ing})
-            MERGE (i)-[:COVERED_BY]->(r)
-            """,
-            rule_id=rule_id,
-            ing=ing,
-            bad=rules["bad"],
-            good=rules.get("good", []),
-        )
+    q = """
+    UNWIND $rows AS row
+    MERGE (r:Rule {rule_id: row.rule_id})
+    SET r.ingredient = row.ing,
+        r.bad_with = row.bad,
+        r.good_with = row.good
+    WITH r, row
+    MATCH (i:Ingredient {name: row.ing})
+    MERGE (i)-[:COVERED_BY]->(r)
+    """
+    rows = [
+        {
+            "rule_id": f"rule::{ing}",
+            "ing": ing,
+            "bad": rules["bad"],
+            "good": rules.get("good", []),
+        }
+        for ing, rules in CONFLICT_RULES.items()
+    ]
+    for batch in _batched_rows(rows):
+        tx.run(q, rows=batch)
 
 
 def create_user_session(
@@ -259,6 +346,17 @@ def create_user_session(
         """,
         sid=session_id,
         gender=gender,
+    )
+
+    # Refresh dynamic user-session edges on every run so the graph reflects
+    # the latest skin scores, allergies, wishlist, and inferred skin type.
+    tx.run(
+        """
+        MATCH (u:UserSession {session_id: $sid})-[r]->()
+        WHERE type(r) IN ['HAS_CONCERN', 'HAS_ALLERGY', 'HAS_WISHLIST', 'HAS_SKIN_TYPE']
+        DELETE r
+        """,
+        sid=session_id,
     )
 
     for concern, importance in skin_data.items():
@@ -360,7 +458,8 @@ def load_from_mysql() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Data
             SELECT
                 p.brand_name,
                 p.product_name,
-                i.ingredient_name AS Ingredient
+                i.ingredient_name AS Ingredient,
+                pi.product_ingredient_id AS ingredient_order
             FROM PRODUCT_INGREDIENT pi
             JOIN PRODUCT p ON p.product_id = pi.product_id
             JOIN INGREDIENT i ON i.ingredient_id = pi.ingredient_id
@@ -403,9 +502,22 @@ def load_from_mysql() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Data
 
 
 def load_all():
+    """Backward-compatible alias for loading static cosmetics graph data."""
+    load_static_graph()
+
+
+def load_static_graph():
+    """
+    Load only static cosmetics graph data from MySQL.
+
+    This should be run once during initialization or whenever product,
+    ingredient, or conflict master data changes. User-specific dynamic data
+    is loaded separately at recommendation time through create_user_session().
+    """
     hwahae, inci_p, inci_i, edge_r = load_from_mysql()
 
     with driver.session() as s:
+        s.execute_write(ensure_constraints)
         s.execute_write(load_products, hwahae)
         s.execute_write(load_ingredients, inci_p, inci_i)
         s.execute_write(load_concerns, inci_i)
@@ -413,9 +525,22 @@ def load_all():
         s.execute_write(load_conflicts, edge_r)
         s.execute_write(load_rules)
 
-    print("Graph loading completed from MySQL.")
+    print("Static cosmetics graph loading completed from MySQL.")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Load Neo4j graph data for recommendation pipeline.")
+    parser.add_argument(
+        "--mode",
+        choices=["static", "all"],
+        default="static",
+        help="Load mode. 'static' loads only cosmetics master graph data. 'all' is kept as a backward-compatible alias.",
+    )
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    load_all()
+    args = parse_args()
+    if args.mode in {"static", "all"}:
+        load_static_graph()
 
