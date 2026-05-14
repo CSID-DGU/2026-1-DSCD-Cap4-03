@@ -7,7 +7,8 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
-
+# API
+GPT_API_key.txt
 
 # 수업관련 문서
 DSCD_수업내용/
@@ -19,4 +20,5 @@ model/recommendation/embedding_old/
 model/recommendation/embedding_pipeline/embedding_results/
 model/recommendation/embedding_test/
 model/recommendation/kg_pipeline/output
+model/recommendation/kg_pipeline/llm
 DB/
