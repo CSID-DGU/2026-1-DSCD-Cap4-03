@@ -4,7 +4,6 @@ from datetime import datetime
 
 import pytz
 
-
 class KSTFormatter(logging.Formatter):
     """Logging formatter that uses KST (UTC+9) timestamps."""
 
