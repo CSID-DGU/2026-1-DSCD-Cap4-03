@@ -1,0 +1,187 @@
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { analysisApi } from '../api/analysis';
+import { routineApi } from '../api/routine';
+import './LoadingPage.css';
+
+type LoadingType = 'analysis' | 'routine';
+
+interface StepConfig {
+  message: string;
+  detail: string;
+}
+
+const STEPS: Record<LoadingType, StepConfig[]> = {
+  analysis: [
+    { message: '피부 사진 전송 중',    detail: '이미지를 서버로 보내고 있어요' },
+    { message: 'AI 피부 분석 중',      detail: '피부 상태를 6가지 지표로 측정하고 있어요' },
+    { message: 'AI 코멘트 작성 중',    detail: '분석 결과를 바탕으로 설명을 생성하고 있어요' },
+  ],
+  routine: [
+    { message: '피부 분석 결과 확인 중', detail: '내 피부 상태를 불러오고 있어요' },
+    { message: '맞춤 제품 탐색 중',     detail: '수천 개 제품 중 내 피부에 맞는 것을 찾고 있어요' },
+    { message: '최적 루틴 구성 중',     detail: '예산과 피부 타입을 고려해 루틴을 조합하고 있어요' },
+    { message: 'AI 추천 이유 작성 중',  detail: '루틴 설명과 사용법을 작성하고 있어요' },
+  ],
+};
+
+const META: Record<LoadingType, { icon: string; title: string; doneTitle: string }> = {
+  analysis: { icon: '🔬', title: 'AI 피부 분석',    doneTitle: '분석 완료!' },
+  routine:  { icon: '✨', title: '맞춤 루틴 생성',   doneTitle: '루틴 완성!' },
+};
+
+export default function LoadingPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const type: LoadingType = location.state?.type ?? 'analysis';
+  const steps = STEPS[type];
+  const meta = META[type];
+
+  // state를 effect 밖에서 추출 → 의존성 배열 경고 방지
+  const imageId: number    = location.state?.image_id  ?? 1;
+  const imageUrl: string   = location.state?.imageUrl  ?? '';
+  const resultId: number   = location.state?.resultId  ?? 1;
+  const routineImageId: number = location.state?.imageId ?? 1;
+  const budget = location.state?.budget ?? {};
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [doneSteps, setDoneSteps] = useState<number[]>([]);
+  const [isDone, setIsDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const advance = (i: number) => setCurrentStep(i);
+  const complete = (i: number) => setDoneSteps((prev) => [...prev, i]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const runAnalysis = async () => {
+
+      // step 0: 전송 확인 (이미 DiagnosisPage에서 완료)
+      advance(0);
+      await delay(600);
+      if (cancelled) return;
+      complete(0);
+
+      // step 1: 피부분석 모델 실행
+      advance(1);
+      const { result_id } = await analysisApi.run({ image_id: imageId });
+      if (cancelled) return;
+      complete(1);
+
+      // step 2: LLM 요약 생성
+      advance(2);
+      await analysisApi.createSummary({ result_id });
+      if (cancelled) return;
+      complete(2);
+
+      setIsDone(true);
+      await delay(800);
+      if (!cancelled) navigate('/analysis', { state: { result_id, imageUrl } });
+    };
+
+    const runRoutine = async () => {
+      // step 0: 결과 확인
+      advance(0);
+      await delay(400);
+      if (cancelled) return;
+      complete(0);
+
+      // step 1-2: 추천 모델 실행
+      advance(1);
+      const { session_id } = await routineApi.recommend({
+        result_id:       resultId,
+        image_id:        routineImageId,
+        total_budget:    budget['전체']   ?? null,
+        toner_budget:    budget['토너']   ?? null,
+        emulsion_budget: budget['에멀젼'] ?? null,
+        ampoule_budget:  budget['앰플']   ?? null,
+        cream_budget:    budget['크림']   ?? null,
+      });
+      if (cancelled) return;
+      complete(1);
+
+      advance(2);
+      await delay(400);
+      if (cancelled) return;
+      complete(2);
+
+      // step 3: LLM 추천 이유 생성
+      advance(3);
+      await routineApi.createExplanation({ session_id });
+      if (cancelled) return;
+      complete(3);
+
+      setIsDone(true);
+      await delay(800);
+      if (!cancelled) navigate('/routine/result', { state: { session_id, resultId, imageId: routineImageId } });
+    };
+
+    const run = async () => {
+      try {
+        if (type === 'analysis') await runAnalysis();
+        else await runRoutine();
+      } catch (err) {
+        if (!cancelled) setError((err as Error).message || '처리 중 오류가 발생했어요.');
+      }
+    };
+
+    run();
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div className="lp-page">
+      <div className="lp-card">
+        <div className={`lp-icon-wrap ${isDone ? 'done' : ''}`}>
+          <span className="lp-icon">{isDone ? '✅' : meta.icon}</span>
+          {!isDone && !error && <div className="lp-spinner" />}
+        </div>
+
+        <h1 className="lp-title">
+          {error ? '오류가 발생했어요' : isDone ? meta.doneTitle : meta.title}
+        </h1>
+
+        {!error && (
+          <p className="lp-sub">
+            {isDone ? '잠시 후 결과 페이지로 이동합니다' : '잠시만 기다려주세요. 금방 끝나요!'}
+          </p>
+        )}
+
+        {!error && (
+          <div className="lp-steps">
+            {steps.map((step, idx) => {
+              const isDoneStep = doneSteps.includes(idx);
+              const isActive   = currentStep === idx && !isDone;
+              const isPending  = idx > currentStep && !isDone;
+              return (
+                <div key={idx} className={`lp-step ${isDoneStep ? 'done' : ''} ${isActive ? 'active' : ''} ${isPending ? 'pending' : ''}`}>
+                  <div className="lp-step-icon">
+                    {isDoneStep ? '✓' : isActive ? <span className="lp-dot-spin" /> : idx + 1}
+                  </div>
+                  <div className="lp-step-text">
+                    <div className="lp-step-message">{step.message}</div>
+                    {isActive && <div className="lp-step-detail">{step.detail}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {error && (
+          <div className="lp-error">
+            <p className="lp-error-text">{error}</p>
+            <button className="lp-retry-btn" onClick={() => navigate(-1)}>← 이전으로 돌아가기</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}

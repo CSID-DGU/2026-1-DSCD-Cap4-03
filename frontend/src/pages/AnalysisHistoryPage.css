@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.ah-page {
+  min-height: 100vh;
+  background: #f5f3ff;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.ah-banner {
+  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
+  padding: 64px 24px 52px;
+}
+.ah-banner-inner { max-width: 1080px; margin: 0 auto; }
+.ah-badge {
+  display: inline-block;
+  background: #7c3aed; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 14px; letter-spacing: 1px;
+}
+.ah-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 800; color: #1a1a2e; margin-bottom: 8px;
+}
+.ah-sub { font-size: 14px; color: #6b7280; }
+
+.ah-body {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+/* 새 진단 유도 카드 */
+.ah-new-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border-radius: 20px;
+  padding: 24px 28px;
+  margin-bottom: 32px;
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s;
+  box-shadow: 0 4px 20px rgba(124,58,237,0.25);
+}
+.ah-new-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(124,58,237,0.35); }
+.ah-new-icon { font-size: 28px; flex-shrink: 0; }
+.ah-new-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px;
+}
+.ah-new-sub { font-size: 13px; color: rgba(255,255,255,0.75); }
+.ah-new-arrow {
+  margin-left: auto;
+  font-size: 20px; color: #fff; font-weight: 700; flex-shrink: 0;
+}
+
+/* 섹션 타이틀 */
+.ah-section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 16px; font-weight: 700; color: #1a1a2e;
+  margin-bottom: 16px;
+}
+
+/* 빈 상태 */
+.ah-empty {
+  background: #fff; border-radius: 20px; padding: 60px 24px;
+  text-align: center; color: #9ca3af; font-size: 14px;
+  box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+}
+.ah-empty p { margin-bottom: 20px; }
+.ah-btn-primary {
+  background: #7c3aed; color: #fff;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 700;
+  padding: 12px 28px; border-radius: 24px; border: none; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(124,58,237,0.3); transition: all 0.18s;
+}
+.ah-btn-primary:hover { transform: translateY(-2px); }
+
+/* 기록 리스트 */
+.ah-list { display: flex; flex-direction: column; gap: 12px; }
+
+.ah-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+  border: 1.5px solid transparent;
+  transition: all 0.18s;
+}
+.ah-card:hover {
+  border-color: #c4b5fd;
+  transform: translateX(4px);
+  box-shadow: 0 4px 18px rgba(124,58,237,0.12);
+}
+.ah-card-left { position: relative; flex-shrink: 0; }
+.ah-thumb {
+  width: 72px; height: 72px;
+  border-radius: 14px; object-fit: cover;
+  border: 2px solid #ede9fe;
+}
+.ah-latest-badge {
+  position: absolute; top: -6px; right: -6px;
+  background: #7c3aed; color: #fff;
+  font-size: 9px; font-weight: 700;
+  padding: 2px 7px; border-radius: 10px;
+  letter-spacing: 0.5px;
+}
+.ah-card-info { flex: 1; min-width: 0; }
+.ah-card-date { font-size: 11px; color: #9ca3af; font-weight: 600; margin-bottom: 4px; }
+.ah-card-type {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700; color: #7c3aed; margin-bottom: 5px;
+}
+.ah-card-comment {
+  font-size: 12px; color: #6b7280; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical; overflow: hidden;
+}
+.ah-card-arrow { font-size: 22px; color: #c4b5fd; flex-shrink: 0; }

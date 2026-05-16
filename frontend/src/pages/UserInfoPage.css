@@ -1,0 +1,189 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.ui-page {
+  min-height: 100vh;
+  background: #f5f3ff;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ── 배너 ── */
+.ui-banner {
+  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
+  padding: 56px 24px 44px;
+}
+.ui-banner-inner { max-width: 1080px; margin: 0 auto; }
+.ui-badge {
+  display: inline-block;
+  background: #7c3aed; color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 14px; letter-spacing: 1px;
+}
+.ui-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(24px, 4vw, 38px);
+  font-weight: 800; color: #1a1a2e; margin-bottom: 8px;
+}
+.ui-sub { font-size: 14px; color: #6b7280; }
+
+/* ── 바디 ── */
+.ui-body {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 24px 80px;
+}
+
+/* ── 카드 ── */
+.ui-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 0;
+  box-shadow: 0 2px 20px rgba(124,58,237,0.08);
+  overflow: hidden;
+}
+
+/* ── 섹션 ── */
+.ui-section {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  padding: 32px 40px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .ui-section { grid-template-columns: 1fr; gap: 16px; padding: 24px 20px; }
+}
+
+.ui-section-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-right: 32px;
+  padding-top: 2px;
+}
+.ui-step-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #7c3aed; color: #fff;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ui-section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700; color: #1a1a2e;
+  margin-bottom: 4px;
+}
+.ui-section-sub { font-size: 12px; color: #9ca3af; line-height: 1.5; }
+
+.ui-section-body { width: 100%; }
+
+/* ── 구분선 ── */
+.ui-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 0 40px;
+}
+@media (max-width: 720px) { .ui-divider { margin: 0 20px; } }
+
+/* ── 성별/피부타입 버튼 그룹 ── */
+.ui-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ui-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #faf8ff;
+  border: 1.5px solid #ede9fe;
+  border-radius: 20px;
+  font-size: 13px; font-weight: 600; color: #4b5563;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.18s;
+}
+.ui-select-btn:hover { border-color: #a855f7; color: #7c3aed; }
+.ui-select-btn.active {
+  background: #7c3aed; border-color: #7c3aed;
+  color: #fff;
+}
+
+/* ── 날짜 input ── */
+.ui-input {
+  padding: 11px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #ede9fe;
+  font-size: 14px; color: #1a1a2e;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #faf8ff;
+  outline: none;
+  transition: border-color 0.18s;
+  width: 200px;
+}
+.ui-input:focus { border-color: #a855f7; }
+
+/* ── 피부 고민 그리드 ── */
+.ui-concern-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ui-concern-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #faf8ff;
+  border: 1.5px solid #ede9fe;
+  border-radius: 20px;
+  font-size: 13px; font-weight: 600; color: #4b5563;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.18s;
+}
+.ui-concern-btn:hover { border-color: #a855f7; color: #7c3aed; background: #f5f3ff; }
+.ui-concern-btn.active {
+  background: #7c3aed; border-color: #7c3aed; color: #fff;
+}
+.ui-concern-icon { display: none; }
+
+/* ── 제출 행 ── */
+.ui-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 28px 40px;
+  background: #faf8ff;
+  border-top: 1px solid #f3f4f6;
+}
+@media (max-width: 720px) { .ui-submit-row { padding: 24px 20px; } }
+
+.ui-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+.ui-summary-tag {
+  background: #ede9fe; color: #6b21a8;
+  font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 20px;
+}
+.ui-summary-tag.allergy { background: #fef2f2; color: #dc2626; }
+
+.ui-submit-btn {
+  background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff;
+  font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700;
+  padding: 14px 40px; border-radius: 28px; border: none; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+  transition: all 0.2s; white-space: nowrap;
+}
+.ui-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
