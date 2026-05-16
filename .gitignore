@@ -1,19 +1,29 @@
-﻿# 가상환경
+# Virtual environments
 .venv/
+.venv-1/
 .venv311/
+backend/.venv/
 
-# 파이썬 캐시 파일
+# Python cache
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
 
-# API
+# Environment variables / secrets / local databases
+.env
+*.env
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
 GPT_API_key.txt
+AWS S3 key.txt
+backend/AWS S3 key.txt
 
-# 수업관련 문서
+# Class materials
 DSCD_수업내용/
 
-# 과거 작업물
+# Old or local-only work
 cosmetic_crawling/
 model/skin_analysis
 model/recommendation/embedding_old/
@@ -21,5 +31,9 @@ model/recommendation/embedding_pipeline/embedding_results/
 model/recommendation/embedding_test/
 model/recommendation/kg_pipeline/output
 model/recommendation/kg_pipeline/llm
-DB/
+/DB/
 DEVELOPMENT_FLOW.md
+
+# Local dumps / temporary outputs
+freeze
+requirements_min.txt

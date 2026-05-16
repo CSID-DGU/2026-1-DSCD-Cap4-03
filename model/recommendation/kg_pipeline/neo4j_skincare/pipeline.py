@@ -530,7 +530,7 @@ def run_pipeline(
                 reranked = reranked_fb
                 price_map = _build_price_map(reranked)
                 fallback_applied = True
-                print("[fallback] ?? ??? ?? ??? ?? ?? ?? ?? ?? ??? ??? ?????.")
+                print("[fallback] 예산 조건에 맞는 추천이 없어, 예산 제한 없이 가장 유사한 루틴을 제공합니다.")
 
     # Best/Value are built by separate engines above
     if ctx.get("gender") == "male":
