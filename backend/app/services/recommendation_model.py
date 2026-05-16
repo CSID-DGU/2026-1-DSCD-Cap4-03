@@ -30,6 +30,96 @@ def _prepare_model_imports() -> None:
     os.environ["ROUPLE_MYSQL_DB"] = settings.mysql_db
 
 
+def _candidate_count(db: Session, image_id: int) -> int:
+    return int(
+        db.scalar(
+            text("SELECT COUNT(*) FROM recommendation_candidate WHERE image_id = :image_id"),
+            {"image_id": image_id},
+        )
+        or 0
+    )
+
+
+def _load_skin_query_for_request(db: Session, payload: RecommendationRequest, user_id: int):
+    import pandas as pd
+
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                ui.image_id,
+                ui.user_id,
+                COALESCE(LOWER(up.gender), 'female') AS gender,
+                ui.storage_url,
+                sar.dryness_score,
+                sar.pore_score,
+                sar.wrinkle_score,
+                sar.pigmentation_score,
+                sar.sagging_score,
+                sar.acne_score
+            FROM user_image ui
+            LEFT JOIN user_profile up ON up.user_id = ui.user_id
+            JOIN skin_analysis_result sar ON sar.image_id = ui.image_id
+            WHERE ui.user_id = :user_id
+              AND ui.image_id = :image_id
+              AND sar.result_id = :result_id
+            LIMIT 1
+            """
+        ),
+        {"user_id": user_id, "image_id": payload.image_id, "result_id": payload.result_id},
+    ).mappings().all()
+
+    if not rows:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Skin analysis result not found")
+    return pd.DataFrame(rows)
+
+
+def ensure_embedding_candidates(db: Session, payload: RecommendationRequest, user_id: int) -> None:
+    if _candidate_count(db, payload.image_id) > 0:
+        return
+
+    _prepare_model_imports()
+    try:
+        from model.recommendation.embedding_pipeline import config as embedding_config
+        from model.recommendation.embedding_pipeline.data_loader import load_corpus_from_db
+        from model.recommendation.embedding_pipeline.db_uploader import upload_recommendation_candidates
+        from model.recommendation.embedding_pipeline.retriever import run_retrieval
+        from model.recommendation.embedding_pipeline.run_embedding import build_load_output
+    except ModuleNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"임베딩 모델 의존성 누락: {exc.name}. requirements.txt 설치 필요",
+        ) from exc
+
+    embedding_config.MYSQL_HOST = settings.mysql_host
+    embedding_config.MYSQL_PORT = settings.mysql_port
+    embedding_config.MYSQL_USER = settings.mysql_user
+    embedding_config.MYSQL_PASSWORD = settings.mysql_password
+    embedding_config.MYSQL_DB = settings.mysql_db
+
+    emb_path = embedding_config.DEFAULT_OUTPUT_DIR / f"cosmetic_emb_{embedding_config.MODEL_NAME.replace('/', '_')}.npy"
+    embedding_config.DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    try:
+        corpus_df = load_corpus_from_db()
+        skin_df = _load_skin_query_for_request(db, payload, user_id)
+        result_df = run_retrieval(
+            corpus_df=corpus_df,
+            skin_df=skin_df,
+            topk_per_category=embedding_config.TOPK_PER_CATEGORY,
+            model_name=embedding_config.MODEL_NAME,
+            emb_path=emb_path,
+        )
+        if result_df.empty:
+            raise ValueError("No embedding candidates generated.")
+        upload_recommendation_candidates(build_load_output(result_df))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"임베딩 후보 생성 실패: {exc}",
+        ) from exc
+
+
 def _run_recommendation_pipeline(payload: RecommendationRequest, user_id: int) -> None:
     _prepare_model_imports()
     try:
@@ -127,6 +217,7 @@ def ensure_skin_result_for_recommendation(db: Session, payload: RecommendationRe
 
 def create_recommendation_with_model(db: Session, payload: RecommendationRequest, user_id: int) -> RecommendationSession:
     ensure_skin_result_for_recommendation(db, payload, user_id)
+    ensure_embedding_candidates(db, payload, user_id)
     _run_recommendation_pipeline(payload, user_id)
     session = get_latest_recommendation_session(db, user_id, payload.result_id, payload.image_id)
     if not session:
