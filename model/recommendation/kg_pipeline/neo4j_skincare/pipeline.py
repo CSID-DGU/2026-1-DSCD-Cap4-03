@@ -48,7 +48,6 @@ def _insert_recommendation_results(
     candidates: pd.DataFrame,
     routines: list[dict[str, Any]],
     reranked: pd.DataFrame,
-    strict_budget: bool,
     total_budget_min: float | None,
     total_budget_max: float | None,
     slot_budget_min_map: dict[str, float] | None,
@@ -73,7 +72,7 @@ def _insert_recommendation_results(
                     user_id,
                     session_meta["image_id"],
                     session_meta["result_id"],
-                    1 if strict_budget else 0,
+                    0,
                     int(total_budget_min) if total_budget_min is not None else None,
                     int(total_budget_max) if total_budget_max is not None else None,
                     json.dumps(slot_budget_min_map, ensure_ascii=False) if slot_budget_min_map else None,
@@ -335,7 +334,6 @@ def run_pipeline(
     top_n: int | None = None,
     total_budget: float | None = None,
     slot_budget_map: dict[str, float] | None = None,
-    strict_budget: bool = False,
     total_budget_min: float | None = None,
     total_budget_max: float | None = None,
     slot_budget_min_map: dict[str, float] | None = None,
@@ -345,7 +343,6 @@ def run_pipeline(
     candidates = _load_candidates_from_embedding(ctx.get("image_id"), ctx.get("image_name"), ctx["gender"])
     _print_run_context(ctx, user_id=user_id, candidates=candidates)
     session_id = f"user::{user_id}::image::{ctx['image_id']}"
-    strict_budget = False
     effective_total_budget_max = total_budget_max if total_budget_max is not None else total_budget
     effective_slot_budget_max_map = slot_budget_max_map if slot_budget_max_map is not None else slot_budget_map
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -357,6 +354,7 @@ def run_pipeline(
             ctx["gender"],
             ctx["allergies"],
             ctx.get("wishlist_product_keys", []),
+            (ctx.get("profile") or {}).get("skin_type"),
         )
     filtered, drop_log = hard_filter(
         candidates,
@@ -413,6 +411,7 @@ def run_pipeline(
             ctx["gender"],
             session_id,
             top_n=beam_top_n,
+            beam_width=500,
             total_budget_min=total_budget_min,
             total_budget_max=effective_total_budget_max,
             slot_budget_min_map=slot_budget_min_map,
@@ -497,7 +496,13 @@ def run_pipeline(
                 ~reranked_fb["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
             ].copy()
             beam_top_n = 8 if top_n is None else max(int(top_n), 2)
-            best_fb = build_routines(reranked_for_routine_fb, ctx["gender"], session_id, top_n=beam_top_n)
+            best_fb = build_routines(
+                reranked_for_routine_fb,
+                ctx["gender"],
+                session_id,
+                top_n=beam_top_n,
+                beam_width=500,
+            )
             value_fb = _build_value_with_expand(
                 reranked_for_routine_fb,
                 ctx["gender"],
@@ -537,7 +542,7 @@ def run_pipeline(
         routines = _attach_all_in_one_to_routines(routines, all_in_one_pick)
     if len(routines) >= 2 and str(routines[0].get("products")) == str(routines[1].get("products")):
         routines = routines[:1]
-    if has_budget_input and routines:
+    if has_budget_input and routines and not fallback_applied:
         before_budget_check = len(routines)
         routines = [
             r
@@ -580,7 +585,6 @@ def run_pipeline(
                 candidates=candidates,
                 routines=routines,
                 reranked=reranked,
-                strict_budget=strict_budget,
                 total_budget_min=total_budget_min,
                 total_budget_max=total_budget_max,
                 slot_budget_min_map=slot_budget_min_map,
@@ -644,7 +648,7 @@ def run_pipeline(
             else:
                 total_price += float(pv)
 
-        total_price_txt = "N/A" if price_missing else f"{int(total_price):,}₩"
+        total_price_txt = "N/A" if price_missing else f"{int(total_price):,}원"
         if price_missing:
             budget_state = "N/A"
         elif total_budget_min is not None and total_price < float(total_budget_min):

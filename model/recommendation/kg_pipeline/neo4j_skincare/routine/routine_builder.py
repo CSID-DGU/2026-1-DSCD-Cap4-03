@@ -140,7 +140,7 @@ def build_routines(
     gender: str,
     session_id: str,
     top_n: int = 3,
-    beam_width: int = 150,
+    beam_width: int = 500,
     total_budget_min: float | None = None,
     total_budget_max: float | None = None,
     slot_budget_min_map: dict[str, float] | None = None,
@@ -246,13 +246,7 @@ def build_routines(
 
     print(f"[debug][best] beam_candidates={len(beam)}, passed={len(routines)}, dropped_conflict={skipped_conflict}")
 
-    routines.sort(
-        key=lambda x: (
-            x["am_pm_label"] == "am+pm",
-            x["total_score"],
-        ),
-        reverse=True,
-    )
+    routines.sort(key=lambda x: x["total_score"], reverse=True)
 
     return routines[:top_n]
 

@@ -115,8 +115,6 @@ def _is_out_of_budget(
     if slot_budget_max is not None and price > float(slot_budget_max):
         return True
 
-    if total_budget_min is not None and price < float(total_budget_min):
-        return True
     if total_budget_max is not None and price > float(total_budget_max):
         return True
 
