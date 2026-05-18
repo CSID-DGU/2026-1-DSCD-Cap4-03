@@ -411,7 +411,7 @@ def run_pipeline(
             ctx["gender"],
             session_id,
             top_n=beam_top_n,
-            beam_width=500,
+            beam_width=200,
             total_budget_min=total_budget_min,
             total_budget_max=effective_total_budget_max,
             slot_budget_min_map=slot_budget_min_map,
@@ -501,7 +501,7 @@ def run_pipeline(
                 ctx["gender"],
                 session_id,
                 top_n=beam_top_n,
-                beam_width=500,
+                beam_width=200,
             )
             value_fb = _build_value_with_expand(
                 reranked_for_routine_fb,

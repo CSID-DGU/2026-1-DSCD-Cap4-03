@@ -9,6 +9,13 @@ from model.recommendation.kg_pipeline.neo4j_skincare.routine.conflict_checker im
 SMILES_CONFLICT_PENALTY = 0.1
 SMILES_CONFLICT_PENALTY_CAP = 0.3
 
+
+def _routine_average_score(score_sum: float, products: list[dict]) -> float:
+    if not products:
+        return 0.0
+    return float(score_sum) / len(products)
+
+
 # 
 SLOT_TOPK_QUERY = """
 MATCH (p:Product)-[:IN_CATEGORY]->(cat:Category)
@@ -24,8 +31,8 @@ RETURN p.product_key AS product_key,
 # Beam Search: 각 단계마다 상위 b개만 유지하는 함수
 def _top_b(items: list[tuple[float, list[dict]]], b: int) -> list[tuple[float, list[dict]]]:
     if len(items) <= b:
-        return sorted(items, key=lambda x: x[0], reverse=True)
-    return heapq.nlargest(b, items, key=lambda x: x[0])
+        return sorted(items, key=lambda x: _routine_average_score(x[0], x[1]), reverse=True)
+    return heapq.nlargest(b, items, key=lambda x: _routine_average_score(x[0], x[1]))
 
 
 def _norm_category(v: Any) -> str:
@@ -134,13 +141,14 @@ def _smiles_penalty(conflict: dict) -> float:
     count = int(conflict.get("smiles_conflict_count", 0) or 0)
     return min(count * SMILES_CONFLICT_PENALTY, SMILES_CONFLICT_PENALTY_CAP)
 
+
 # Routine Builder
 def build_routines(
     reranked: pd.DataFrame,
     gender: str,
     session_id: str,
     top_n: int = 3,
-    beam_width: int = 500,
+    beam_width: int = 200,
     total_budget_min: float | None = None,
     total_budget_max: float | None = None,
     slot_budget_min_map: dict[str, float] | None = None,
@@ -226,7 +234,7 @@ def build_routines(
             continue
 
         am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        total_score = float(approx_score) - _smiles_penalty(conflict)
+        total_score = _routine_average_score(float(approx_score), products) - _smiles_penalty(conflict)
 
         routines.append(
             {
@@ -348,7 +356,8 @@ def build_value_routines(
             continue
 
         am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        total_score = sum(float(p.get("S_rerank", 0.0)) for p in products) - _smiles_penalty(conflict)
+        score_sum = sum(float(p.get("S_rerank", 0.0)) for p in products)
+        total_score = _routine_average_score(score_sum, products) - _smiles_penalty(conflict)
 
         candidate_routines.append(
             {
