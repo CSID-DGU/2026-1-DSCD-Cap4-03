@@ -153,8 +153,8 @@ def _insert_recommendation_results(
                     cur.execute(
                         """
                         INSERT INTO RECOMMENDATION_ITEM (
-                            routine_id, slot_order, category, product_id, product_score
-                        ) VALUES (%s, %s, %s, %s, %s)
+                            routine_id, slot_order, category, product_id, product_score, time_tag
+                        ) VALUES (%s, %s, %s, %s, %s, %s)
                         """,
                         (
                             routine_id,
@@ -162,6 +162,7 @@ def _insert_recommendation_results(
                             p.get("category"),
                             product_id,
                             float(p.get("S_rerank", 0.0)),
+                            p.get("time_tag"),
                         ),
                     )
     finally:
@@ -308,16 +309,21 @@ def _print_am_pm_details(routine: dict[str, Any]) -> None:
 def _print_conflict_details(routine: dict[str, Any]) -> None:
     rule_logs = routine.get("rule_conflict_log", [])
     smiles_logs = routine.get("smiles_conflict_log", [])
+    max_logs = 5
 
     if rule_logs:
         print("  rule conflicts:")
-        for line in rule_logs:
+        for line in rule_logs[:max_logs]:
             print(f"    - {line}")
+        if len(rule_logs) > max_logs:
+            print(f"    ... 외 {len(rule_logs) - max_logs}개")
 
     if smiles_logs:
         print("  smiles warnings:")
-        for line in smiles_logs:
+        for line in smiles_logs[:max_logs]:
             print(f"    - {line}")
+        if len(smiles_logs) > max_logs:
+            print(f"    ... 외 {len(smiles_logs) - max_logs}개")
 
 
 
@@ -653,10 +659,17 @@ def run_pipeline(
             budget_state = "N/A"
         elif total_budget_min is not None and total_price < float(total_budget_min):
             budget_state = "UNDER_MIN"
-        elif total_budget_max is not None and total_price > float(total_budget_max):
+        elif effective_total_budget_max is not None and total_price > float(effective_total_budget_max):
             budget_state = "OVER_MAX"
-        elif total_budget_min is not None or total_budget_max is not None:
-            budget_state = "WITHIN_RANGE"
+        elif any([
+            total_budget is not None,
+            total_budget_min is not None,
+            total_budget_max is not None,
+            bool(slot_budget_map),
+            bool(slot_budget_min_map),
+            bool(slot_budget_max_map),
+        ]):
+            budget_state = "WITHIN_BUDGET"
         else:
             budget_state = "NO_LIMIT"
 

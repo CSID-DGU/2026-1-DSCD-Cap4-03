@@ -70,6 +70,46 @@ CONCERN_KEYWORDS = {
     "pigmentation": ["\uBBF8\uBC31", "\uC7A1\uD2F0", "\uD1A4\uC5C5", "\uAE30\uBBF8", "\uC0C9\uC18C\uCE68\uCC29"],
     "wrinkle": ["\uC8FC\uB984", "\uD0C4\uB825", "\uB9C1\uD074", "\uC548\uD2F0\uC5D0\uC774\uC9D5"],
     "sagging": ["\uD0C4\uB825", "\uB9AC\uD504\uD305", "\uCC98\uC9D0", "\uD37C\uBC0D"],
+    "redness": ["\uBD89\uC740\uAE30", "\uD64D\uC870", "\uC9C4\uC815", "\uC800\uC790\uADF9", "\uBBFC\uAC10"],
+    "dark_circle": ["\uB2E4\uD06C\uC11C\uD074", "\uB208\uAC00", "\uC544\uC774", "\uC0DD\uAE30", "\uD53C\uBD80\uD1A4"],
+    "atopy": ["\uC544\uD1A0\uD53C", "\uBBFC\uAC10", "\uC800\uC790\uADF9", "\uC7A5\uBCBD", "\uC9C4\uC815"],
+    "sensitive": ["\uBBFC\uAC10\uC131", "\uBBFC\uAC10", "\uC21C\uD568", "\uC800\uC790\uADF9", "\uC9C4\uC815"],
+    "keratin": ["\uAC01\uC9C8", "\uACB0", "\uBD80\uB4DC\uB7EC\uC6C0", "\uC815\uB3C8", "\uC5D1\uC2A4\uD3F4\uB9AC\uC5D0\uC774\uD305"],
+}
+
+PROFILE_CONCERN_ALIASES = {
+    "acne": "acne",
+    "\uC5EC\uB4DC\uB984": "acne",
+    "\uD2B8\uB7EC\uBE14": "acne",
+    "wrinkle": "wrinkle",
+    "\uC8FC\uB984": "wrinkle",
+    "brightening": "pigmentation",
+    "\uBBF8\uBC31": "pigmentation",
+    "\uC7A1\uD2F0": "pigmentation",
+    "\uC0C9\uC18C\uCE68\uCC29": "pigmentation",
+    "sebum": "pore",
+    "\uD53C\uC9C0": "pore",
+    "dryness": "dryness",
+    "\uAC74\uC870": "dryness",
+    "\uC18D\uAC74\uC870": "dryness",
+    "redness": "redness",
+    "\uBD89\uC740\uAE30": "redness",
+    "flushing": "redness",
+    "\uD64D\uC870": "redness",
+    "dark_circle": "dark_circle",
+    "darkcircle": "dark_circle",
+    "\uB2E4\uD06C\uC11C\uD074": "dark_circle",
+    "atopy": "atopy",
+    "\uC544\uD1A0\uD53C": "atopy",
+    "sensitive": "sensitive",
+    "\uBBFC\uAC10\uC131": "sensitive",
+    "\uBBFC\uAC10": "sensitive",
+    "pore": "pore",
+    "\uBAA8\uACF5": "pore",
+    "keratin": "keratin",
+    "\uAC01\uC9C8": "keratin",
+    "none": "",
+    "\uD574\uB2F9\uC0AC\uD56D \uC5C6\uC74C": "",
 }
 
 SKIN_TYPE_KEYWORDS = {
@@ -127,7 +167,17 @@ def _split_concerns(v: str | None) -> list[str]:
         return []
     raw = _norm_text(v)
     parts = [x.strip() for x in raw.replace("/", ",").replace("|", ",").split(",")]
-    return [p for p in parts if p]
+    concerns: list[str] = []
+    for part in parts:
+        concern = PROFILE_CONCERN_ALIASES.get(part, part)
+        if concern and concern not in concerns:
+            concerns.append(concern)
+    return concerns
+
+
+def _map_profile_skin_type(v: str | None) -> str:
+    key = _norm_text(v or "")
+    return PROFILE_SKIN_TYPE_ALIASES.get(key, "")
 
 
 def _map_profile_skin_type(v: str | None) -> str:

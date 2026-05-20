@@ -1,0 +1,70 @@
+.navbar {
+  display: flex;
+  align-items: center;
+  padding: 16px 40px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+/* 왼쪽 */
+.nav-left {
+  flex: 1;
+}
+
+/* 가운데 */
+.nav-center {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+}
+
+/* 오른쪽 */
+.nav-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+/* 공통 */
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: #7B61FF;
+  text-decoration: none;
+}
+
+.logo-dot {
+  width: 6px;
+  height: 6px;
+  background: #7B61FF;
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #555;
+  font-size: 14px;
+}
+
+.nav-link.active {
+  color: #7B61FF;
+  font-weight: bold;
+}
+
+.nav-login {
+  color: #7B61FF;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  color: #7B61FF;
+}
+
+.nav-link.active {
+  border-bottom: 2px solid #7B61FF;
+  padding-bottom: 4px;
+}

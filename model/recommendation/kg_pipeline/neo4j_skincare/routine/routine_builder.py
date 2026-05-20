@@ -6,8 +6,23 @@ import pandas as pd
 from model.recommendation.kg_pipeline.neo4j_skincare.config import AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS, SLOT_ORDER, driver
 from model.recommendation.kg_pipeline.neo4j_skincare.routine.conflict_checker import check_am_pm, check_conflicts
 
-SMILES_CONFLICT_PENALTY = 0.1
-SMILES_CONFLICT_PENALTY_CAP = 0.3
+OPTIONAL_SLOT_BONUS = 0.01
+
+
+def _routine_average_score(score_sum: float, products: list[dict]) -> float:
+    if not products:
+        return 0.0
+    return float(score_sum) / len(products)
+
+
+def _optional_slot_bonus(products: list[dict]) -> float:
+    optional_count = sum(1 for p in products if p.get("_slot_type") == "optional")
+    return optional_count * OPTIONAL_SLOT_BONUS
+
+
+def _routine_search_score(score_sum: float, products: list[dict]) -> float:
+    return _routine_average_score(score_sum, products) + _optional_slot_bonus(products)
+
 
 
 def _routine_average_score(score_sum: float, products: list[dict]) -> float:
@@ -31,8 +46,8 @@ RETURN p.product_key AS product_key,
 # Beam Search: 각 단계마다 상위 b개만 유지하는 함수
 def _top_b(items: list[tuple[float, list[dict]]], b: int) -> list[tuple[float, list[dict]]]:
     if len(items) <= b:
-        return sorted(items, key=lambda x: _routine_average_score(x[0], x[1]), reverse=True)
-    return heapq.nlargest(b, items, key=lambda x: _routine_average_score(x[0], x[1]))
+        return sorted(items, key=lambda x: _routine_search_score(x[0], x[1]), reverse=True)
+    return heapq.nlargest(b, items, key=lambda x: _routine_search_score(x[0], x[1]))
 
 
 def _norm_category(v: Any) -> str:
@@ -137,9 +152,26 @@ def _routine_budget_allowed(
     return True
 
 
-def _smiles_penalty(conflict: dict) -> float:
-    count = int(conflict.get("smiles_conflict_count", 0) or 0)
-    return min(count * SMILES_CONFLICT_PENALTY, SMILES_CONFLICT_PENALTY_CAP)
+def _apply_item_time_tags(products: list[dict], am_pm: dict) -> None:
+    am_avoid_keys = {
+        str(hit.get("pk") or "").strip().lower()
+        for hit in am_pm.get("am_hit_details", [])
+    }
+    pm_avoid_keys = {
+        str(hit.get("pk") or "").strip().lower()
+        for hit in am_pm.get("pm_hit_details", [])
+    }
+    for product in products:
+        key = str(product.get("product_key") or "").strip().lower()
+        if key in am_avoid_keys and key in pm_avoid_keys:
+            product["time_tag"] = "check"
+        elif key in am_avoid_keys:
+            product["time_tag"] = "pm"
+        elif key in pm_avoid_keys:
+            product["time_tag"] = "am"
+        else:
+            product["time_tag"] = None
+
 
 
 # Routine Builder
@@ -175,6 +207,7 @@ def build_routines(
 
             for r in rows:
                 r["S_rerank"] = score_map.get(str(r["product_key"]).strip().lower(), 0.0)
+                r["_slot_type"] = slot_type
 
             rows = [
                 r
@@ -234,7 +267,8 @@ def build_routines(
             continue
 
         am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        total_score = _routine_average_score(float(approx_score), products) - _smiles_penalty(conflict)
+        _apply_item_time_tags(products, am_pm)
+        total_score = _routine_search_score(float(approx_score), products)
 
         routines.append(
             {
@@ -300,6 +334,7 @@ def build_value_routines(
             for r in rows:
                 r["S_rerank"] = score_map.get(str(r["product_key"]).strip().lower(), 0.0)
                 r["_price"] = _safe_price(r.get("price"))
+                r["_slot_type"] = slot_type
 
             rows = [
                 r
@@ -356,8 +391,9 @@ def build_value_routines(
             continue
 
         am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
+        _apply_item_time_tags(products, am_pm)
         score_sum = sum(float(p.get("S_rerank", 0.0)) for p in products)
-        total_score = _routine_average_score(score_sum, products) - _smiles_penalty(conflict)
+        total_score = _routine_search_score(score_sum, products)
 
         candidate_routines.append(
             {
