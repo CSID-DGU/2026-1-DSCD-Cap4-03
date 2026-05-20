@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models import User, UserAllergy, UserImage, UserProfile
+from app.models import Ingredient, User, UserAllergy, UserImage, UserProfile
 from app.schemas.users import UpdateAllergiesRequest, UpdateProfileRequest
 from app.services.auth import hash_password
 
@@ -108,18 +108,66 @@ def update_user_profile(db: Session, user: User, payload: UpdateProfileRequest) 
 def replace_user_allergies(db: Session, user_id: int, payload: UpdateAllergiesRequest) -> dict:
     db.execute(delete(UserAllergy).where(UserAllergy.user_id == user_id))
 
-    for category in payload.allergy_categories:
-        db.add(UserAllergy(user_id=user_id, allergy_category=category, allergy_ingredient=None))
+    if payload.allergy_items is not None:
+        raw_items = [
+            {
+                "category": item.category,
+                "ingredient_id": item.ingredient_id,
+            }
+            for item in payload.allergy_items
+        ]
+    else:
+        fallback_category = payload.allergy_categories[0] if len(payload.allergy_categories) == 1 else None
+        raw_items = [
+            {
+                "category": fallback_category,
+                "ingredient_id": ingredient_id,
+            }
+            for ingredient_id in payload.allergy_ingredient_ids
+        ]
 
-    for ingredient_id in payload.allergy_ingredient_ids:
-        db.add(UserAllergy(user_id=user_id, allergy_category=None, allergy_ingredient=str(ingredient_id)))
+    deduped_items: list[dict] = []
+    seen_ingredient_ids: set[int] = set()
+    for item in raw_items:
+        ingredient_id = int(item["ingredient_id"])
+        if ingredient_id in seen_ingredient_ids:
+            continue
+        seen_ingredient_ids.add(ingredient_id)
+        deduped_items.append({**item, "ingredient_id": ingredient_id})
+
+    ingredient_ids = [item["ingredient_id"] for item in deduped_items]
+    ingredients = []
+    if ingredient_ids:
+        ingredients = list(
+            db.scalars(
+                select(Ingredient).where(Ingredient.ingredient_id.in_(ingredient_ids))
+            )
+        )
+
+    ingredient_by_id = {ingredient.ingredient_id: ingredient for ingredient in ingredients}
+
+    for item in deduped_items:
+        ingredient_id = item["ingredient_id"]
+        ingredient = ingredient_by_id.get(ingredient_id)
+        category = item.get("category") or (ingredient.allergy_category if ingredient else None)
+        db.add(
+            UserAllergy(
+                user_id=user_id,
+                allergy_category=category,
+                allergy_ingredient=str(ingredient_id),
+            )
+        )
 
     db.commit()
+    saved_categories = [
+        item.get("category") or (ingredient_by_id.get(item["ingredient_id"]).allergy_category if ingredient_by_id.get(item["ingredient_id"]) else None)
+        for item in deduped_items
+    ]
     return {
         "user_id": user_id,
-        "allergy_categories": payload.allergy_categories,
-        "allergy_ingredient_ids": payload.allergy_ingredient_ids,
-        "saved_count": len(payload.allergy_ingredient_ids),
+        "allergy_categories": [category for category in dict.fromkeys(saved_categories) if category],
+        "allergy_ingredient_ids": ingredient_ids,
+        "saved_count": len(ingredient_ids),
     }
 
 

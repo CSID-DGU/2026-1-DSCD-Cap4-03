@@ -8,7 +8,7 @@ WITH p, a, r1
 ORDER BY p.product_key, coalesce(r1.order, 999999999), a.name
 WITH p, collect(a)[..5] AS top_ings
 UNWIND top_ings AS a
-MATCH (a)-[c:CONFLICTS]->(b:Ingredient)<-[r2:CONTAINS]-(p2:Product)
+MATCH (a)-[c:CONFLICTS]-(b:Ingredient)<-[r2:CONTAINS]-(p2:Product)
 WHERE p2.product_key IN $product_keys
   AND p.product_key <> p2.product_key
 WITH p, a, c, b, p2, r2

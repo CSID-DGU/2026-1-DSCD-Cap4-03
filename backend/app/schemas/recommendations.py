@@ -14,7 +14,6 @@ class RecommendationRequest(BaseModel):
 class RecommendationProduct(BaseModel):
     product_id: int
     step: int
-    application_guide: str
     time_tag: str | None = None
 
 
@@ -25,7 +24,6 @@ class RecommendationRoutine(BaseModel):
     routine_time: str
     total_cost: int
     duration: int
-    ai_description: str
     products: list[RecommendationProduct]
 
 
@@ -34,6 +32,9 @@ class RecommendationResponse(BaseModel):
     user_id: int
     result_id: int
     session_status: str
+    budget_check_passed: bool = True
+    budget_fallback_applied: bool = False
+    budget_message: str | None = None
     routines: list[RecommendationRoutine]
 
 
@@ -41,10 +42,26 @@ class RecommendationExplanationRequest(BaseModel):
     session_id: int
 
 
+class RecommendationStepGuide(BaseModel):
+    slot_order: int
+    category: str
+    usage_guide: str
+
+
+class RecommendationExplanationRoutine(BaseModel):
+    routine_id: int | str
+    routine_type: str
+    routine_rank: int
+    ampm_mode: str
+    recommend_summary: str
+    ampm_comment: str
+    step_guides: list[RecommendationStepGuide]
+    strengths: list[str]
+    cautions: list[str]
+
+
 class RecommendationExplanationResponse(BaseModel):
     session_id: int
     llm_model: str
     prompt_version: str
-    summary_text: str
-    usage_guide_text: str
-    warning_text: str
+    routines: list[RecommendationExplanationRoutine]

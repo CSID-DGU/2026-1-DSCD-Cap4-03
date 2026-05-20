@@ -28,6 +28,11 @@ class Settings:
     mysql_db: str = os.getenv("MYSQL_DB", "Rouple_db")
     database_url: str | None = os.getenv("DATABASE_URL")
     db_auto_create_tables: bool = os.getenv("DB_AUTO_CREATE_TABLES", "true").lower() == "true"
+    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
+    openai_model: str = os.getenv("OPENAI_MODEL", os.getenv("KG_OPENAI_MODEL", "gpt-5.4-mini"))
+    skin_model_checkpoint: str | None = os.getenv("SKIN_MODEL_CHECKPOINT")
+    skin_model_device: str = os.getenv("SKIN_MODEL_DEVICE", "cpu")
+    skin_model_img_size: int = int(os.getenv("SKIN_MODEL_IMG_SIZE", "224"))
     frontend_origins_raw: str = os.getenv(
         "FRONTEND_ORIGINS",
         "http://127.0.0.1:8000,http://localhost:8000,http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:3000,http://localhost:3000",

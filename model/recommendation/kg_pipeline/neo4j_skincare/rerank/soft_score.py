@@ -1,4 +1,5 @@
 from functools import lru_cache
+import math
 from typing import Optional
 
 import pymysql
@@ -63,24 +64,86 @@ RETURN CASE WHEN count(CASE WHEN w.product_key = p.product_key THEN 1 END) > 0 T
 
 # Profile-aware review mapping (simple deterministic keywords).
 CONCERN_KEYWORDS = {
-    "dryness": ["??", "??", "??", "??", "??"],
-    "acne": ["???", "???", "??", "??", "???"],
-    "pore": ["??", "??", "????", "?"],
-    "pigmentation": ["??", "?", "??", "??"],
-    "wrinkle": ["??", "??", "???"],
-    "sagging": ["??", "??", "???"],
+    "dryness": ["\uBCF4\uC2B5", "\uC218\uBD84", "\uCD09\uCD09", "\uAC74\uC870", "\uC18D\uAC74\uC870"],
+    "acne": ["\uD2B8\uB7EC\uBE14", "\uC5EC\uB4DC\uB984", "\uC9C4\uC815", "\uD53C\uC9C0", "\uC881\uC300"],
+    "pore": ["\uBAA8\uACF5", "\uD53C\uC9C0", "\uBE14\uB799\uD5E4\uB4DC", "\uAC01\uC9C8"],
+    "pigmentation": ["\uBBF8\uBC31", "\uC7A1\uD2F0", "\uD1A4\uC5C5", "\uAE30\uBBF8", "\uC0C9\uC18C\uCE68\uCC29"],
+    "wrinkle": ["\uC8FC\uB984", "\uD0C4\uB825", "\uB9C1\uD074", "\uC548\uD2F0\uC5D0\uC774\uC9D5"],
+    "sagging": ["\uD0C4\uB825", "\uB9AC\uD504\uD305", "\uCC98\uC9D0", "\uD37C\uBC0D"],
+    "redness": ["\uBD89\uC740\uAE30", "\uD64D\uC870", "\uC9C4\uC815", "\uC800\uC790\uADF9", "\uBBFC\uAC10"],
+    "dark_circle": ["\uB2E4\uD06C\uC11C\uD074", "\uB208\uAC00", "\uC544\uC774", "\uC0DD\uAE30", "\uD53C\uBD80\uD1A4"],
+    "atopy": ["\uC544\uD1A0\uD53C", "\uBBFC\uAC10", "\uC800\uC790\uADF9", "\uC7A5\uBCBD", "\uC9C4\uC815"],
+    "sensitive": ["\uBBFC\uAC10\uC131", "\uBBFC\uAC10", "\uC21C\uD568", "\uC800\uC790\uADF9", "\uC9C4\uC815"],
+    "keratin": ["\uAC01\uC9C8", "\uACB0", "\uBD80\uB4DC\uB7EC\uC6C0", "\uC815\uB3C8", "\uC5D1\uC2A4\uD3F4\uB9AC\uC5D0\uC774\uD305"],
+}
+
+PROFILE_CONCERN_ALIASES = {
+    "acne": "acne",
+    "\uC5EC\uB4DC\uB984": "acne",
+    "\uD2B8\uB7EC\uBE14": "acne",
+    "wrinkle": "wrinkle",
+    "\uC8FC\uB984": "wrinkle",
+    "brightening": "pigmentation",
+    "\uBBF8\uBC31": "pigmentation",
+    "\uC7A1\uD2F0": "pigmentation",
+    "\uC0C9\uC18C\uCE68\uCC29": "pigmentation",
+    "sebum": "pore",
+    "\uD53C\uC9C0": "pore",
+    "dryness": "dryness",
+    "\uAC74\uC870": "dryness",
+    "\uC18D\uAC74\uC870": "dryness",
+    "redness": "redness",
+    "\uBD89\uC740\uAE30": "redness",
+    "flushing": "redness",
+    "\uD64D\uC870": "redness",
+    "dark_circle": "dark_circle",
+    "darkcircle": "dark_circle",
+    "\uB2E4\uD06C\uC11C\uD074": "dark_circle",
+    "atopy": "atopy",
+    "\uC544\uD1A0\uD53C": "atopy",
+    "sensitive": "sensitive",
+    "\uBBFC\uAC10\uC131": "sensitive",
+    "\uBBFC\uAC10": "sensitive",
+    "pore": "pore",
+    "\uBAA8\uACF5": "pore",
+    "keratin": "keratin",
+    "\uAC01\uC9C8": "keratin",
+    "none": "",
+    "\uD574\uB2F9\uC0AC\uD56D \uC5C6\uC74C": "",
 }
 
 SKIN_TYPE_KEYWORDS = {
-    "dry": ["??", "??", "??", "??"],
-    "oily": ["??", "??", "??", "??"],
-    "combination": ["???", "???", "??", "??"],
-    "sensitive": ["???", "??", "??", "??", "???", "??"],
-    "normal": ["??", "???"],
+    "dry": ["\uAC74\uC131", "\uBCF4\uC2B5", "\uCD09\uCD09", "\uC218\uBD84"],
+    "oily": ["\uC9C0\uC131", "\uC0B0\uB73B", "\uD53C\uC9C0", "\uC720\uBD84"],
+    "combination": ["\uBCF5\uD569\uC131", "\uC218\uBD80\uC9C0", "\uC720\uC218\uBD84", "\uBC38\uB7F0\uC2A4"],
+    "sensitive": ["\uBBFC\uAC10\uC131", "\uC21C\uD568", "\uC800\uC790\uADF9", "\uC9C4\uC815"],
+    "normal": ["\uC911\uC131", "\uBB34\uB09C", "\uB370\uC77C\uB9AC"],
 }
 
-NEGATIVE_HINTS = ["??", "???", "??", "???", "??", "??", "??"]
+NEGATIVE_HINTS = [
+    "\uB530\uAC00\uC6C0",
+    "\uC790\uADF9",
+    "\uAC74\uC870\uD568",
+    "\uB2F5\uB2F5",
+    "\uB048\uC801",
+    "\uD2B8\uB7EC\uBE14",
+    "\uB4A4\uC9D1\uC5B4",
+]
 
+PROFILE_SKIN_TYPE_ALIASES = {
+    "\uAC74\uC131": "dry",
+    "\uC9C0\uC131": "oily",
+    "\uBCF5\uD569\uC131": "combination",
+    "\uC218\uBD80\uC9C0": "combination",
+    "\uBBFC\uAC10\uC131": "sensitive",
+    "\uC911\uC131": "normal",
+    "\uBAA8\uB984": "",
+    "dry": "dry",
+    "oily": "oily",
+    "combination": "combination",
+    "sensitive": "sensitive",
+    "normal": "normal",
+}
 
 def _mysql_connect():
     return pymysql.connect(
@@ -104,7 +167,17 @@ def _split_concerns(v: str | None) -> list[str]:
         return []
     raw = _norm_text(v)
     parts = [x.strip() for x in raw.replace("/", ",").replace("|", ",").split(",")]
-    return [p for p in parts if p]
+    concerns: list[str] = []
+    for part in parts:
+        concern = PROFILE_CONCERN_ALIASES.get(part, part)
+        if concern and concern not in concerns:
+            concerns.append(concern)
+    return concerns
+
+
+def _map_profile_skin_type(v: str | None) -> str:
+    key = _norm_text(v or "")
+    return PROFILE_SKIN_TYPE_ALIASES.get(key, "")
 
 
 @lru_cache(maxsize=2048)
@@ -129,7 +202,7 @@ def _load_user_profile(user_id: int) -> tuple[str, list[str]]:
     if not row:
         return "", []
 
-    skin_type = _norm_text(str(row.get("skin_type") or ""))
+    skin_type = _map_profile_skin_type(str(row.get("skin_type") or ""))
     concerns = _split_concerns(str(row.get("skin_concern") or ""))
     return skin_type, concerns
 
@@ -249,12 +322,12 @@ def soft_score(product_key: str, session_id: str, vector_score: float, user_id: 
     with driver.session() as s:
         if flags["has_concern_graph"]:
             rbase = s.run(SCORE_WITH_CONCERN_QUERY, sid=session_id, product_key=product_key).single()
-            concern_score = float((rbase or {}).get("concern_score") or 0.0)
+            raw_concern_score = float((rbase or {}).get("concern_score") or 0.0)
         else:
             rbase = s.run(SCORE_BASE_QUERY, sid=session_id, product_key=product_key).single()
-            concern_score = 0.0
+            raw_concern_score = 0.0
 
-        skin_bonus = float((rbase or {}).get("skin_bonus") or 0.0)
+        raw_skin_bonus = float((rbase or {}).get("skin_bonus") or 0.0)
         irr_sum = float((rbase or {}).get("irr_sum") or 0.0)
         irr_penalty = min(irr_sum * RERANK_IRRITATION_PENALTY_SCALE, 1.0)
 
@@ -264,9 +337,14 @@ def soft_score(product_key: str, session_id: str, vector_score: float, user_id: 
         else:
             wishlist_bonus = 0.0
 
-    review_score = _profile_review_match_score(product_key, user_id)
+    vector_score = max(0.0, min(1.0, float(vector_score)))
+    concern_score = 1.0 - math.exp(-raw_concern_score)
+    skin_bonus = max(0.0, min(1.0, (raw_skin_bonus + 1.0) / 2.0))
 
-    s_rerank = (
+    raw_review_score = _profile_review_match_score(product_key, user_id)
+    review_score = max(0.0, min(1.0, (raw_review_score + 1.0) / 2.0))
+
+    raw_s_rerank = (
         vector_score * RERANK_VECTOR_WEIGHT
         + concern_score * RERANK_CONCERN_WEIGHT
         + skin_bonus * RERANK_SKIN_WEIGHT
@@ -274,14 +352,19 @@ def soft_score(product_key: str, session_id: str, vector_score: float, user_id: 
         + review_score * RERANK_REVIEW_WEIGHT
         - irr_penalty
     )
+    s_rerank = max(0.0, min(1.0, (raw_s_rerank + 1.0) / 2.0))
 
     return {
         "product_key": product_key,
         "vector_score": round(vector_score, 4),
+        "raw_concern_match_score": round(raw_concern_score, 4),
         "concern_match_score": round(concern_score, 4),
+        "raw_skin_type_bonus": round(raw_skin_bonus, 4),
         "skin_type_bonus": round(skin_bonus, 4),
         "wishlist_bonus": round(wishlist_bonus, 4),
+        "raw_review_score": round(raw_review_score, 4),
         "review_score": round(review_score, 4),
         "irritation_penalty": round(irr_penalty, 4),
+        "raw_S_rerank": round(raw_s_rerank, 4),
         "S_rerank": round(s_rerank, 4),
     }

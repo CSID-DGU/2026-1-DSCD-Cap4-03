@@ -81,7 +81,8 @@ def _attach_all_in_one_to_routines(routines: list[dict[str, Any]], all_in_one_pi
         nr = dict(r)
         nr["products"] = products
         nr["slot_count"] = len(products)
-        nr["total_score"] = round(float(nr.get("total_score", 0.0)) + float(ai.get("S_rerank", 0.0)) * (0 if has_ai else 1), 4)
+        score_sum = sum(float(p.get("S_rerank", 0.0) or 0.0) for p in products)
+        nr["total_score"] = round(score_sum / len(products), 4) if products else 0.0
         out.append(nr)
 
     return out

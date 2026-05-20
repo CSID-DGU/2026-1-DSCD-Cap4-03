@@ -154,8 +154,8 @@ def _run_recommendation_pipeline(payload: RecommendationRequest, user_id: int) -
             user_id=user_id,
             image_id=payload.image_id,
             top_n=3,
-            total_budget=payload.total_budget,
-            slot_budget_map=slot_budget_map or None,
+            total_budget_max=payload.total_budget,
+            slot_budget_max_map=slot_budget_map or None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
@@ -167,21 +167,24 @@ def _run_recommendation_pipeline(payload: RecommendationRequest, user_id: int) -
 
 
 def ensure_skin_result_for_recommendation(db: Session, payload: RecommendationRequest, user_id: int) -> None:
-    exists = db.scalar(
+    existing = db.execute(
         text(
             """
-            SELECT result_id
+            SELECT user_id, image_id
             FROM skin_analysis_result
             WHERE result_id = :result_id
-              AND user_id = :user_id
-              AND image_id = :image_id
             LIMIT 1
             """
         ),
-        {"result_id": payload.result_id, "user_id": user_id, "image_id": payload.image_id},
-    )
-    if exists:
-        return
+        {"result_id": payload.result_id},
+    ).mappings().first()
+    if existing:
+        if existing["user_id"] == user_id and existing["image_id"] == payload.image_id:
+            return
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Skin analysis result_id already exists for another image or user. Run /skin-analysis again.",
+        )
 
     memory_result = store.skin_results.get(payload.result_id)
     if not memory_result or memory_result["user_id"] != user_id or memory_result["image_id"] != payload.image_id:
@@ -219,6 +222,8 @@ def create_recommendation_with_model(db: Session, payload: RecommendationRequest
     ensure_skin_result_for_recommendation(db, payload, user_id)
     ensure_embedding_candidates(db, payload, user_id)
     _run_recommendation_pipeline(payload, user_id)
+    db.commit()
+    db.expire_all()
     session = get_latest_recommendation_session(db, user_id, payload.result_id, payload.image_id)
     if not session:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="추천 결과 저장 세션을 찾지 못함")
@@ -266,14 +271,14 @@ def get_recommendation_session_or_404(db: Session, session_id: int, user_id: int
 def _routine_type(routine: RecommendationRoutine) -> str:
     label = (routine.routine_label or "").lower()
     if "value" in label:
-        return "budget"
+        return "value"
     if routine.routine_rank == 2:
-        return "budget"
+        return "value"
     return "best"
 
 
 def _routine_label(routine: RecommendationRoutine) -> str:
-    if _routine_type(routine) == "budget":
+    if _routine_type(routine) == "value":
         return "가성비 루틴"
     return "AI BEST 루틴"
 
@@ -307,13 +312,11 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
                 continue
             product_data = serialize_product_list_item(db, item.product)
             total_cost += product_data["price"]
-            usage, _ = _usage_for_category(item.category or item.product.category)
             products.append(
                 {
                     "product_id": item.product.product_id,
                     "step": item.slot_order,
-                    "application_guide": usage,
-                    "time_tag": None if _routine_time(routine) == "both" else _routine_time(routine),
+                    "time_tag": item.time_tag,
                 }
             )
 
@@ -325,15 +328,24 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
                 "routine_time": _routine_time(routine),
                 "total_cost": total_cost,
                 "duration": len(products),
-                "ai_description": _routine_description(routine, total_cost, len(products)),
                 "products": products,
             }
         )
+
+    budget_fallback_applied = session.session_status == "SUCCESS" and not bool(session.budget_check_passed)
+    budget_message = (
+        "예산 조건에 맞는 추천이 없어, 예산 제한 없이 가장 유사한 루틴을 제공합니다."
+        if budget_fallback_applied
+        else None
+    )
 
     return {
         "session_id": session.session_id,
         "user_id": session.user_id,
         "result_id": session.result_id or 0,
         "session_status": session.session_status,
+        "budget_check_passed": bool(session.budget_check_passed),
+        "budget_fallback_applied": budget_fallback_applied,
+        "budget_message": budget_message,
         "routines": routines,
     }

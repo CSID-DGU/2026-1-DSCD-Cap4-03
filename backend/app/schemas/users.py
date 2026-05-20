@@ -22,7 +22,13 @@ class UpdateProfileRequest(BaseModel):
     skin_concerns: list[str] | None = None
 
 
+class AllergyItem(BaseModel):
+    category: str | None = Field(default=None, max_length=30)
+    ingredient_id: int
+
+
 class UpdateAllergiesRequest(BaseModel):
+    allergy_items: list[AllergyItem] | None = None
     allergy_categories: list[str] = Field(default_factory=list)
     allergy_ingredient_ids: list[int] = Field(default_factory=list)
 
