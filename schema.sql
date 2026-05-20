@@ -1,5 +1,5 @@
 -- MySQL 8.0+
--- Core entities DDL (0506 modified flow)
+-- Core entities DDL (0519 modified flow)
 
 CREATE DATABASE IF NOT EXISTS Rouple_db
     DEFAULT CHARACTER SET utf8mb4
@@ -305,6 +305,7 @@ CREATE TABLE RECOMMENDATION_ITEM (
     category VARCHAR(30) NULL,
     product_id BIGINT NULL,
     product_score DECIMAL(8,4) NULL,
+    time_tag VARCHAR(10) NULL,
     KEY idx_item_routine_id (routine_id),
     KEY idx_item_product_id (product_id),
     UNIQUE KEY uq_item_slot_per_routine (routine_id, slot_order),

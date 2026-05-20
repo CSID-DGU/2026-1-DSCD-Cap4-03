@@ -34,15 +34,23 @@ DSCD_수업내용/
 
 # Old or local-only work
 cosmetic_crawling/
-model/skin/
+model/skin_analysis_resnet/
 model/recommendation/embedding_old/
 model/recommendation/embedding_pipeline/embedding_results/
 model/recommendation/embedding_test/
 model/recommendation/kg_pipeline/output
 model/recommendation/kg_pipeline/llm
+backend/llm_outputs/
+backend/uploads/
+model/llm/outputs/
 /DB/
 DEVELOPMENT_FLOW.md
+
+# Not My Code
+model/skin_analysis/
+model/llm/
 
 # Local dumps / temporary outputs
 freeze
 requirements_min.txt
+test_img/

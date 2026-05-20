@@ -49,7 +49,7 @@ class SkinAnalysisDetailResponse(BaseModel):
     image_url: str
     skin_type: str | None = None
     raw_metrics: dict[str, int]
-    display_scores: dict[str, int]
+    display_scores: dict[str, float]
 
 
 class SkinAnalysisHistoryItem(BaseModel):

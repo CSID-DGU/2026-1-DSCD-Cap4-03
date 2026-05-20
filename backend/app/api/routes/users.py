@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db.memory import store
@@ -59,9 +60,43 @@ def get_my_routines(current_user: dict = Depends(get_current_user)) -> dict:
 @router.get("/me/skin-analysis")
 def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
     profile = ensure_profile(db, current_user["user_id"])
+    rows = db.execute(
+        text(
+            """
+            SELECT
+                sar.result_id,
+                sar.image_id,
+                sar.analyzed_at,
+                ui.storage_url AS image_url
+            FROM skin_analysis_result sar
+            LEFT JOIN user_image ui
+              ON ui.image_id = sar.image_id
+            WHERE sar.user_id = :user_id
+            ORDER BY sar.analyzed_at DESC, sar.result_id DESC
+            """
+        ),
+        {"user_id": current_user["user_id"]},
+    ).mappings().all()
+
     results = []
+    for row in rows:
+        summary = store.skin_summaries.get(int(row["result_id"]), {})
+        analyzed_at = row["analyzed_at"].isoformat() if hasattr(row["analyzed_at"], "isoformat") else str(row["analyzed_at"])
+        results.append(
+            {
+                "result_id": int(row["result_id"]),
+                "image_id": int(row["image_id"]),
+                "analyzed_at": analyzed_at,
+                "skin_type": profile.skin_type if profile else None,
+                "image_url": row["image_url"],
+                "ai_comment": summary.get("summary_comment", "아직 분석 요약이 준비되지 않았습니다."),
+            }
+        )
+
     for row in store.skin_results.values():
         if row["user_id"] != current_user["user_id"]:
+            continue
+        if any(item["result_id"] == row["result_id"] for item in results):
             continue
         image = get_user_image(db, row["image_id"])
         summary = store.skin_summaries.get(row["result_id"], {})
@@ -75,5 +110,6 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 "ai_comment": summary.get("summary_comment", "아직 분석 요약이 준비되지 않았습니다."),
             }
         )
+
     results.sort(key=lambda item: item["analyzed_at"], reverse=True)
     return {"items": results}

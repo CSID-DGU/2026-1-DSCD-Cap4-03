@@ -24,7 +24,8 @@ def _norm_score(v: float | None) -> float:
     if v is None:
         return 0.0
     x = float(v)
-    return x / 100.0 if x > 1.0 else x
+    x = x / 100.0 if x > 1.0 else x
+    return max(0.0, min(x, 1.0))
 
 def _norm_text(v: Any) -> str:
     if v is None:
@@ -80,9 +81,13 @@ def _load_user_context(user_id: int, image_id: int | None = None) -> dict[str, A
         with conn.cursor() as cur:
             cur.execute(
                 """
-                SELECT *
-                FROM USER_PROFILE
-                WHERE user_id = %s
+                SELECT
+                    up.*,
+                    u.user_name,
+                    u.nickname
+                FROM USER_PROFILE up
+                JOIN USER u ON u.user_id = up.user_id
+                WHERE up.user_id = %s
                 LIMIT 1
                 """,
                 (user_id,),

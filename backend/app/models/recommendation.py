@@ -55,6 +55,7 @@ class RecommendationItem(Base):
     category: Mapped[str | None] = mapped_column(String(30), nullable=True)
     product_id: Mapped[int | None] = mapped_column(ForeignKey("product.product_id"), nullable=True)
     product_score: Mapped[Decimal | None] = mapped_column(Numeric(8, 4), nullable=True)
+    time_tag: Mapped[str | None] = mapped_column(String(10), nullable=True)
 
     routine: Mapped[RecommendationRoutine] = relationship(back_populates="items")
     product: Mapped[Product | None] = relationship()

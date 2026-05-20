@@ -338,6 +338,7 @@ def create_user_session(
     gender: str,
     allergies: list[str],
     wishlist_product_keys: list[str] | None = None,
+    profile_skin_type: str | None = None,
 ):
     tx.run(
         """
@@ -394,7 +395,7 @@ def create_user_session(
             product_key=product_key,
         )
 
-    skin_type = _infer_skin_type(skin_data)
+    skin_type = _normalize_profile_skin_type(profile_skin_type) or _infer_skin_type(skin_data)
     tx.run(
         """
         MATCH (u:UserSession {session_id: $sid})
@@ -404,6 +405,24 @@ def create_user_session(
         sid=session_id,
         skin_type=skin_type,
     )
+
+
+def _normalize_profile_skin_type(profile_skin_type: str | None) -> str:
+    key = str(profile_skin_type or "").strip()
+    aliases = {
+        "\uAC74\uC131": "dry",
+        "\uC9C0\uC131": "oily",
+        "\uBCF5\uD569\uC131": "combination",
+        "\uC218\uBD80\uC9C0": "combination",
+        "\uBBFC\uAC10\uC131": "sensitive",
+        "\uC911\uC131": "normal",
+        "dry": "dry",
+        "oily": "oily",
+        "combination": "combination",
+        "sensitive": "sensitive",
+        "normal": "normal",
+    }
+    return aliases.get(key, "")
 
 
 def _infer_skin_type(skin_data: dict) -> str:
