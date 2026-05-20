@@ -37,4 +37,11 @@ export const imagesApi = {
       headers: { 'Content-Type': 'image/jpeg' },
     });
   },
+
+  /** S3 미연결 테스트용 — 파일 직접 업로드 */
+  localUpload: (blob: Blob) => {
+    const form = new FormData();
+    form.append('file', blob, 'skin.jpg');
+    return api.postMultipart<{ image_id: number }>('/files/local-upload', form);
+  },
 };

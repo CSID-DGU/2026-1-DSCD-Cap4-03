@@ -20,6 +20,15 @@ GPT_API_key.txt
 AWS S3 key.txt
 backend/AWS S3 key.txt
 
+# Node
+node_modules/
+
+# Vite cache
+.vite/
+
+# Claude Code local config
+.claude/
+
 # Class materials
 DSCD_수업내용/
 

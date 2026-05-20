@@ -2,35 +2,39 @@
 
 .dp-page {
   min-height: 100vh;
-  background: #f5f3ff;
+  background: #ffffff;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* ── 배너 ── */
 .dp-banner {
-  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
-  padding: 56px 24px 44px;
+  background: #F9F7FF;
+  padding: 48px 80px 40px;
 }
-.dp-banner-inner { max-width: 1080px; margin: 0 auto; }
+.dp-banner-inner { max-width: 1200px; margin: 0 auto; }
 .dp-badge {
   display: inline-block;
-  background: #7c3aed; color: #fff;
+  background: none;
+  color: #7c3aed;
   font-size: 11px; font-weight: 700;
-  padding: 5px 14px; border-radius: 20px;
-  margin-bottom: 14px; letter-spacing: 1px;
+  padding: 0;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 .dp-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(24px, 4vw, 38px);
-  font-weight: 800; color: #1a1a2e; margin-bottom: 8px;
+  font-weight: 800; color: #1A1A1A; margin-bottom: 8px;
+  letter-spacing: -0.03em;
 }
-.dp-sub { font-size: 14px; color: #6b7280; }
+.dp-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
 /* ── 바디 ── */
 .dp-body {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 24px 80px;
+  padding: 28px 80px 80px;
 }
 
 /* ── 가이드 행 ── */
@@ -45,11 +49,11 @@
   align-items: center;
   gap: 7px;
   background: #fff;
-  border: 1.5px solid #ede9fe;
+  border: 1.5px solid #A78BFA;
   padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 24px;
   font-size: 13px;
-  color: #4b5563;
+  color: #5F5F5F;
   font-weight: 500;
 }
 .dp-guide-icon { font-size: 15px; }
@@ -62,9 +66,9 @@
   gap: 0;
   margin-bottom: 24px;
   background: #fff;
-  border-radius: 16px;
+  border-radius: 24px;
   padding: 16px 24px;
-  box-shadow: 0 2px 10px rgba(124,58,237,0.06);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 .dp-step-item {
   display: flex;
@@ -75,8 +79,8 @@
 .dp-step-circle {
   width: 32px; height: 32px;
   border-radius: 50%;
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: #F5F3FF;
+  color: #9CA3AF;
   font-size: 13px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   font-family: 'Sora', sans-serif;
@@ -86,13 +90,13 @@
 .dp-step-circle.active { background: #7c3aed; color: #fff; }
 .dp-step-circle.done { background: #22c55e; color: #fff; }
 .dp-step-label {
-  font-size: 13px; font-weight: 600; color: #9ca3af;
+  font-size: 13px; font-weight: 600; color: #9CA3AF;
   transition: color 0.2s;
 }
 .dp-step-label.active { color: #7c3aed; }
 .dp-step-line {
   flex: 1; height: 2px;
-  background: #e5e7eb; margin: 0 8px;
+  background: #F5F3FF; margin: 0 8px;
   transition: background 0.2s;
 }
 .dp-step-line.done { background: #22c55e; }
@@ -101,7 +105,7 @@
 .dp-card {
   background: #fff;
   border-radius: 24px;
-  box-shadow: 0 2px 16px rgba(124,58,237,0.08);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   overflow: hidden;
 }
 
@@ -113,7 +117,7 @@
   align-items: center;
   justify-content: center;
   padding: 80px 40px;
-  border: 2px dashed #ddd6fe;
+  border: 2px dashed #A78BFA;
   border-radius: 24px;
   cursor: pointer;
   transition: all 0.2s;
@@ -121,26 +125,26 @@
 }
 .dp-upload-area:hover {
   border-color: #7c3aed;
-  background: #faf8ff;
+  background: #F9F7FF;
 }
 .dp-upload-icon { font-size: 52px; margin-bottom: 16px; }
 .dp-upload-title {
   font-family: 'Sora', sans-serif;
-  font-size: 20px; font-weight: 700; color: #1a1a2e; margin-bottom: 8px;
+  font-size: 20px; font-weight: 700; color: #1A1A1A; margin-bottom: 8px;
 }
-.dp-upload-sub { font-size: 14px; color: #6b7280; margin-bottom: 6px; }
+.dp-upload-sub { font-size: 14px; color: #5F5F5F; margin-bottom: 6px; }
 .dp-upload-hint {
-  font-size: 12px; color: #9ca3af; margin-bottom: 24px;
+  font-size: 12px; color: #9CA3AF; margin-bottom: 24px;
 }
 .dp-btn-upload {
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
   padding: 12px 32px; border-radius: 24px; border: none; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: all 0.2s;
 }
-.dp-btn-upload:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,58,237,0.4); }
+.dp-btn-upload:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
 
 /* ── STEP 2: 크롭 ── */
 .dp-crop-card { padding: 32px; }
@@ -163,9 +167,9 @@
   aspect-ratio: 3 / 4;
   margin: 0 auto;
   background: #000;
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 
 /* 얼굴 가이드 */
@@ -218,7 +222,7 @@
   flex: 1;
   -webkit-appearance: none;
   height: 4px;
-  background: #ddd6fe;
+  background: #A78BFA;
   border-radius: 99px;
   outline: none;
   cursor: pointer;
@@ -237,7 +241,7 @@
   padding-top: 12px;
 }
 .dp-crop-guide-title {
-  font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 14px;
+  font-size: 15px; font-weight: 700; color: #1A1A1A; margin-bottom: 14px;
 }
 .dp-crop-guide-list {
   list-style: none;
@@ -245,9 +249,9 @@
   display: flex; flex-direction: column; gap: 10px;
 }
 .dp-crop-guide-list li {
-  font-size: 13px; color: #4b5563;
+  font-size: 13px; color: #5F5F5F;
   padding: 10px 14px;
-  background: #f5f3ff;
+  background: #F9F7FF;
   border-radius: 10px;
   border-left: 3px solid #7c3aed;
 }
@@ -255,12 +259,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #faf8ff;
-  border: 1.5px solid #ede9fe;
+  background: #F9F7FF;
+  border: 1.5px solid #A78BFA;
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 20px;
-  font-size: 13px; color: #6b7280;
+  font-size: 13px; color: #5F5F5F;
 }
 .dp-crop-size-info strong { color: #7c3aed; font-family: 'Sora', sans-serif; }
 .dp-crop-btns {
@@ -285,9 +289,9 @@
 .dp-preview-img {
   width: 220px; height: 293px;
   object-fit: cover;
-  border-radius: 16px;
-  border: 3px solid #ede9fe;
-  box-shadow: 0 8px 24px rgba(124,58,237,0.15);
+  border-radius: 24px;
+  border: 3px solid #F5F3FF;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   display: block;
 }
 .dp-preview-size-badge {
@@ -305,17 +309,18 @@
 .dp-preview-info-col { padding-top: 8px; }
 .dp-preview-title {
   font-family: 'Sora', sans-serif;
-  font-size: 22px; font-weight: 800; color: #1a1a2e; margin-bottom: 10px;
+  font-size: 22px; font-weight: 800; color: #1A1A1A; margin-bottom: 10px;
+  letter-spacing: -0.03em;
 }
 .dp-preview-sub {
-  font-size: 14px; color: #6b7280; line-height: 1.8; margin-bottom: 20px;
+  font-size: 14px; color: #5F5F5F; line-height: 1.8; margin-bottom: 20px;
 }
 .dp-preview-checklist {
   display: flex; flex-direction: column; gap: 8px; margin-bottom: 28px;
 }
 .dp-check-item {
   font-size: 13px; color: #16a34a; font-weight: 600;
-  background: #f0fdf4; border-radius: 10px;
+  background: #F9F7FF; border-radius: 10px;
   padding: 9px 14px;
 }
 .dp-preview-btns { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -326,19 +331,24 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
   padding: 13px 28px; border-radius: 24px; border: none; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: all 0.2s;
 }
-.dp-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(124,58,237,0.4); }
+.dp-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
 .dp-btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 .dp-btn-primary.loading { opacity: 0.8; }
 
 .dp-btn-secondary {
-  background: #fff; color: #7c3aed;
+  background: transparent; color: #7c3aed;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
   padding: 13px 24px; border-radius: 24px;
-  border: 1.5px solid #c4b5fd; cursor: pointer;
+  border: 1.5px solid #7c3aed; cursor: pointer;
   transition: all 0.2s;
 }
-.dp-btn-secondary:hover { background: #f5f3ff; }
+.dp-btn-secondary:hover { background: #F9F7FF; }
+
+@media (max-width: 900px) {
+  .dp-banner { padding: 40px 24px 32px; }
+  .dp-body { padding: 24px 24px 64px; }
+}

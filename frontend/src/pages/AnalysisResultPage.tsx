@@ -3,17 +3,40 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis,
 } from 'recharts';
+import { Flame, Droplets, Layers, ScanLine, Cloud, Waves, Leaf, Sparkles, Bot } from 'lucide-react';
 import { analysisApi, type AnalysisResult } from '../api/analysis';
 import { useAuth } from '../context/useAuth';
 import './AnalysisResultPage.css';
 
-// ── 등급 변환 함수
-function getAcneGrade(v: number)         { return v === 0 ? '양호' : v === 1 ? '보통' : '개선필요'; }
-function getDrynessGrade(v: number)      { return v <= 1 ? '양호' : v === 2 ? '보통' : '개선필요'; }
-function getSaggingGrade(v: number)      { return v <= 1 ? '양호' : v <= 3 ? '보통' : '개선필요'; }
-function getPoreGrade(v: number)         { return v <= 1 ? '양호' : v <= 3 ? '보통' : '개선필요'; }
-function getPigmentationGrade(v: number) { return v === 0 ? '양호' : v <= 3 ? '보통' : '개선필요'; }
-function getWrinkleGrade(v: number)      { return v <= 1 ? '양호' : v <= 3 ? '보통' : '개선필요'; }
+// ── 등급 변환 함수 (display_score 0-100 → 양호/보통/개선필요)
+// grade = round(score * 등급수 / 100), 최대 등급수-1 클램프
+function toGrade(score: number, levels: number) {
+  return Math.min(Math.round(score * levels / 100), levels - 1);
+}
+function getAcneGrade(score: number): Grade {
+  const g = toGrade(score, 4); // 0~3
+  return g === 0 ? '양호' : g === 1 ? '보통' : '개선필요';
+}
+function getDrynessGrade(score: number): Grade {
+  const g = toGrade(score, 5); // 0~4
+  return g <= 1 ? '양호' : g === 2 ? '보통' : '개선필요';
+}
+function getSaggingGrade(score: number): Grade {
+  const g = toGrade(score, 6); // 0~5
+  return g <= 1 ? '양호' : g <= 3 ? '보통' : '개선필요';
+}
+function getPoreGrade(score: number): Grade {
+  const g = toGrade(score, 5); // 0~4
+  return g <= 1 ? '양호' : g <= 3 ? '보통' : '개선필요';
+}
+function getPigmentationGrade(score: number): Grade {
+  const g = toGrade(score, 6); // 0~5
+  return g === 0 ? '양호' : g <= 3 ? '보통' : '개선필요';
+}
+function getWrinkleGrade(score: number): Grade {
+  const g = toGrade(score, 6); // 0~5
+  return g <= 1 ? '양호' : g === 2 ? '보통' : '개선필요';
+}
 
 type Grade = '양호' | '보통' | '개선필요';
 
@@ -25,17 +48,25 @@ const GRADE_BG: Record<Grade, string> = {
 };
 
 function buildMetrics(result: AnalysisResult) {
-  const raw = result.raw_metrics;
-  const scores = result.display_scores;
+  const raw = result.display_scores;
   const comments = result.indicator_comments;
 
+  const s = {
+    acne:         Math.round(raw.acne         * 100),
+    dryness:      Math.round(raw.dryness      * 100),
+    sagging:      Math.round(raw.sagging      * 100),
+    pore:         Math.round(raw.pore         * 100),
+    pigmentation: Math.round(raw.pigmentation * 100),
+    wrinkle:      Math.round(raw.wrinkle      * 100),
+  };
+
   return [
-    { key: 'acne',         label: '트러블',   icon: '🔴', grade: getAcneGrade(raw.acne) as Grade,              displayVal: scores.acne,         desc: comments.acne },
-    { key: 'dryness',      label: '건조',     icon: '💧', grade: getDrynessGrade(raw.dryness) as Grade,         displayVal: scores.dryness,      desc: comments.dryness },
-    { key: 'sagging',      label: '처짐',     icon: '✨', grade: getSaggingGrade(raw.sagging) as Grade,         displayVal: scores.sagging,      desc: comments.sagging },
-    { key: 'pore',         label: '모공',     icon: '🔬', grade: getPoreGrade(raw.pore) as Grade,              displayVal: scores.pore,         desc: comments.pore },
-    { key: 'pigmentation', label: '색소침착', icon: '🌫️', grade: getPigmentationGrade(raw.pigmentation) as Grade, displayVal: scores.pigmentation, desc: comments.pigmentation },
-    { key: 'wrinkle',      label: '주름',     icon: '〰️', grade: getWrinkleGrade(raw.wrinkle) as Grade,         displayVal: scores.wrinkle,      desc: comments.wrinkle },
+    { key: 'acne',         label: '트러블',   Icon: Flame,    grade: getAcneGrade(s.acne),               displayVal: s.acne,         desc: comments.acne },
+    { key: 'dryness',      label: '건조',     Icon: Droplets, grade: getDrynessGrade(s.dryness),         displayVal: s.dryness,      desc: comments.dryness },
+    { key: 'sagging',      label: '처짐',     Icon: Layers,   grade: getSaggingGrade(s.sagging),         displayVal: s.sagging,      desc: comments.sagging },
+    { key: 'pore',         label: '모공',     Icon: ScanLine, grade: getPoreGrade(s.pore),               displayVal: s.pore,         desc: comments.pore },
+    { key: 'pigmentation', label: '색소침착', Icon: Cloud,    grade: getPigmentationGrade(s.pigmentation), displayVal: s.pigmentation, desc: comments.pigmentation },
+    { key: 'wrinkle',      label: '주름',     Icon: Waves,    grade: getWrinkleGrade(s.wrinkle),         displayVal: s.wrinkle,      desc: comments.wrinkle },
   ];
 }
 
@@ -84,7 +115,7 @@ export default function AnalysisResultPage() {
   const radarData = metrics.map((m) => ({ metric: m.label, value: m.displayVal, fullMark: 100 }));
   const imageUrl = passedImageUrl || result.image_url;
   const displayName = nickname || '내';
-  const skinTags = [result.skin_type, '모공', '건조'];
+  const skinTags = [result.skin_type, '모공', '건조'].filter(Boolean) as string[];
 
   const gradeCounts: Record<Grade, number> = { 양호: 0, 보통: 0, 개선필요: 0 };
   metrics.forEach((m) => { gradeCounts[m.grade]++; });
@@ -108,7 +139,7 @@ export default function AnalysisResultPage() {
             </div>
             <div className="ar-hero-btns">
               <button className="ar-btn-primary" onClick={() => navigate('/routine/budget', { state: { resultId: result.result_id, imageId: result.image_id } })}>
-                🌿 루틴 추천받기
+                <Leaf size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />루틴 추천받기
               </button>
               <button className="ar-btn-ghost" onClick={() => navigate('/analysis-history')}>
                 이전 분석 보기
@@ -173,7 +204,7 @@ export default function AnalysisResultPage() {
                     <div className="ar-metric-card" key={m.key} style={{ borderTop: `3px solid ${color}` }}>
                       <div className="ar-metric-card-top">
                         <div className="ar-metric-icon-wrap" style={{ background: bg }}>
-                          <span>{m.icon}</span>
+                          <m.Icon size={18} color="#7c3aed" />
                         </div>
                         <div className="ar-metric-label-wrap">
                           <div className="ar-metric-name">{m.label}</div>
@@ -194,7 +225,7 @@ export default function AnalysisResultPage() {
 
           {/* AI 한마디 */}
           <div className="ar-ai-box">
-            <div className="ar-ai-label">🤖 AI 한마디 ✨</div>
+            <div className="ar-ai-label"><Bot size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />AI 한마디</div>
             <p className="ar-ai-text">{result.summary_comment}</p>
             <p className="ar-ai-cta">아래 맞춤 루틴 추천을 확인해보세요 →</p>
           </div>
@@ -208,14 +239,9 @@ export default function AnalysisResultPage() {
         <h2>{displayName}님을 위한 루틴</h2>
         <p>AI가 분석한 피부 상태에 맞는 제품을 추천해드려요</p>
         <button className="ar-btn-white" onClick={() => navigate('/routine/budget', { state: { resultId: result.result_id, imageId: result.image_id } })}>
-          ✨ 맞춤 루틴 바로 받기
+          <Sparkles size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />맞춤 루틴 바로 받기
         </button>
       </section>
-
-      <footer className="ar-footer">
-        <span>© 2026 ROUPLE AI 기반 맞춤형 스킨케어 솔루션</span>
-        <span className="ar-footer-links">개인정보처리방침 · 이용약관</span>
-      </footer>
 
     </div>
   );

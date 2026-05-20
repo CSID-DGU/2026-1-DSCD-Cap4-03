@@ -3,18 +3,35 @@ import { useNavigate } from 'react-router-dom';
 import { userApi, type UserProfile } from '../api/user';
 import { productApi, type ProductSummary } from '../api/product';
 import { useAuth } from '../context/useAuth';
-import AllergySelector, { type AllergySelectorValue } from '../components/AllergySelector';
+import AllergySelector, { buildAllergyItems, type AllergySelectorValue } from '../components/AllergySelector';
+import { User, Heart, type LucideIcon } from 'lucide-react';
 import './MyPage.css';
 
 type Tab = 'info' | 'wishlist';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'info',     label: '내 정보', icon: '👤' },
-  { key: 'wishlist', label: '찜 목록', icon: '💜' },
+const TABS: { key: Tab; label: string; Icon: LucideIcon }[] = [
+  { key: 'info',     label: '내 정보', Icon: User },
+  { key: 'wishlist', label: '찜 목록', Icon: Heart },
 ];
 
 const SKIN_TYPES = ['건성', '지성', '복합성', '중성', '민감성', '수부지', '모름'];
 const GENDER_LABEL: Record<string, string> = { female: '여성', male: '남성' };
+
+const CONCERNS = [
+  { id: 'acne',        label: '여드름' },
+  { id: 'wrinkle',     label: '주름' },
+  { id: 'brightening', label: '미백' },
+  { id: 'sebum',       label: '피지' },
+  { id: 'dryness',     label: '속건조' },
+  { id: 'redness',     label: '붉은기' },
+  { id: 'dark_circle', label: '다크서클' },
+  { id: 'atopy',       label: '아토피' },
+  { id: 'sensitive',   label: '민감성' },
+  { id: 'pore',        label: '모공' },
+  { id: 'flushing',    label: '홍조' },
+  { id: 'keratin',     label: '각질' },
+  { id: 'none',        label: '해당사항 없음' },
+];
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -27,7 +44,9 @@ export default function MyPage() {
   const [formName, setFormName] = useState('');
   const [formGender, setFormGender] = useState('');
   const [formSkinType, setFormSkinType] = useState('');
+  const [formConcerns, setFormConcerns] = useState<string[]>([]);
   const [allergy, setAllergy] = useState<AllergySelectorValue>({ categories: [], ingredientIds: [] });
+  const [allergyLoading, setAllergyLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
 
@@ -43,20 +62,39 @@ export default function MyPage() {
       setFormName(user.nickname || user.user_name);
       setFormGender(user.gender || '');
       setFormSkinType(user.skin_type || '');
+      setFormConcerns(user.skin_concerns || []);
       setWishlist(wish.items);
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const handleEdit = () => {
+  const handleConcern = (id: string) => {
+    if (id === 'none') { setFormConcerns(['none']); return; }
+    setFormConcerns((prev) => {
+      const filtered = prev.filter((c) => c !== 'none');
+      return filtered.includes(id) ? filtered.filter((c) => c !== id) : [...filtered, id];
+    });
+  };
+
+  const handleEdit = async () => {
     setSaveMsg('');
+    setFormConcerns(profile?.skin_concerns || []);
+    setAllergyLoading(true);
     setIsEditing(true);
+    try {
+      const res = await userApi.getAllergies();
+      setAllergy({ categories: res.allergy_categories, ingredientIds: res.allergy_ingredient_ids });
+    } catch {
+      setAllergy({ categories: [], ingredientIds: [] });
+    } finally {
+      setAllergyLoading(false);
+    }
   };
 
   const handleCancel = () => {
-    // 폼을 현재 저장된 profile로 되돌림
     setFormName(profile?.nickname || profile?.user_name || '');
     setFormGender(profile?.gender || '');
     setFormSkinType(profile?.skin_type || '');
+    setFormConcerns(profile?.skin_concerns || []);
     setAllergy({ categories: [], ingredientIds: [] });
     setSaveMsg('');
     setIsEditing(false);
@@ -66,16 +104,20 @@ export default function MyPage() {
     setSaving(true);
     setSaveMsg('');
     try {
+      const concernLabels = formConcerns
+        .filter((id) => id !== 'none')
+        .map((id) => CONCERNS.find((c) => c.id === id)?.label ?? id);
+
+      const allergyItems = buildAllergyItems(allergy);
+
       const [updated] = await Promise.all([
         userApi.updateProfile({
           nickname: formName,
           gender: formGender || undefined,
           skin_type: formSkinType || undefined,
+          skin_concerns: concernLabels.length ? concernLabels : undefined,
         }),
-        userApi.updateAllergies({
-          allergy_categories: allergy.categories,
-          allergy_ingredient_ids: allergy.ingredientIds,
-        }),
+        userApi.updateAllergies({ allergy_items: allergyItems }),
       ]);
       setProfile(updated);
       setSaveMsg('저장되었어요!');
@@ -104,9 +146,9 @@ export default function MyPage() {
 
       <div className="my-tabs">
         <div className="my-tabs-inner">
-          {TABS.map(({ key, label, icon }) => (
+          {TABS.map(({ key, label, Icon }) => (
             <button key={key} className={`my-tab ${activeTab === key ? 'active' : ''}`} onClick={() => setActiveTab(key)}>
-              <span>{icon}</span>
+              <Icon size={15} />
               <span>{label}</span>
             </button>
           ))}
@@ -139,6 +181,17 @@ export default function MyPage() {
                 <div className="my-info-row">
                   <span className="my-label">피부 타입</span>
                   <span className="my-info-value">{profile?.skin_type || '-'}</span>
+                </div>
+                <div className="my-info-row" style={{ alignItems: 'flex-start' }}>
+                  <span className="my-label">피부 고민</span>
+                  <span className="my-info-value">
+                    {profile?.skin_concerns?.filter((c) => c !== 'none').length
+                      ? profile.skin_concerns
+                          .filter((c) => c !== 'none')
+                          .map((id) => CONCERNS.find((c) => c.id === id)?.label ?? id)
+                          .join(', ')
+                      : '-'}
+                  </span>
                 </div>
                 {saveMsg && <p style={{ fontSize: '0.875rem', color: '#22c55e' }}>{saveMsg}</p>}
                 <button className="my-save-btn" onClick={handleEdit}>수정하기</button>
@@ -177,8 +230,26 @@ export default function MyPage() {
                   </select>
                 </div>
                 <div>
+                  <label className="my-label">피부 고민</label>
+                  <div className="my-concern-grid">
+                    {CONCERNS.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`my-concern-btn ${formConcerns.includes(c.id) ? 'active' : ''}`}
+                        onClick={() => handleConcern(c.id)}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
                   <label className="my-label">알레르기 성분</label>
-                  <AllergySelector value={allergy} onChange={setAllergy} />
+                  {allergyLoading
+                    ? <p style={{ color: '#7c3aed', fontSize: '0.875rem' }}>알레르기 정보 불러오는 중...</p>
+                    : <AllergySelector value={allergy} onChange={setAllergy} />
+                  }
                 </div>
                 {saveMsg && <p style={{ fontSize: '0.875rem', color: '#ef4444' }}>{saveMsg}</p>}
                 <button className="my-save-btn" onClick={handleSave} disabled={saving}>

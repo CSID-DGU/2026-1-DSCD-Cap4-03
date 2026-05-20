@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check, Wind, FlaskConical, Cog, Leaf, type LucideIcon } from 'lucide-react';
 import './AllergySelector.css';
 
 // ── 타입
@@ -15,13 +16,13 @@ interface Props {
 }
 
 // ── 1차 옵션
-const FIRST_LEVEL = [
-  { id: 'none',               label: '없음',              icon: '✅' },
-  { id: 'fragrance',          label: '향료/퍼퓸',          icon: '🌸' },
-  { id: 'preservative',       label: '보존제',             icon: '🧪' },
-  { id: 'metal',              label: '금속',               icon: '⚙️' },
-  { id: 'plant_essential_oil',label: '식물/에센셜오일 성분', icon: '🌿' },
-] as const;
+const FIRST_LEVEL: { id: string; label: string; Icon: LucideIcon }[] = [
+  { id: 'none',               label: '없음',              Icon: Check },
+  { id: 'fragrance',          label: '향료/퍼퓸',          Icon: Wind },
+  { id: 'preservative',       label: '보존제',             Icon: FlaskConical },
+  { id: 'metal',              label: '금속',               Icon: Cog },
+  { id: 'plant_essential_oil',label: '식물/에센셜오일 성분', Icon: Leaf },
+];
 
 // ── 2차 성분 목록
 const SECOND_LEVEL: Record<AllergyCategory, { id: number; name: string }[]> = {
@@ -136,6 +137,17 @@ const SECOND_LEVEL: Record<AllergyCategory, { id: number; name: string }[]> = {
   ],
 };
 
+export function buildAllergyItems(value: AllergySelectorValue): { category: string; ingredient_id: number }[] {
+  const result: { category: string; ingredient_id: number }[] = [];
+  for (const cat of value.categories) {
+    const catIds = new Set(SECOND_LEVEL[cat].map((i) => i.id));
+    for (const ingId of value.ingredientIds) {
+      if (catIds.has(ingId)) result.push({ category: cat, ingredient_id: ingId });
+    }
+  }
+  return result;
+}
+
 const CATEGORY_LABELS: Record<AllergyCategory, string> = {
   fragrance:          '향료/퍼퓸 성분 선택',
   preservative:       '보존제 성분 선택',
@@ -208,7 +220,7 @@ export default function AllergySelector({ value, onChange }: Props) {
               className={`allergy-first-btn ${isActive ? 'active' : ''}`}
               onClick={() => handleFirst(opt.id)}
             >
-              <span className="allergy-first-icon">{opt.icon}</span>
+              <opt.Icon size={16} className="allergy-first-icon" />
               <span>{opt.label}</span>
             </button>
           );

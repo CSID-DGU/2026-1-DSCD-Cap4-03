@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { analysisApi, type SkinHistoryItem } from '../api/analysis';
+import { Camera } from 'lucide-react';
 import './AnalysisHistoryPage.css';
 
 function formatDate(iso: string) {
@@ -36,7 +37,7 @@ export default function AnalysisHistoryPage() {
       <div className="ah-body">
 
         <div className="ah-new-card" onClick={() => navigate('/diagnosis')}>
-          <div className="ah-new-icon">📸</div>
+          <div className="ah-new-icon"><Camera size={28} color="#7c3aed" /></div>
           <div>
             <div className="ah-new-title">새로 피부 진단받기</div>
             <div className="ah-new-sub">최신 피부 상태를 다시 분석해보세요</div>
@@ -67,12 +68,12 @@ export default function AnalysisHistoryPage() {
                 onClick={() => navigate('/analysis', { state: { result_id: r.result_id } })}
               >
                 <div className="ah-card-left">
-                  <img src={r.image_url} alt="썸네일" className="ah-thumb" />
+                  {r.image_url && <img src={r.image_url} alt="썸네일" className="ah-thumb" />}
                   {idx === 0 && <span className="ah-latest-badge">최신</span>}
                 </div>
                 <div className="ah-card-info">
                   <div className="ah-card-date">{formatDate(r.analyzed_at)}</div>
-                  <div className="ah-card-type">{r.skin_type}</div>
+                  {r.skin_type && <div className="ah-card-type">{r.skin_type}</div>}
                   <div className="ah-card-comment">{r.ai_comment}</div>
                 </div>
                 <span className="ah-card-arrow">›</span>

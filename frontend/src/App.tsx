@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
 import MainPage from "./pages/MainPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
@@ -15,8 +17,14 @@ import RoutinePage from "./pages/RoutinePage";
 import ProductListPage from "./pages/ProductListPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
 import MyPage from "./pages/MyPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import TermsPage from "./pages/TermsPage";
 
 import { AuthProvider } from "./context/AuthProvider";
+
+const P = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>{children}</ProtectedRoute>
+);
 
 export default function App() {
   return (
@@ -24,32 +32,27 @@ export default function App() {
       <BrowserRouter>
         <Navbar />
         <Routes>
-          {/* 기존 */}
+          {/* 공개 */}
           <Route path="/" element={<MainPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
-          <Route path="/userinfo" element={<UserInfoPage />} />
-          <Route path="/diagnosis" element={<DiagnosisPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
 
-          {/* 로딩 */}
-          <Route path="/loading" element={<LoadingPage />} />
-
-          {/* 중간 페이지 */}
-          <Route path="/analysis-history" element={<AnalysisHistoryPage />} />
-          <Route path="/routine-history" element={<RoutineHistoryPage />} />
-
-          {/* 결과 / 루틴 */}
-          <Route path="/analysis" element={<AnalysisResultPage />} />
-          <Route path="/routine/budget" element={<BudgetPage />} />
-          <Route path="/routine/result" element={<RoutinePage />} />
-
-          {/* 제품 */}
-          <Route path="/products" element={<ProductListPage />} />
-          <Route path="/products/:id" element={<ProductDetailPage />} />
-
-          {/* 마이 */}
-          <Route path="/mypage" element={<MyPage />} />
+          {/* 로그인 필요 */}
+          <Route path="/userinfo"          element={<P><UserInfoPage /></P>} />
+          <Route path="/diagnosis"         element={<P><DiagnosisPage /></P>} />
+          <Route path="/loading"           element={<P><LoadingPage /></P>} />
+          <Route path="/analysis-history"  element={<P><AnalysisHistoryPage /></P>} />
+          <Route path="/analysis"          element={<P><AnalysisResultPage /></P>} />
+          <Route path="/routine/budget"    element={<P><BudgetPage /></P>} />
+          <Route path="/routine/result"    element={<P><RoutinePage /></P>} />
+          <Route path="/routine-history"   element={<P><RoutineHistoryPage /></P>} />
+          <Route path="/products"          element={<P><ProductListPage /></P>} />
+          <Route path="/products/:id"      element={<P><ProductDetailPage /></P>} />
+          <Route path="/mypage"            element={<P><MyPage /></P>} />
         </Routes>
+        <Footer />
       </BrowserRouter>
     </AuthProvider>
   );

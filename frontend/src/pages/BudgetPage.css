@@ -2,42 +2,43 @@
 
 .budget-page {
   min-height: 100vh;
-  background: #f5f3ff;
+  background: #ffffff;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 .budget-banner {
-  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
-  padding: 64px 24px 52px;
+  background: #F9F7FF;
+  padding: 48px 80px 40px;
 }
 .budget-banner-inner {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 .budget-banner-badge {
   display: inline-block;
-  background: #7c3aed;
-  color: #fff;
+  background: none;
+  color: #7c3aed;
   font-size: 11px;
   font-weight: 700;
-  padding: 5px 14px;
-  border-radius: 20px;
+  padding: 0;
   margin-bottom: 14px;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 .budget-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(26px, 4vw, 40px);
   font-weight: 800;
-  color: #1a1a2e;
+  color: #1A1A1A;
   margin-bottom: 8px;
+  letter-spacing: -0.03em;
 }
-.budget-sub { font-size: 14px; color: #6b7280; }
+.budget-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
 .budget-body {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: 32px 80px 80px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
@@ -47,14 +48,14 @@
 
 .budget-section {
   background: #fff;
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 22px 20px;
-  box-shadow: 0 2px 12px rgba(124,58,237,0.06);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 .budget-cat-label {
   font-size: 15px;
   font-weight: 700;
-  color: #1a1a2e;
+  color: #1A1A1A;
   margin-bottom: 16px;
 }
 .budget-options { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -63,17 +64,17 @@
   align-items: center;
   cursor: pointer;
   padding: 8px 18px;
-  border-radius: 20px;
-  border: 1.5px solid #ede9fe;
+  border-radius: 24px;
+  border: 1.5px solid #A78BFA;
   font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
-  background: #faf8ff;
+  color: #5F5F5F;
+  background: #ffffff;
   transition: all 0.18s;
   user-select: none;
 }
 .budget-radio input[type='radio'] { display: none; }
-.budget-radio:hover { border-color: #a855f7; color: #7c3aed; }
+.budget-radio:hover { border-color: #7c3aed; color: #7c3aed; }
 .budget-radio.selected { background: #7c3aed; border-color: #7c3aed; color: #fff; font-weight: 700; }
 
 .budget-submit-wrap {
@@ -82,16 +83,21 @@
   padding-top: 8px;
 }
 .btn-budget-next {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: #7c3aed;
   color: #fff;
   font-family: 'Sora', sans-serif;
   font-size: 15px;
   font-weight: 700;
   padding: 16px 64px;
-  border-radius: 30px;
+  border-radius: 24px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: transform 0.2s, box-shadow 0.2s;
 }
-.btn-budget-next:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,0.4); }
+.btn-budget-next:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
+
+@media (max-width: 900px) {
+  .budget-banner { padding: 40px 24px 32px; }
+  .budget-body { padding: 24px 24px 64px; }
+}

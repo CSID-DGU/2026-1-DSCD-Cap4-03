@@ -2,33 +2,37 @@
 
 .rh-page {
   min-height: 100vh;
-  background: #f5f3ff;
+  background: #ffffff;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 .rh-banner {
-  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
-  padding: 64px 24px 52px;
+  background: #F9F7FF;
+  padding: 48px 80px 40px;
 }
-.rh-banner-inner { max-width: 1080px; margin: 0 auto; }
+.rh-banner-inner { max-width: 1200px; margin: 0 auto; }
 .rh-badge {
   display: inline-block;
-  background: #7c3aed; color: #fff;
+  background: none;
+  color: #7c3aed;
   font-size: 11px; font-weight: 700;
-  padding: 5px 14px; border-radius: 20px;
-  margin-bottom: 14px; letter-spacing: 1px;
+  padding: 0;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 .rh-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(26px, 4vw, 40px);
-  font-weight: 800; color: #1a1a2e; margin-bottom: 8px;
+  font-weight: 800; color: #1A1A1A; margin-bottom: 8px;
+  letter-spacing: -0.03em;
 }
-.rh-sub { font-size: 14px; color: #6b7280; }
+.rh-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
 .rh-body {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: 32px 80px 80px;
   display: flex;
   flex-direction: column;
   gap: 28px;
@@ -40,17 +44,17 @@
   background: #fff;
   border-radius: 24px;
   padding: 28px 28px;
-  box-shadow: 0 2px 14px rgba(124,58,237,0.07);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 .rh-section-title {
   font-family: 'Sora', sans-serif;
-  font-size: 17px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px;
+  font-size: 17px; font-weight: 700; color: #1A1A1A; margin-bottom: 4px;
 }
-.rh-section-sub { font-size: 13px; color: #9ca3af; margin-bottom: 20px; }
+.rh-section-sub { font-size: 13px; color: #9CA3AF; margin-bottom: 20px; }
 
 /* 분석 결과 없을 때 */
 .rh-no-result {
-  text-align: center; padding: 32px; color: #9ca3af; font-size: 13px;
+  text-align: center; padding: 32px; color: #9CA3AF; font-size: 13px;
 }
 .rh-no-result p { margin-bottom: 16px; }
 .rh-btn-primary {
@@ -58,7 +62,7 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
   padding: 12px 28px; border-radius: 24px; border: none; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(124,58,237,0.3); transition: all 0.18s;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08); transition: all 0.18s;
 }
 .rh-btn-primary:hover { transform: translateY(-2px); }
 
@@ -69,23 +73,23 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  background: #faf8ff;
-  border-radius: 16px;
+  background: #F9F7FF;
+  border-radius: 24px;
   padding: 18px 20px;
-  border: 1.5px solid #ede9fe;
+  border: 1.5px solid #F5F3FF;
   cursor: pointer;
   transition: all 0.18s;
 }
 .rh-result-card:hover {
-  border-color: #a855f7;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.12);
+  border-color: #A78BFA;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transform: translateY(-1px);
 }
 .rh-result-card-left { position: relative; flex-shrink: 0; }
 .rh-result-thumb {
   width: 64px; height: 64px;
   border-radius: 12px; object-fit: cover;
-  border: 2px solid #ddd6fe;
+  border: 2px solid #F5F3FF;
 }
 .rh-latest-badge {
   position: absolute; top: -6px; right: -6px;
@@ -94,13 +98,13 @@
   padding: 2px 7px; border-radius: 10px;
 }
 .rh-result-info { flex: 1; min-width: 0; }
-.rh-result-date { font-size: 11px; color: #9ca3af; font-weight: 600; margin-bottom: 3px; }
+.rh-result-date { font-size: 11px; color: #9CA3AF; font-weight: 600; margin-bottom: 3px; }
 .rh-result-type {
   font-family: 'Sora', sans-serif;
   font-size: 14px; font-weight: 700; color: #7c3aed; margin-bottom: 4px;
 }
 .rh-result-comment {
-  font-size: 12px; color: #6b7280; line-height: 1.5;
+  font-size: 12px; color: #5F5F5F; line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 1;
   -webkit-box-orient: vertical; overflow: hidden;
 }
@@ -108,7 +112,7 @@
 .rh-select-btn {
   background: #7c3aed; color: #fff;
   font-size: 12px; font-weight: 700;
-  padding: 9px 16px; border-radius: 20px;
+  padding: 9px 16px; border-radius: 24px;
   white-space: nowrap;
   transition: all 0.18s;
 }
@@ -118,17 +122,17 @@
 
 /* 빈 상태 */
 .rh-empty {
-  text-align: center; padding: 40px; color: #9ca3af; font-size: 13px;
+  text-align: center; padding: 40px; color: #9CA3AF; font-size: 13px;
 }
 
 /* 저장된 루틴 */
 .rh-saved-list { display: flex; flex-direction: column; gap: 16px; }
 
 .rh-saved-card {
-  background: #faf8ff;
-  border-radius: 18px;
+  background: #F9F7FF;
+  border-radius: 24px;
   padding: 20px;
-  border: 1.5px solid #ede9fe;
+  border: 1.5px solid #F5F3FF;
 }
 .rh-saved-card-header {
   display: flex; align-items: center;
@@ -138,13 +142,13 @@
 }
 .rh-type-badge {
   font-size: 12px; font-weight: 700;
-  padding: 4px 12px; border-radius: 20px;
+  padding: 4px 12px; border-radius: 24px;
 }
-.rh-type-badge.best { background: #fef3c7; color: #b45309; }
-.rh-type-badge.budget { background: #dcfce7; color: #16a34a; }
+.rh-type-badge.best { background: #F9F7FF; color: #7c3aed; border: 1.5px solid #A78BFA; }
+.rh-type-badge.budget { background: #F9F7FF; color: #7c3aed; border: 1.5px solid #A78BFA; }
 .rh-saved-meta {
   display: flex; align-items: center; gap: 6px;
-  font-size: 12px; color: #9ca3af;
+  font-size: 12px; color: #9CA3AF;
 }
 .rh-saved-cost { color: #7c3aed; font-weight: 700; font-family: 'Sora', sans-serif; }
 
@@ -155,14 +159,14 @@
   margin-bottom: 16px;
 }
 .rh-saved-products::-webkit-scrollbar { height: 3px; }
-.rh-saved-products::-webkit-scrollbar-thumb { background: #ddd6fe; border-radius: 2px; }
+.rh-saved-products::-webkit-scrollbar-thumb { background: #A78BFA; border-radius: 2px; }
 
 .rh-saved-product {
   flex: 0 0 120px;
   display: flex; flex-direction: column; align-items: center;
   gap: 4px; cursor: pointer;
-  background: #fff; border-radius: 14px;
-  border: 1.5px solid #ede9fe; padding: 12px 8px;
+  background: #fff; border-radius: 24px;
+  border: 1.5px solid #F5F3FF; padding: 12px 8px;
   transition: transform 0.18s;
   text-align: center;
 }
@@ -176,9 +180,9 @@
   width: 64px; height: 64px;
   object-fit: cover; border-radius: 10px; margin-bottom: 4px;
 }
-.rh-saved-brand { font-size: 9px; color: #9ca3af; font-weight: 600; text-transform: uppercase; }
+.rh-saved-brand { font-size: 9px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; }
 .rh-saved-name {
-  font-size: 11px; font-weight: 700; color: #1a1a2e; line-height: 1.35;
+  font-size: 11px; font-weight: 700; color: #1A1A1A; line-height: 1.35;
   display: -webkit-box; -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden;
 }
@@ -190,29 +194,34 @@
 /* 필수 / 옵션 라벨 */
 .rh-saved-block-label {
   font-size: 11px; font-weight: 700;
-  color: #7c3aed; background: #ede9fe;
+  color: #7c3aed; background: #F9F7FF;
   display: inline-block;
   padding: 3px 10px; border-radius: 10px;
   margin-bottom: 10px;
 }
 .rh-saved-block-label.optional {
-  color: #9ca3af; background: #f3f4f6;
+  color: #9CA3AF; background: #F9F7FF;
   margin-top: 4px;
 }
 
 /* 옵션 제품 카드 */
 .rh-saved-product.optional {
-  border-color: #e5e7eb;
-  background: #fafafa;
+  border-color: #F5F3FF;
+  background: #F9F7FF;
 }
-.rh-saved-product.optional .rh-saved-price { color: #9ca3af; }
+.rh-saved-product.optional .rh-saved-price { color: #9CA3AF; }
 
 .rh-view-btn {
   width: 100%;
-  background: #f5f3ff; border: 1.5px solid #ddd6fe; color: #7c3aed;
+  background: transparent; border: 1.5px solid #7c3aed; color: #7c3aed;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 13px; font-weight: 700;
-  padding: 11px; border-radius: 12px; cursor: pointer;
+  padding: 11px; border-radius: 24px; cursor: pointer;
   transition: all 0.18s;
 }
-.rh-view-btn:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+.rh-view-btn:hover { background: #7c3aed; color: #fff; }
+
+@media (max-width: 900px) {
+  .rh-banner { padding: 40px 24px 32px; }
+  .rh-body { padding: 24px 24px 64px; }
+}
