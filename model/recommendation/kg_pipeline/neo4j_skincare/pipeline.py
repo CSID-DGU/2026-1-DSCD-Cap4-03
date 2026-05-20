@@ -403,14 +403,12 @@ def run_pipeline(
             scores = soft_score(row["product_key"], session_id, float(row["score"]), user_id=user_id)
             scored_rows.append({**row.to_dict(), **scores})
         reranked = pd.DataFrame(scored_rows).sort_values("S_rerank", ascending=False)
-        # All-In-One is treated as a standalone recommendation (not routine-combination slot)
+        # Keep All-In-One in the optional slot pool so it can be rendered as an option item.
         all_in_one_df = reranked[
             reranked["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
         ].copy()
         all_in_one_pick = all_in_one_df.iloc[0].to_dict() if not all_in_one_df.empty else None
-        reranked_for_routine = reranked[
-            ~reranked["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
-        ].copy()
+        reranked_for_routine = reranked.copy()
         beam_top_n = 8 if top_n is None else max(int(top_n), 2)
         best_candidates = build_routines(
             reranked_for_routine,
@@ -498,9 +496,7 @@ def run_pipeline(
             ].copy()
             if not all_in_one_fb.empty:
                 all_in_one_pick = all_in_one_fb.iloc[0].to_dict()
-            reranked_for_routine_fb = reranked_fb[
-                ~reranked_fb["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
-            ].copy()
+            reranked_for_routine_fb = reranked_fb.copy()
             beam_top_n = 8 if top_n is None else max(int(top_n), 2)
             best_fb = build_routines(
                 reranked_for_routine_fb,
@@ -565,6 +561,79 @@ def run_pipeline(
         dropped_budget_routines = before_budget_check - len(routines)
         if dropped_budget_routines > 0:
             print(f"[budget] dropped {dropped_budget_routines} routine(s) exceeding strict budget")
+        if len(routines) == 0:
+            filtered_fb, _ = hard_filter(
+                candidates,
+                session_id,
+                gender=ctx["gender"],
+                total_budget=None,
+                slot_budget_map=None,
+                total_budget_min=None,
+                total_budget_max=None,
+                slot_budget_min_map=None,
+                slot_budget_max_map=None,
+            )
+
+            if not filtered_fb.empty:
+                scored_fb = []
+                for _, row in filtered_fb.iterrows():
+                    scores = soft_score(row["product_key"], session_id, float(row["score"]), user_id=user_id)
+                    scored_fb.append({**row.to_dict(), **scores})
+
+                reranked_fb = pd.DataFrame(scored_fb).sort_values("S_rerank", ascending=False)
+                all_in_one_fb = reranked_fb[
+                    reranked_fb["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
+                ].copy()
+                if not all_in_one_fb.empty:
+                    all_in_one_pick = all_in_one_fb.iloc[0].to_dict()
+                reranked_for_routine_fb = reranked_fb.copy()
+                beam_top_n = 8 if top_n is None else max(int(top_n), 2)
+                best_fb = build_routines(
+                    reranked_for_routine_fb,
+                    ctx["gender"],
+                    session_id,
+                    top_n=beam_top_n,
+                    beam_width=200,
+                )
+                value_fb = _build_value_with_expand(
+                    reranked_for_routine_fb,
+                    ctx["gender"],
+                    session_id,
+                    top_n=20,
+                    start_beam=500,
+                    step=100,
+                    max_beam=1500,
+                )
+                routines_fb = []
+                if best_fb:
+                    b = dict(best_fb[0])
+                    b["routine_label"] = "Best Routine"
+                    routines_fb.append(b)
+                if value_fb:
+                    best_key = str(routines_fb[0].get("products")) if routines_fb else ""
+                    pick_v = None
+                    for cand in value_fb:
+                        if str(cand.get("products")) != best_key:
+                            pick_v = cand
+                            break
+                    if pick_v is None and len(value_fb) > 0:
+                        pick_v = value_fb[0]
+                    if pick_v is not None:
+                        v = dict(pick_v)
+                        v["routine_label"] = "Value Routine"
+                        if routines_fb and str(v.get("products")) == str(routines_fb[0].get("products")) and len(best_fb) > 1:
+                            v = dict(best_fb[1])
+                            v["routine_label"] = "Value Routine"
+                        routines_fb.append(v)
+
+                if routines_fb:
+                    routines = routines_fb
+                    reranked = reranked_fb
+                    price_map = _build_price_map(reranked)
+                    fallback_applied = True
+                    print("[fallback] 예산 조건에 맞는 추천이 없어, 예산 제한 없이 가장 유사한 루틴을 제공합니다.")
+                    if ctx.get("gender") == "male":
+                        routines = _attach_all_in_one_to_routines(routines, all_in_one_pick)
     failure_reason = None
     session_status = "SUCCESS"
     if len(routines) == 0:
