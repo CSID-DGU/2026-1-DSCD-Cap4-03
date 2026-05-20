@@ -24,6 +24,13 @@ def _routine_search_score(score_sum: float, products: list[dict]) -> float:
     return _routine_average_score(score_sum, products) + _optional_slot_bonus(products)
 
 
+
+def _routine_average_score(score_sum: float, products: list[dict]) -> float:
+    if not products:
+        return 0.0
+    return float(score_sum) / len(products)
+
+
 # 
 SLOT_TOPK_QUERY = """
 MATCH (p:Product)-[:IN_CATEGORY]->(cat:Category)
@@ -164,6 +171,7 @@ def _apply_item_time_tags(products: list[dict], am_pm: dict) -> None:
             product["time_tag"] = "am"
         else:
             product["time_tag"] = None
+
 
 
 # Routine Builder

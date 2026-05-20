@@ -180,6 +180,11 @@ def _map_profile_skin_type(v: str | None) -> str:
     return PROFILE_SKIN_TYPE_ALIASES.get(key, "")
 
 
+def _map_profile_skin_type(v: str | None) -> str:
+    key = _norm_text(v or "")
+    return PROFILE_SKIN_TYPE_ALIASES.get(key, "")
+
+
 @lru_cache(maxsize=2048)
 def _load_user_profile(user_id: int) -> tuple[str, list[str]]:
     conn = _mysql_connect()
