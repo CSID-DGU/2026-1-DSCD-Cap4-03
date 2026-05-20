@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Wallet, Droplets, Leaf, Sparkles, Package } from 'lucide-react';
 import './BudgetPage.css';
 
 const CATEGORIES = ['전체', '토너', '에멀젼', '앰플', '크림'] as const;
@@ -61,11 +62,22 @@ export default function BudgetPage() {
   };
 
   const handleNext = () => {
-    navigate('/loading', { state: { type: 'routine', resultId, imageId, budget } });
+    navigate('/loading', {
+      state: {
+        type: 'routine', resultId, imageId,
+        budget: {
+          total:    budget['전체'],
+          toner:    budget['토너'],
+          emulsion: budget['에멀젼'],
+          ampoule:  budget['앰플'],
+          cream:    budget['크림'],
+        },
+      },
+    });
   };
 
-  const CAT_ICONS: Record<Category, string> = {
-    전체: '💰', 토너: '💧', 에멀젼: '🌿', 앰플: '✨', 크림: '🧴',
+  const CAT_ICONS: Record<Category, ReactNode> = {
+    전체: <Wallet size={15} />, 토너: <Droplets size={15} />, 에멀젼: <Leaf size={15} />, 앰플: <Sparkles size={15} />, 크림: <Package size={15} />,
   };
 
   return (
@@ -81,7 +93,7 @@ export default function BudgetPage() {
       <div className="budget-body">
         {CATEGORIES.map((cat) => (
           <div className="budget-section" key={cat}>
-            <div className="budget-cat-label">{CAT_ICONS[cat]} {cat === '전체' ? '전체 예산' : cat}</div>
+            <div className="budget-cat-label" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>{CAT_ICONS[cat]} {cat === '전체' ? '전체 예산' : cat}</div>
             <div className="budget-options">
               {BUDGET_OPTIONS[cat].map(({ label, value }) => (
                 <label key={label} className={`budget-radio ${budget[cat] === value ? 'selected' : ''}`}>

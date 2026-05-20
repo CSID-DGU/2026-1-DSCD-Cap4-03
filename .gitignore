@@ -20,12 +20,21 @@ GPT_API_key.txt
 AWS S3 key.txt
 backend/AWS S3 key.txt
 
+# Node
+node_modules/
+
+# Vite cache
+.vite/
+
+# Claude Code local config
+.claude/
+
 # Class materials
 DSCD_수업내용/
 
 # Old or local-only work
 cosmetic_crawling/
-model/skin_analysis
+model/skin/
 model/recommendation/embedding_old/
 model/recommendation/embedding_pipeline/embedding_results/
 model/recommendation/embedding_test/

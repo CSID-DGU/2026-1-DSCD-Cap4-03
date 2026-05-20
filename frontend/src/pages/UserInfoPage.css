@@ -2,35 +2,39 @@
 
 .ui-page {
   min-height: 100vh;
-  background: #f5f3ff;
+  background: #ffffff;
   font-family: 'Noto Sans KR', sans-serif;
 }
 
 /* ── 배너 ── */
 .ui-banner {
-  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
-  padding: 56px 24px 44px;
+  background: #F9F7FF;
+  padding: 48px 80px 40px;
 }
-.ui-banner-inner { max-width: 1080px; margin: 0 auto; }
+.ui-banner-inner { max-width: 1200px; margin: 0 auto; }
 .ui-badge {
   display: inline-block;
-  background: #7c3aed; color: #fff;
+  background: none;
+  color: #7c3aed;
   font-size: 11px; font-weight: 700;
-  padding: 5px 14px; border-radius: 20px;
-  margin-bottom: 14px; letter-spacing: 1px;
+  padding: 0;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 .ui-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(24px, 4vw, 38px);
-  font-weight: 800; color: #1a1a2e; margin-bottom: 8px;
+  font-weight: 800; color: #1A1A1A; margin-bottom: 8px;
+  letter-spacing: -0.03em;
 }
-.ui-sub { font-size: 14px; color: #6b7280; }
+.ui-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
 /* ── 바디 ── */
 .ui-body {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 28px 24px 80px;
+  padding: 28px 80px 80px;
 }
 
 /* ── 카드 ── */
@@ -38,7 +42,7 @@
   background: #fff;
   border-radius: 24px;
   padding: 0;
-  box-shadow: 0 2px 20px rgba(124,58,237,0.08);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   overflow: hidden;
 }
 
@@ -72,17 +76,17 @@
 }
 .ui-section-title {
   font-family: 'Sora', sans-serif;
-  font-size: 15px; font-weight: 700; color: #1a1a2e;
+  font-size: 15px; font-weight: 700; color: #1A1A1A;
   margin-bottom: 4px;
 }
-.ui-section-sub { font-size: 12px; color: #9ca3af; line-height: 1.5; }
+.ui-section-sub { font-size: 12px; color: #9CA3AF; line-height: 1.5; }
 
 .ui-section-body { width: 100%; }
 
 /* ── 구분선 ── */
 .ui-divider {
   height: 1px;
-  background: #f3f4f6;
+  background: #F5F3FF;
   margin: 0 40px;
 }
 @media (max-width: 720px) { .ui-divider { margin: 0 20px; } }
@@ -98,15 +102,15 @@
   align-items: center;
   gap: 6px;
   padding: 10px 20px;
-  background: #faf8ff;
-  border: 1.5px solid #ede9fe;
-  border-radius: 20px;
-  font-size: 13px; font-weight: 600; color: #4b5563;
+  background: #ffffff;
+  border: 1.5px solid #A78BFA;
+  border-radius: 24px;
+  font-size: 13px; font-weight: 600; color: #5F5F5F;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
   transition: all 0.18s;
 }
-.ui-select-btn:hover { border-color: #a855f7; color: #7c3aed; }
+.ui-select-btn:hover { border-color: #7c3aed; color: #7c3aed; }
 .ui-select-btn.active {
   background: #7c3aed; border-color: #7c3aed;
   color: #fff;
@@ -116,15 +120,15 @@
 .ui-input {
   padding: 11px 16px;
   border-radius: 14px;
-  border: 1.5px solid #ede9fe;
-  font-size: 14px; color: #1a1a2e;
+  border: 1.5px solid #A78BFA;
+  font-size: 14px; color: #1A1A1A;
   font-family: 'Noto Sans KR', sans-serif;
-  background: #faf8ff;
+  background: #F9F7FF;
   outline: none;
   transition: border-color 0.18s;
   width: 200px;
 }
-.ui-input:focus { border-color: #a855f7; }
+.ui-input:focus { border-color: #7c3aed; }
 
 /* ── 피부 고민 그리드 ── */
 .ui-concern-grid {
@@ -138,15 +142,15 @@
   align-items: center;
   gap: 6px;
   padding: 10px 20px;
-  background: #faf8ff;
-  border: 1.5px solid #ede9fe;
-  border-radius: 20px;
-  font-size: 13px; font-weight: 600; color: #4b5563;
+  background: #ffffff;
+  border: 1.5px solid #A78BFA;
+  border-radius: 24px;
+  font-size: 13px; font-weight: 600; color: #5F5F5F;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
   transition: all 0.18s;
 }
-.ui-concern-btn:hover { border-color: #a855f7; color: #7c3aed; background: #f5f3ff; }
+.ui-concern-btn:hover { border-color: #7c3aed; color: #7c3aed; background: #F9F7FF; }
 .ui-concern-btn.active {
   background: #7c3aed; border-color: #7c3aed; color: #fff;
 }
@@ -160,8 +164,8 @@
   flex-wrap: wrap;
   gap: 16px;
   padding: 28px 40px;
-  background: #faf8ff;
-  border-top: 1px solid #f3f4f6;
+  background: #F9F7FF;
+  border-top: 1px solid #F5F3FF;
 }
 @media (max-width: 720px) { .ui-submit-row { padding: 24px 20px; } }
 
@@ -172,18 +176,24 @@
   flex: 1;
 }
 .ui-summary-tag {
-  background: #ede9fe; color: #6b21a8;
+  background: #F9F7FF; color: #7c3aed;
   font-size: 12px; font-weight: 700;
-  padding: 4px 12px; border-radius: 20px;
+  padding: 4px 12px; border-radius: 24px;
+  border: 1.5px solid #A78BFA;
 }
-.ui-summary-tag.allergy { background: #fef2f2; color: #dc2626; }
+.ui-summary-tag.allergy { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
 
 .ui-submit-btn {
-  background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff;
+  background: #7c3aed; color: #fff;
   font-family: 'Sora', sans-serif;
   font-size: 15px; font-weight: 700;
-  padding: 14px 40px; border-radius: 28px; border: none; cursor: pointer;
-  box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+  padding: 14px 40px; border-radius: 24px; border: none; cursor: pointer;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: all 0.2s; white-space: nowrap;
 }
-.ui-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+.ui-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
+
+@media (max-width: 900px) {
+  .ui-banner { padding: 40px 24px 32px; }
+  .ui-body { padding: 24px 24px 64px; }
+}

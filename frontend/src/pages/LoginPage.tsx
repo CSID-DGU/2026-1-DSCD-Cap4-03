@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { authApi } from '../api/auth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
+  const from: string = location.state?.from ?? '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +21,7 @@ export default function LoginPage() {
     try {
       const res = await authApi.login({ email, password });
       login(res.access_token, res.user_id, res.nickname);
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err) {
       setError((err as Error).message || '로그인에 실패했어요.');
     } finally {

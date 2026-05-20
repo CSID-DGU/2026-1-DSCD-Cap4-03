@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AllergySelector from '../components/AllergySelector';
+import AllergySelector, { buildAllergyItems } from '../components/AllergySelector';
 import type { AllergySelectorValue } from '../components/AllergySelector';
 import { userApi } from '../api/user';
 import './UserInfoPage.css';
@@ -61,18 +61,20 @@ export default function UserInfoPage() {
     setError('');
     setLoading(true);
     try {
+      const concernLabels = concerns
+        .filter((id) => id !== 'none')
+        .map((id) => CONCERNS.find((c) => c.id === id)?.label ?? id);
+
       await userApi.updateProfile({
         gender: gender || undefined,
         birth: birthdate || undefined,
         skin_type: skinType || undefined,
-        skin_concerns: concerns.length ? concerns : undefined,
+        skin_concerns: concernLabels.length ? concernLabels : undefined,
       });
 
-      if (allergy.categories.length > 0 || allergy.ingredientIds.length > 0) {
-        await userApi.updateAllergies({
-          allergy_categories: allergy.categories,
-          allergy_ingredient_ids: allergy.ingredientIds,
-        });
+      const allergyItems = buildAllergyItems(allergy);
+      if (allergyItems.length > 0) {
+        await userApi.updateAllergies({ allergy_items: allergyItems });
       }
 
       navigate('/');
@@ -97,11 +99,11 @@ export default function UserInfoPage() {
         <div className="ui-card">
           <Section step={1} title="성별">
             <div className="ui-btn-group">
-              {[{ val: 'female', label: '여성', icon: '👩' }, { val: 'male', label: '남성', icon: '👨' }].map((g) => (
+              {[{ val: 'female', label: '여성' }, { val: 'male', label: '남성' }].map((g) => (
                 <button key={g.val} type="button"
                   className={`ui-select-btn ${gender === g.val ? 'active' : ''}`}
                   onClick={() => setGender(g.val)}>
-                  <span>{g.icon}</span> {g.label}
+                  {g.label}
                 </button>
               ))}
             </div>
