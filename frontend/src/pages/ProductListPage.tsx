@@ -1,16 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productApi, type ProductSummary } from '../api/product';
+import { Heart } from 'lucide-react';
 import './ProductListPage.css';
 
-type CategoryKey = '전체' | '토너' | '에멀젼' | '에센스/앰플' | '크림/젤';
+type CategoryKey =
+  | '전체' | '토너' | '에멀젼' | '에센스/앰플' | '크림/젤'
+  | '멀티밤' | '아이크림' | '페이셜 오일' | '쉐이빙' | '올인원' | '미스트';
 
 const CATEGORY_CONFIG: { key: CategoryKey; apiCategories: string[] }[] = [
-  { key: '전체',        apiCategories: [] },
-  { key: '토너',        apiCategories: ['Toner', 'Toner Pads'] },
-  { key: '에멀젼',      apiCategories: ['Emulsions'] },
+  { key: '전체',       apiCategories: [] },
+  { key: '토너',       apiCategories: ['Toner', 'Toner Pads'] },
+  { key: '에멀젼',     apiCategories: ['Emulsions'] },
   { key: '에센스/앰플', apiCategories: ['Essences/Ampoules/Serums'] },
-  { key: '크림/젤',     apiCategories: ['Cream/Gel'] },
+  { key: '크림/젤',    apiCategories: ['Cream/Gel'] },
+  { key: '멀티밤',     apiCategories: ['Balms/Multi-balms'] },
+  { key: '아이크림',   apiCategories: ['Eye Treatments'] },
+  { key: '페이셜 오일', apiCategories: ['Facial Oils'] },
+  { key: '쉐이빙',     apiCategories: ['Shaving Products'] },
+  { key: '올인원',     apiCategories: ['All-In-One'] },
+  { key: '미스트',     apiCategories: ['Face Mists'] },
 ];
 
 export const CATEGORY_KO: Record<string, string> = {
@@ -19,19 +28,24 @@ export const CATEGORY_KO: Record<string, string> = {
   'Essences/Ampoules/Serums': '에센스/앰플/세럼',
   'Cream/Gel': '크림/젤',
   'Balms/Multi-balms': '멀티밤', 'Eye Treatments': '아이크림',
-  'Facial Oils': '페이셜 오일', 'Shaving Products': '쉐이빙', 'All-In-One': '올인원',
+  'Facial Oils': '페이셜 오일', 'Shaving Products': '쉐이빙',
+  'All-In-One': '올인원', 'Face Mists': '미스트',
 };
 
 export default function ProductListPage() {
   const navigate = useNavigate();
 
+  const PAGE_SIZE = 30;
+
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('전체');
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [wishlist, setWishlist] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     setLoading(true);
+    setPage(1);
     const config = CATEGORY_CONFIG.find((c) => c.key === activeCategory)!;
     const fetch = config.apiCategories.length === 0
       ? productApi.getList()
@@ -100,32 +114,57 @@ export default function ProductListPage() {
           <p style={{ textAlign: 'center', color: '#7c3aed', padding: '3rem' }}>불러오는 중...</p>
         ) : products.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem' }}>제품이 없어요.</p>
-        ) : (
-          <div className="pl-grid">
-            {products.map((product) => (
-              <div className="pl-card" key={product.product_id} onClick={() => navigate(`/products/${product.product_id}`)}>
-                <div className="pl-card-img-wrap">
-                  <img src={product.image_url} alt={product.product_name} className="pl-card-img" />
-                  <button
-                    className={`pl-wish-btn ${wishlist.has(product.product_id) ? 'wished' : ''}`}
-                    onClick={(e) => toggleWish(product.product_id, e)}
-                  >
-                    {wishlist.has(product.product_id) ? '💜' : '🤍'}
-                  </button>
-                  <span className="pl-category-badge">{CATEGORY_KO[product.category] ?? product.category}</span>
-                </div>
-                <div className="pl-card-body">
-                  <div className="pl-card-brand">{product.brand_name}</div>
-                  <div className="pl-card-name">{product.product_name}</div>
-                  <div className="pl-card-tags">
-                    {product.tags.slice(0, 2).map((tag) => <span key={tag} className="pl-tag">#{tag}</span>)}
+        ) : (() => {
+          const totalPages = Math.ceil(products.length / PAGE_SIZE);
+          const paged = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+          return (
+            <>
+              <div className="pl-grid">
+                {paged.map((product) => (
+                  <div className="pl-card" key={product.product_id} onClick={() => navigate(`/products/${product.product_id}`)}>
+                    <div className="pl-card-img-wrap">
+                      <img src={product.image_url} alt={product.product_name} className="pl-card-img" />
+                      <button
+                        className={`pl-wish-btn ${wishlist.has(product.product_id) ? 'wished' : ''}`}
+                        onClick={(e) => toggleWish(product.product_id, e)}
+                      >
+                        <Heart size={14} fill={wishlist.has(product.product_id) ? '#7c3aed' : 'none'} color={wishlist.has(product.product_id) ? '#7c3aed' : '#9CA3AF'} />
+                      </button>
+                      <span className="pl-category-badge">{CATEGORY_KO[product.category] ?? product.category}</span>
+                    </div>
+                    <div className="pl-card-body">
+                      <div className="pl-card-brand">{product.brand_name}</div>
+                      <div className="pl-card-name">{product.product_name}</div>
+                      <div className="pl-card-tags">
+                        {product.tags.filter((t) => t !== product.category).slice(0, 2).map((tag) => <span key={tag} className="pl-tag">#{tag}</span>)}
+                      </div>
+                      <div className="pl-card-price">{product.price.toLocaleString()}원</div>
+                    </div>
                   </div>
-                  <div className="pl-card-price">{product.price.toLocaleString()}원</div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+              {totalPages > 1 && (() => {
+                const WINDOW = 5;
+                const half = Math.floor(WINDOW / 2);
+                let start = Math.max(1, page - half);
+                let end = Math.min(totalPages, start + WINDOW - 1);
+                if (end - start < WINDOW - 1) start = Math.max(1, end - WINDOW + 1);
+                const pageNums = Array.from({ length: end - start + 1 }, (_, i) => start + i);
+                return (
+                  <div className="pl-pagination">
+                    <button className="pl-page-nav" onClick={() => setPage(1)} disabled={page === 1}>«</button>
+                    <button className="pl-page-nav" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+                    {pageNums.map((p) => (
+                      <button key={p} className={`pl-page-num ${p === page ? 'active' : ''}`} onClick={() => setPage(p)}>{p}</button>
+                    ))}
+                    <button className="pl-page-nav" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next ›</button>
+                    <button className="pl-page-nav" onClick={() => setPage(totalPages)} disabled={page === totalPages}>»</button>
+                  </div>
+                );
+              })()}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

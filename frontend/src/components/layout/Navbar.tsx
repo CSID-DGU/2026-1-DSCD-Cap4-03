@@ -7,14 +7,6 @@ export default function Navbar() {
   const { isLoggedIn, logout } = useAuth();
   const navigate = useNavigate();
 
-  const handleDiagnosis = () => {
-    if (isLoggedIn) {
-      navigate('/diagnosis');
-    } else {
-      navigate('/login');
-    }
-  };
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -30,14 +22,13 @@ export default function Navbar() {
 
       {/* 가운데 */}
       <div className="nav-center">
-        <span
+        <Link
+          to="/diagnosis"
           className={`nav-link ${pathname === '/diagnosis' ? 'active' : ''}`}
-          onClick={handleDiagnosis}
         >
           피부 진단 시작하기
-        </span>
+        </Link>
 
-        {/* /analysis → 중간 기록 페이지로 변경 */}
         <Link
           to="/analysis-history"
           className={`nav-link ${pathname === '/analysis-history' || pathname === '/analysis' ? 'active' : ''}`}
@@ -45,7 +36,6 @@ export default function Navbar() {
           피부 분석 결과
         </Link>
 
-        {/* /routine → 루틴 히스토리 페이지로 변경 */}
         <Link
           to="/routine-history"
           className={`nav-link ${pathname === '/routine-history' || pathname.startsWith('/routine') ? 'active' : ''}`}
@@ -55,7 +45,7 @@ export default function Navbar() {
 
         <Link
           to="/products"
-          className={`nav-link ${pathname === '/products' ? 'active' : ''}`}
+          className={`nav-link ${pathname === '/products' || pathname.startsWith('/products') ? 'active' : ''}`}
         >
           제품 찾기
         </Link>

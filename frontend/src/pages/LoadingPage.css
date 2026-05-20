@@ -1,6 +1,6 @@
 .lp-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #ddd6fe 100%);
+  background: #F9F7FF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10,7 +10,7 @@
 .lp-card {
   background: #fff;
   border-radius: 24px;
-  box-shadow: 0 8px 40px rgba(124, 58, 237, 0.12);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   padding: 3rem 2.5rem;
   width: 100%;
   max-width: 440px;
@@ -40,7 +40,7 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 3px solid #ddd6fe;
+  border: 3px solid #F5F3FF;
   border-top-color: #7c3aed;
   animation: lp-spin 1s linear infinite;
 }
@@ -63,13 +63,14 @@
 .lp-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1e1b4b;
+  color: #1A1A1A;
   margin: 0;
+  font-family: 'Sora', sans-serif;
 }
 
 .lp-sub {
   font-size: 0.9rem;
-  color: #6b7280;
+  color: #5F5F5F;
   margin: -0.5rem 0 0;
 }
 
@@ -88,19 +89,19 @@
   gap: 0.85rem;
   padding: 0.8rem 1rem;
   border-radius: 12px;
-  background: #f9fafb;
+  background: #F9F7FF;
   border: 1.5px solid transparent;
   transition: all 0.3s ease;
 }
 
 .lp-step.active {
-  background: #f5f3ff;
+  background: #F5F3FF;
   border-color: #7c3aed;
 }
 
 .lp-step.done {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background: #F9F7FF;
+  border-color: #A78BFA;
 }
 
 .lp-step.pending {
@@ -112,13 +113,13 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #e5e7eb;
+  background: #F5F3FF;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #6b7280;
+  color: #9CA3AF;
   flex-shrink: 0;
   transition: all 0.3s ease;
 }
@@ -156,7 +157,7 @@
 .lp-step-message {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: #1A1A1A;
   line-height: 1.3;
 }
 
@@ -165,7 +166,7 @@
 }
 
 .lp-step.active .lp-step-message {
-  color: #5b21b6;
+  color: #7c3aed;
 }
 
 .lp-step-detail {
@@ -203,12 +204,13 @@
   background: #7c3aed;
   color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 24px;
   padding: 0.75rem 1.8rem;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 
 .lp-retry-btn:hover {

@@ -13,6 +13,10 @@ export interface UserProfile {
 }
 
 export interface AllergyPayload {
+  allergy_items: { category: string; ingredient_id: number }[];
+}
+
+export interface AllergyResponse {
   allergy_categories: string[];
   allergy_ingredient_ids: number[];
 }
@@ -28,6 +32,8 @@ export const userApi = {
     nickname?: string;
     user_name?: string;
   }) => api.patch<UserProfile>('/users/me/profile', body),
+
+  getAllergies: () => api.get<AllergyResponse>('/users/me/allergies'),
 
   updateAllergies: (body: AllergyPayload) =>
     api.put<{ user_id: number; saved_count: number }>('/users/me/allergies', body),

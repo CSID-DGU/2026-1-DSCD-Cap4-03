@@ -19,7 +19,7 @@ export interface AnalysisResult {
     wrinkle: string;
   };
   image_url: string;
-  skin_type: string;
+  skin_type: string | null;
   raw_metrics: {
     acne: number;
     dryness: number;
@@ -43,8 +43,8 @@ export interface SkinHistoryItem {
   result_id: number;
   image_id: number;
   analyzed_at: string;
-  skin_type: string;
-  image_url: string;
+  skin_type: string | null;
+  image_url: string | null;
   ai_comment: string;
 }
 

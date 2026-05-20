@@ -2,36 +2,37 @@
 
 .ar-page {
   min-height: 100vh;
-  background: #f9fafb;
+  background: #ffffff;
   font-family: 'Noto Sans KR', sans-serif;
-  color: #1a1a2e;
+  color: #1A1A1A;
 }
 
-.ar-section-inner { max-width: 1080px; margin: 0 auto; }
+.ar-section-inner { max-width: 1200px; margin: 0 auto; }
 
 .ar-sec-badge {
   display: inline-block;
-  background: #ede9fe;
+  background: none;
   color: #7c3aed;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 5px 16px;
-  border-radius: 20px;
+  padding: 0;
   margin-bottom: 12px;
-  letter-spacing: 0.3px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
-.ar-badge-danger { background: #fef2f2; color: #ef4444; }
+.ar-badge-danger { background: none; color: #ef4444; }
 
 .ar-sec-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(22px, 3vw, 30px);
   font-weight: 700;
-  color: #1a1a2e;
+  color: #1A1A1A;
   margin-bottom: 6px;
+  letter-spacing: -0.03em;
 }
 .ar-sec-sub {
   font-size: 13px;
-  color: #9ca3af;
+  color: #9CA3AF;
   margin-bottom: 24px;
   line-height: 1.7;
   display: flex;
@@ -58,7 +59,7 @@
   flex-direction: column;
   align-items: center;
   padding: 12px 24px;
-  border-radius: 14px;
+  border-radius: 24px;
   border: 1.5px solid;
   min-width: 80px;
 }
@@ -73,11 +74,11 @@
 
 /* ── HERO ── */
 .ar-hero {
-  background: linear-gradient(150deg, #f5f3ff 0%, #ede9fe 60%, #ddd6fe 100%);
-  padding: 72px 24px 80px;
+  background: #F9F7FF;
+  padding: 48px 80px 56px;
 }
 .ar-hero-inner {
-  max-width: 1080px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -88,43 +89,47 @@
 .ar-hero-left { flex: 1; min-width: 280px; }
 .ar-hero-badge {
   display: inline-block;
-  background: #7c3aed; color: #fff;
+  background: none;
+  color: #7c3aed;
   font-size: 11px; font-weight: 700;
-  padding: 5px 14px; border-radius: 20px;
-  margin-bottom: 20px; letter-spacing: 0.5px;
+  padding: 0;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 .ar-hero-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(28px, 4vw, 48px);
   font-weight: 800; line-height: 1.25;
-  color: #1a1a2e; margin-bottom: 14px;
+  color: #1A1A1A; margin-bottom: 14px;
+  letter-spacing: -0.03em;
 }
-.ar-hero-name { color: #1a1a2e; }
+.ar-hero-name { color: #1A1A1A; }
 .ar-hero-title em { color: #7c3aed; font-style: normal; }
-.ar-hero-date { font-size: 13px; color: #6b7280; margin-bottom: 18px; }
+.ar-hero-date { font-size: 13px; color: #5F5F5F; margin-bottom: 18px; }
 .ar-skin-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
 .ar-skin-tag {
-  background: #fff; border: 1.5px solid #ddd6fe;
-  color: #6b21a8; font-size: 12px; font-weight: 600;
-  padding: 5px 14px; border-radius: 20px;
+  background: #fff; border: 1.5px solid #A78BFA;
+  color: #7c3aed; font-size: 12px; font-weight: 600;
+  padding: 5px 14px; border-radius: 24px;
 }
 .ar-hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .ar-btn-primary {
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
-  padding: 13px 28px; border-radius: 28px; border: none; cursor: pointer;
-  transition: all 0.2s; box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+  padding: 13px 28px; border-radius: 24px; border: none; cursor: pointer;
+  transition: all 0.2s; box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
-.ar-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.4); }
+.ar-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
 .ar-btn-ghost {
   background: transparent; color: #7c3aed;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 600;
-  padding: 13px 24px; border-radius: 28px;
-  border: 1.5px solid #c4b5fd; cursor: pointer; transition: all 0.2s;
+  padding: 13px 24px; border-radius: 24px;
+  border: 1.5px solid #7c3aed; cursor: pointer; transition: all 0.2s;
 }
-.ar-btn-ghost:hover { background: #f5f3ff; }
+.ar-btn-ghost:hover { background: #F9F7FF; }
 
 .ar-hero-right {
   position: relative;
@@ -132,9 +137,9 @@
 }
 .ar-photo-ring {
   width: 260px; height: 260px; border-radius: 50%;
-  background: linear-gradient(135deg, #c4b5fd, #a78bfa);
+  background: #F5F3FF;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 12px 40px rgba(124,58,237,0.25);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 .ar-photo {
   width: 240px; height: 240px; border-radius: 50%;
@@ -142,9 +147,9 @@
 }
 .ar-score-badge {
   position: absolute; top: 0; right: -10px;
-  background: #fff; border-radius: 14px; padding: 10px 14px;
-  text-align: center; font-size: 11px; color: #9ca3af; font-weight: 600;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1); line-height: 1.6;
+  background: #fff; border-radius: 24px; padding: 10px 14px;
+  text-align: center; font-size: 11px; color: #9CA3AF; font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08); line-height: 1.6;
 }
 .ar-score-badge strong {
   font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800;
@@ -152,19 +157,19 @@
 }
 .ar-age-badge {
   position: absolute; bottom: 10px; left: -10px;
-  background: #fff; border-radius: 14px; padding: 10px 14px;
-  text-align: center; font-size: 11px; color: #9ca3af; font-weight: 600;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1); line-height: 1.6;
+  background: #fff; border-radius: 24px; padding: 10px 14px;
+  text-align: center; font-size: 11px; color: #9CA3AF; font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08); line-height: 1.6;
 }
 .ar-age-badge strong {
   font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800;
-  color: #a855f7; display: block;
+  color: #7c3aed; display: block;
 }
 
 /* ── 위험 지표 섹션 (AI 한마디 포함) ── */
 .ar-report-section {
   background: #fff;
-  padding: 72px 24px 64px;   /* 아래 여백 충분히 */
+  padding: 72px 80px 64px;
 }
 
 /* 레이더 + 지표 2열 */
@@ -173,17 +178,17 @@
   grid-template-columns: 1fr 1fr;
   gap: 32px;
   align-items: start;
-  margin-bottom: 32px;       /* AI 한마디와의 간격 */
+  margin-bottom: 32px;
 }
 @media (max-width: 860px) {
   .ar-report-body { grid-template-columns: 1fr; }
 }
 
 .ar-radar-col {
-  background: #fafafa;
-  border-radius: 20px;
+  background: #F9F7FF;
+  border-radius: 24px;
   padding: 20px;
-  border: 1px solid #f3f4f6;
+  border: none;
 }
 .ar-radar-wrap { position: relative; }
 .ar-radar-center {
@@ -195,7 +200,7 @@
   font-family: 'Sora', sans-serif;
   font-size: 32px; font-weight: 800; line-height: 1;
 }
-.ar-radar-label { font-size: 12px; color: #9ca3af; font-weight: 600; margin-top: 2px; }
+.ar-radar-label { font-size: 12px; color: #9CA3AF; font-weight: 600; margin-top: 2px; }
 
 .ar-metric-grid {
   display: grid;
@@ -207,20 +212,21 @@
 }
 
 .ar-metric-card {
-  background: #fff; border-radius: 16px; padding: 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-  border: 1px solid #f3f4f6;
+  background: #fff; border-radius: 24px; padding: 14px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  border: none;
   transition: transform 0.18s;
 }
 .ar-metric-card:hover { transform: translateY(-2px); }
 .ar-metric-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .ar-metric-icon-wrap {
   width: 32px; height: 32px; border-radius: 8px;
+  background: #F9F7FF;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; flex-shrink: 0;
 }
 .ar-metric-label-wrap { flex: 1; min-width: 0; }
-.ar-metric-name { font-size: 13px; font-weight: 700; color: #1a1a2e; }
+.ar-metric-name { font-size: 13px; font-weight: 700; color: #1A1A1A; }
 .ar-metric-grade-badge {
   display: inline-block; font-size: 10px; font-weight: 700;
   padding: 2px 8px; border-radius: 8px; margin-top: 2px;
@@ -231,50 +237,56 @@
   flex-shrink: 0; line-height: 1;
 }
 .ar-metric-bar-bg {
-  width: 100%; height: 4px; background: #f3f4f6;
+  width: 100%; height: 4px; background: #F5F3FF;
   border-radius: 99px; overflow: hidden; margin-bottom: 8px;
 }
 .ar-metric-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
-.ar-metric-desc { font-size: 11px; color: #6b7280; line-height: 1.6; margin: 0; }
+.ar-metric-desc { font-size: 11px; color: #5F5F5F; line-height: 1.6; margin: 0; }
 
 /* ── AI 한마디 ── */
 .ar-ai-box {
-  background: #f9fafb;
-  border-radius: 20px;
+  background: #F9F7FF;
+  border-radius: 24px;
   padding: 28px 32px;
-  border-left: 4px solid #7c3aed;
-  /* box-shadow 제거 — 같은 흰 배경이라 자연스럽게 */
-  border: 1px solid #ede9fe;
+  border: none;
   border-left: 4px solid #7c3aed;
 }
 .ar-ai-label { font-size: 13px; font-weight: 700; color: #7c3aed; margin-bottom: 12px; }
-.ar-ai-text { font-size: 15px; color: #1a1a2e; line-height: 1.85; font-weight: 500; margin: 0 0 14px; }
-.ar-ai-cta { font-size: 12px; color: #a78bfa; font-weight: 600; margin: 0; }
+.ar-ai-text { font-size: 15px; color: #1A1A1A; line-height: 1.85; font-weight: 500; margin: 0 0 14px; }
+.ar-ai-cta { font-size: 12px; color: #A78BFA; font-weight: 600; margin: 0; }
 
 /* ── FOOTER CTA ── */
 .ar-cta-section {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
-  padding: 72px 24px; text-align: center;
+  background: #F9F7FF;
+  padding: 72px 80px; text-align: center;
 }
 .ar-cta-section h2 {
   font-family: 'Sora', sans-serif;
   font-size: clamp(22px, 3vw, 32px); font-weight: 700;
-  color: #fff; margin-bottom: 10px;
+  color: #1A1A1A; margin-bottom: 10px;
+  letter-spacing: -0.03em;
 }
-.ar-cta-section p { font-size: 14px; color: rgba(255,255,255,0.75); margin-bottom: 32px; }
+.ar-cta-section p { font-size: 14px; color: #5F5F5F; margin-bottom: 32px; line-height: 1.7; }
 .ar-btn-white {
-  background: #fff; color: #7c3aed;
+  background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 15px; font-weight: 700; padding: 15px 40px;
-  border-radius: 30px; border: none; cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15); transition: all 0.2s;
+  border-radius: 24px; border: none; cursor: pointer;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08); transition: all 0.2s;
 }
 .ar-btn-white:hover { transform: translateY(-2px); }
 
 /* ── FOOTER ── */
 .ar-footer {
-  background: #1a1a2e; padding: 24px 40px;
+  background: #F9F7FF; padding: 24px 80px;
   display: flex; justify-content: space-between; flex-wrap: wrap;
-  gap: 8px; font-size: 11px; color: #6b7280;
+  gap: 8px; font-size: 11px; color: #9CA3AF;
 }
-.ar-footer-links { color: #6b7280; }
+.ar-footer-links { color: #9CA3AF; }
+
+@media (max-width: 900px) {
+  .ar-hero { padding: 40px 24px 40px; }
+  .ar-report-section { padding: 48px 24px 48px; }
+  .ar-cta-section { padding: 48px 24px; }
+  .ar-footer { padding: 24px 24px; }
+}

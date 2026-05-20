@@ -3,18 +3,16 @@ import { api } from './client';
 export interface RoutineProductItem {
   product_id: number;
   step: number;
-  application_guide: string;
   time_tag: 'am' | 'pm' | null;
 }
 
 export interface RoutineItem {
   routine_id: string;
-  type: 'best' | 'budget';
+  type: 'best' | 'value';
   label: string;
   routine_time: 'am' | 'pm' | 'both';
   total_cost: number;
   duration: number;
-  ai_description: string;
   products: RoutineProductItem[];
 }
 
@@ -24,6 +22,9 @@ export interface RecommendationResponse {
   result_id: number;
   session_status: string;
   routines: RoutineItem[];
+  budget_check_passed: boolean;
+  budget_fallback_applied: boolean;
+  budget_message: string | null;
 }
 
 export interface SavedRoutineItem {
@@ -61,7 +62,26 @@ export const routineApi = {
     api.get<RecommendationResponse>(`/recommendations/${sessionId}`),
 
   createExplanation: (body: { session_id: number }) =>
-    api.post<{ session_id: number; summary_text: string }>('/recommendation-explanations', body),
+    api.post<{
+      session_id: number;
+      llm_model: string;
+      prompt_version: string;
+      routines: {
+        routine_id: number;
+        routine_type: 'best' | 'value';
+        routine_rank: number;
+        ampm_mode: string;
+        recommend_summary: string;
+        ampm_comment: string;
+        step_guides: {
+          slot_order: number;
+          category: string;
+          usage_guide: string;
+        }[];
+        strengths: string[];
+        cautions: string[];
+      }[];
+    }>('/recommendation-explanations', body),
 
   save: (sessionId: number, body: { routine_type: string }) =>
     api.post<{ saved_routine_id: number; saved_at: string }>(`/routines/${sessionId}/save`, body),

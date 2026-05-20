@@ -2,14 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routineApi, type SavedRoutineItem } from '../api/routine';
 import { analysisApi, type SkinHistoryItem } from '../api/analysis';
-import { productApi, type ProductSummary } from '../api/product';
-import { userApi } from '../api/user';
+import { Sparkles, Heart, Trophy, Wallet } from 'lucide-react';
 import './RoutineHistoryPage.css';
-
-const OPTIONAL_BY_GENDER: Record<string, string[]> = {
-  female: ['Balms/Multi-balms', 'Eye Treatments', 'Facial Oils'],
-  male:   ['Shaving Products', 'All-In-One'],
-};
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -21,25 +15,15 @@ export default function RoutineHistoryPage() {
 
   const [savedRoutines, setSavedRoutines] = useState<SavedRoutineItem[]>([]);
   const [analysisHistory, setAnalysisHistory] = useState<SkinHistoryItem[]>([]);
-  const [optionalProducts, setOptionalProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       routineApi.getHistory(),
       analysisApi.getHistory(),
-      userApi.getMe(),
-    ]).then(async ([routineRes, analysisRes, user]) => {
+    ]).then(([routineRes, analysisRes]) => {
       setSavedRoutines(routineRes.items);
       setAnalysisHistory(analysisRes.items);
-
-      const optCats = user.gender === 'female'
-        ? OPTIONAL_BY_GENDER.female
-        : OPTIONAL_BY_GENDER.male;
-      const results = await Promise.all(
-        optCats.map((cat) => productApi.getList(cat).catch(() => [] as ProductSummary[]))
-      );
-      setOptionalProducts(results.flat());
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
@@ -60,7 +44,7 @@ export default function RoutineHistoryPage() {
         <div className="rh-new-section">
           <div className="rh-new-header">
             <div>
-              <div className="rh-section-title">✨ 새 루틴 추천받기</div>
+              <div className="rh-section-title"><Sparkles size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />새 루틴 추천받기</div>
               <p className="rh-section-sub">어떤 분석 결과를 기반으로 루틴을 추천받을까요?</p>
             </div>
           </div>
@@ -81,12 +65,12 @@ export default function RoutineHistoryPage() {
                   onClick={() => navigate('/routine/budget', { state: { resultId: r.result_id } })}
                 >
                   <div className="rh-result-card-left">
-                    <img src={r.image_url} alt="썸네일" className="rh-result-thumb" />
+                    {r.image_url && <img src={r.image_url} alt="썸네일" className="rh-result-thumb" />}
                     {idx === 0 && <span className="rh-latest-badge">최신</span>}
                   </div>
                   <div className="rh-result-info">
                     <div className="rh-result-date">{formatDate(r.analyzed_at)} 분석</div>
-                    <div className="rh-result-type">{r.skin_type}</div>
+                    {r.skin_type && <div className="rh-result-type">{r.skin_type}</div>}
                     <div className="rh-result-comment">{r.ai_comment}</div>
                   </div>
                   <div className="rh-result-cta">
@@ -100,7 +84,7 @@ export default function RoutineHistoryPage() {
 
         {/* 저장된 루틴 목록 */}
         <div className="rh-saved-section">
-          <div className="rh-section-title">💜 저장된 루틴</div>
+          <div className="rh-section-title"><Heart size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />저장된 루틴</div>
           <p className="rh-section-sub">마음에 들었던 루틴을 다시 확인해보세요</p>
 
           {!loading && savedRoutines.length === 0 && (
@@ -117,7 +101,9 @@ export default function RoutineHistoryPage() {
                   <div className="rh-saved-card" key={routine.saved_routine_id}>
                     <div className="rh-saved-card-header">
                       <span className={`rh-type-badge ${typeKey}`}>
-                        {typeKey === 'best' ? '🏆 AI BEST' : '💸 가성비'}
+                        {typeKey === 'best'
+                          ? <><Trophy size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />AI BEST</>
+                          : <><Wallet size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />가성비</>}
                       </span>
                       <div className="rh-saved-meta">
                         <span>제품 {sortedProducts.length}개</span>
@@ -128,8 +114,6 @@ export default function RoutineHistoryPage() {
                       </div>
                     </div>
 
-                    {/* 필수 제품 */}
-                    <div className="rh-saved-block-label">필수</div>
                     <div className="rh-saved-products">
                       {sortedProducts.map((p, idx) => (
                         <div
@@ -146,33 +130,6 @@ export default function RoutineHistoryPage() {
                       ))}
                     </div>
 
-                    {/* 옵션 제품 */}
-                    {optionalProducts.length > 0 && (
-                      <>
-                        <div className="rh-saved-block-label optional">옵션</div>
-                        <div className="rh-saved-products">
-                          {optionalProducts.map((p) => (
-                            <div
-                              className="rh-saved-product optional"
-                              key={p.product_id}
-                              onClick={() => navigate(`/products/${p.product_id}`)}
-                            >
-                              <img src={p.image_url} alt={p.product_name} className="rh-saved-img" />
-                              <div className="rh-saved-brand">{p.brand_name}</div>
-                              <div className="rh-saved-name">{p.product_name}</div>
-                              <div className="rh-saved-price">{p.price.toLocaleString()}원</div>
-                            </div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-
-                    <button
-                      className="rh-view-btn"
-                      onClick={() => navigate('/routine/result', { state: { session_id: routine.session_id } })}
-                    >
-                      루틴 자세히 보기
-                    </button>
                   </div>
                 );
               })}

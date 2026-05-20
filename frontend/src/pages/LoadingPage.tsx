@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { analysisApi } from '../api/analysis';
 import { routineApi } from '../api/routine';
+import { Microscope, Sparkles, CheckCircle } from 'lucide-react';
 import './LoadingPage.css';
 
 type LoadingType = 'analysis' | 'routine';
@@ -25,9 +26,9 @@ const STEPS: Record<LoadingType, StepConfig[]> = {
   ],
 };
 
-const META: Record<LoadingType, { icon: string; title: string; doneTitle: string }> = {
-  analysis: { icon: '🔬', title: 'AI 피부 분석',    doneTitle: '분석 완료!' },
-  routine:  { icon: '✨', title: '맞춤 루틴 생성',   doneTitle: '루틴 완성!' },
+const META: Record<LoadingType, { IconEl: ReactNode; title: string; doneTitle: string }> = {
+  analysis: { IconEl: <Microscope size={32} color="#7c3aed" />, title: 'AI 피부 분석',    doneTitle: '분석 완료!' },
+  routine:  { IconEl: <Sparkles   size={32} color="#7c3aed" />, title: '맞춤 루틴 생성',  doneTitle: '루틴 완성!' },
 };
 
 export default function LoadingPage() {
@@ -90,15 +91,16 @@ export default function LoadingPage() {
 
       // step 1-2: 추천 모델 실행
       advance(1);
-      const { session_id } = await routineApi.recommend({
+      const rec = await routineApi.recommend({
         result_id:       resultId,
         image_id:        routineImageId,
-        total_budget:    budget['전체']   ?? null,
-        toner_budget:    budget['토너']   ?? null,
-        emulsion_budget: budget['에멀젼'] ?? null,
-        ampoule_budget:  budget['앰플']   ?? null,
-        cream_budget:    budget['크림']   ?? null,
+        total_budget:    budget.total    ?? null,
+        toner_budget:    budget.toner    ?? null,
+        emulsion_budget: budget.emulsion ?? null,
+        ampoule_budget:  budget.ampoule  ?? null,
+        cream_budget:    budget.cream    ?? null,
       });
+      const { session_id } = rec;
       if (cancelled) return;
       complete(1);
 
@@ -109,13 +111,22 @@ export default function LoadingPage() {
 
       // step 3: LLM 추천 이유 생성
       advance(3);
-      await routineApi.createExplanation({ session_id });
+      const explanation = await routineApi.createExplanation({ session_id });
       if (cancelled) return;
       complete(3);
 
       setIsDone(true);
       await delay(800);
-      if (!cancelled) navigate('/routine/result', { state: { session_id, resultId, imageId: routineImageId } });
+      if (!cancelled) navigate('/routine/result', {
+        state: {
+          session_id,
+          resultId,
+          imageId: routineImageId,
+          explanationRoutines: explanation.routines ?? [],
+          budgetFallbackApplied: rec.budget_fallback_applied,
+          budgetMessage: rec.budget_message,
+        },
+      });
     };
 
     const run = async () => {
@@ -136,7 +147,7 @@ export default function LoadingPage() {
     <div className="lp-page">
       <div className="lp-card">
         <div className={`lp-icon-wrap ${isDone ? 'done' : ''}`}>
-          <span className="lp-icon">{isDone ? '✅' : meta.icon}</span>
+          <span className="lp-icon">{isDone ? <CheckCircle size={32} color="#22c55e" /> : meta.IconEl}</span>
           {!isDone && !error && <div className="lp-spinner" />}
         </div>
 

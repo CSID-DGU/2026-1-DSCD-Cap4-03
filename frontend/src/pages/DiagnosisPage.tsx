@@ -3,17 +3,25 @@ import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useNavigate } from 'react-router-dom';
 import { imagesApi } from '../api/images';
+import {
+  Lightbulb, Eye, Minus, Ban, Glasses,
+  Camera, ZoomIn, ZoomOut, Check, Ruler, Microscope,
+  type LucideIcon,
+} from 'lucide-react';
 import './DiagnosisPage.css';
 
 const TARGET_WIDTH = 480;
 const TARGET_HEIGHT = 640;
 
-const GUIDES = [
-  { icon: '💡', text: '밝은 조명에서 촬영해주세요' },
-  { icon: '👁️', text: '정면을 바라보고 찍어주세요' },
-  { icon: '😐', text: '무표정으로 촬영해주세요' },
-  { icon: '🚫', text: '화장품 없이 생얼로 찍어주세요' },
-  { icon: '👓', text: '안경 및 악세사리를 제거해주세요' },
+// S3 미연결 테스트용 — S3 열리면 false로 변경
+const SKIP_S3 = true;
+
+const GUIDES: { Icon: LucideIcon; text: string }[] = [
+  { Icon: Lightbulb, text: '밝은 조명에서 촬영해주세요' },
+  { Icon: Eye,       text: '정면을 바라보고 찍어주세요' },
+  { Icon: Minus,     text: '무표정으로 촬영해주세요' },
+  { Icon: Ban,       text: '화장품 없이 생얼로 찍어주세요' },
+  { Icon: Glasses,   text: '안경 및 악세사리를 제거해주세요' },
 ];
 
 type Step = 'upload' | 'crop' | 'preview';
@@ -85,31 +93,37 @@ export default function DiagnosisPage() {
     let imageUrl = resultImage; // base64 폴백
 
     try {
-      // 1. presigned URL 발급
-      const presign = await imagesApi.presign({
-        file_name: 'skin.jpg',
-        mime_type: 'image/jpeg',
-        file_size: resultBlob.size,
-      });
+      if (SKIP_S3) {
+        // S3 미연결 테스트: 로컬 업로드 API 사용
+        const res = await imagesApi.localUpload(resultBlob);
+        imageId = res.image_id;
+        imageUrl = resultImage; // base64 미리보기용
+      } else {
+        // 1. presigned URL 발급
+        const presign = await imagesApi.presign({
+          file_name: 'skin.jpg',
+          mime_type: 'image/jpeg',
+          file_size: resultBlob.size,
+        });
 
-      // 2. S3 직접 업로드
-      await imagesApi.uploadToS3(presign.upload_url, resultBlob);
+        // 2. S3 직접 업로드
+        await imagesApi.uploadToS3(presign.upload_url, resultBlob);
 
-      // 3. 이미지 메타데이터 저장
-      const img = await imagesApi.createImage({
-        storage_url: presign.public_url,
-        s3_key: presign.s3_key,
-        original_file_name: 'skin.jpg',
-        mime_type: 'image/jpeg',
-        file_size: resultBlob.size,
-        crop_data: croppedAreaPixels
-          ? { x: croppedAreaPixels.x, y: croppedAreaPixels.y, width: TARGET_WIDTH, height: TARGET_HEIGHT }
-          : { x: 0, y: 0, width: TARGET_WIDTH, height: TARGET_HEIGHT },
-        upload_status: 'UPLOADED',
-      });
-
-      imageId = img.image_id;
-      imageUrl = presign.public_url || resultImage;
+        // 3. 이미지 메타데이터 저장
+        const img = await imagesApi.createImage({
+          storage_url: presign.public_url,
+          s3_key: presign.s3_key,
+          original_file_name: 'skin.jpg',
+          mime_type: 'image/jpeg',
+          file_size: resultBlob.size,
+          crop_data: croppedAreaPixels
+            ? { x: croppedAreaPixels.x, y: croppedAreaPixels.y, width: TARGET_WIDTH, height: TARGET_HEIGHT }
+            : { x: 0, y: 0, width: TARGET_WIDTH, height: TARGET_HEIGHT },
+          upload_status: 'UPLOADED',
+        });
+        imageId = img.image_id;
+        imageUrl = presign.public_url || resultImage;
+      }
     } catch {
       // API 연결 안 됐거나 실패 시 mock값으로 폴백
     }
@@ -145,7 +159,7 @@ export default function DiagnosisPage() {
         <div className="dp-guide-row">
           {GUIDES.map((g) => (
             <div className="dp-guide-item" key={g.text}>
-              <span className="dp-guide-icon">{g.icon}</span>
+              <g.Icon size={18} color="#7c3aed" className="dp-guide-icon" />
               <span className="dp-guide-text">{g.text}</span>
             </div>
           ))}
@@ -180,7 +194,7 @@ export default function DiagnosisPage() {
               style={{ display: 'none' }}
             />
             <div className="dp-upload-area" onClick={() => fileInputRef.current?.click()}>
-              <div className="dp-upload-icon">📷</div>
+              <div className="dp-upload-icon"><Camera size={36} color="#7c3aed" /></div>
               <div className="dp-upload-title">사진을 업로드하세요</div>
               <div className="dp-upload-sub">클릭하여 파일을 업로드 해주세요</div>
               <div className="dp-upload-hint">JPG, PNG · 최대 10MB</div>
@@ -216,7 +230,7 @@ export default function DiagnosisPage() {
 
                 {/* 줌 슬라이더 */}
                 <div className="dp-zoom-row">
-                  <span className="dp-zoom-icon">🔍−</span>
+                  <ZoomOut size={16} color="#7c3aed" className="dp-zoom-icon" />
                   <input
                     type="range"
                     className="dp-zoom-slider"
@@ -224,13 +238,15 @@ export default function DiagnosisPage() {
                     value={zoom}
                     onChange={(e) => setZoom(Number(e.target.value))}
                   />
-                  <span className="dp-zoom-icon">🔍+</span>
+                  <ZoomIn size={16} color="#7c3aed" className="dp-zoom-icon" />
                 </div>
               </div>
 
               {/* 안내 */}
               <div className="dp-crop-guide-col">
-                <div className="dp-crop-guide-title">✅ 이렇게 맞춰주세요</div>
+                <div className="dp-crop-guide-title">
+                  <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />이렇게 맞춰주세요
+                </div>
                 <ul className="dp-crop-guide-list">
                   <li>눈, 코, 입이 가이드 안에 들어오게</li>
                   <li>얼굴이 화면 중앙에 오도록</li>
@@ -238,8 +254,8 @@ export default function DiagnosisPage() {
                   <li>슬라이더로 크기를 조절하세요</li>
                 </ul>
                 <div className="dp-crop-size-info">
-                  <span>📐 저장 크기</span>
-                  <strong>{TARGET_WIDTH} × {TARGET_HEIGHT}px</strong>
+                  <Ruler size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />저장 크기
+                  <strong style={{ marginLeft: 6 }}>{TARGET_WIDTH} × {TARGET_HEIGHT}px</strong>
                 </div>
                 <div className="dp-crop-btns">
                   <button className="dp-btn-secondary" onClick={handleReset}>다시 선택</button>
@@ -272,9 +288,9 @@ export default function DiagnosisPage() {
                 </p>
 
                 <div className="dp-preview-checklist">
-                  <div className="dp-check-item">✅ 480 × 640px 고정 크기</div>
-                  <div className="dp-check-item">✅ JPEG 압축률 90%</div>
-                  <div className="dp-check-item">✅ 서버 전송 준비 완료</div>
+                  <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />480 × 640px 고정 크기</div>
+                  <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />JPEG 압축률 90%</div>
+                  <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />서버 전송 준비 완료</div>
                 </div>
 
                 <div className="dp-preview-btns">
@@ -286,7 +302,9 @@ export default function DiagnosisPage() {
                     onClick={handleAnalyze}
                     disabled={isUploading}
                   >
-                    {isUploading ? '업로드 중...' : '🔬 분석 시작하기'}
+                    {isUploading
+                      ? '업로드 중...'
+                      : <><Microscope size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />분석 시작하기</>}
                   </button>
                 </div>
               </div>
