@@ -226,7 +226,12 @@ def create_recommendation_with_model(db: Session, payload: RecommendationRequest
     db.expire_all()
     session = get_latest_recommendation_session(db, user_id, payload.result_id, payload.image_id)
     if not session:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="추천 결과 저장 세션을 찾지 못함")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Recommendation session was not created.")
+    if not session.routines:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Recommendation routines were not created. Check recommendation pipeline logs.",
+        )
     return session
 
 

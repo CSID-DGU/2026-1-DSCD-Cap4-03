@@ -50,7 +50,7 @@ SKIN_SCORE_KEYS = {
 
 
 def _ensure_llm_ready() -> None:
-    if not settings.openai_api_key:
+    if not (settings.dgu_llm_api_key or settings.openai_api_key):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="OPENAI_API_KEY is not set. backend/.env에 OPENAI_API_KEY를 설정하세요.",
@@ -295,8 +295,14 @@ def build_routine_llm_input(session: RecommendationSession) -> dict[str, Any]:
 
 def generate_routine_explanation_llm(session: RecommendationSession) -> dict[str, Any]:
     _ensure_llm_ready()
+    llm_input = build_routine_llm_input(session)
+    if not llm_input["routines"]:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Recommendation session has no routines. Run POST /recommendations again with a successful session_id.",
+        )
     llm_result = generate_routine_llm_result(
-        llm_input=build_routine_llm_input(session),
+        llm_input=llm_input,
         output_dir=str(BACKEND_ROOT / "llm_outputs" / "routine_recommendation"),
     )
     return {

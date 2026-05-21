@@ -30,6 +30,9 @@ class Settings:
     db_auto_create_tables: bool = os.getenv("DB_AUTO_CREATE_TABLES", "true").lower() == "true"
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
     openai_model: str = os.getenv("OPENAI_MODEL", os.getenv("KG_OPENAI_MODEL", "gpt-5.4-mini"))
+    dgu_llm_api_key: str | None = os.getenv("DGU_LLM_API_KEY")
+    dgu_llm_base_url: str = os.getenv("DGU_LLM_BASE_URL", "https://factchat-cloud.mindlogic.ai/v1/gateway")
+    dgu_llm_model: str = os.getenv("DGU_LLM_MODEL", "gpt-5.4-mini")
     skin_model_checkpoint: str | None = os.getenv("SKIN_MODEL_CHECKPOINT")
     skin_model_device: str = os.getenv("SKIN_MODEL_DEVICE", "cpu")
     skin_model_img_size: int = int(os.getenv("SKIN_MODEL_IMG_SIZE", "224"))
