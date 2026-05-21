@@ -76,6 +76,12 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 sar.result_id,
                 sar.image_id,
                 sar.analyzed_at,
+                sar.acne_score,
+                sar.dryness_score,
+                sar.sagging_score,
+                sar.pore_score,
+                sar.pigmentation_score,
+                sar.wrinkle_score,
                 ui.storage_url AS image_url
             FROM skin_analysis_result sar
             LEFT JOIN user_image ui
@@ -98,6 +104,14 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 "analyzed_at": analyzed_at,
                 "skin_type": profile.skin_type if profile else None,
                 "image_url": row["image_url"],
+                "display_scores": {
+                    "acne": float(row["acne_score"] or 0),
+                    "dryness": float(row["dryness_score"] or 0),
+                    "sagging": float(row["sagging_score"] or 0),
+                    "pore": float(row["pore_score"] or 0),
+                    "pigmentation": float(row["pigmentation_score"] or 0),
+                    "wrinkle": float(row["wrinkle_score"] or 0),
+                },
                 "ai_comment": summary.get("summary_comment", "아직 분석 요약이 준비되지 않았습니다."),
             }
         )
@@ -116,6 +130,7 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 "analyzed_at": row["analyzed_at"],
                 "skin_type": profile.skin_type if profile else None,
                 "image_url": image.storage_url if image else None,
+                "display_scores": row.get("display_scores", {}),
                 "ai_comment": summary.get("summary_comment", "아직 분석 요약이 준비되지 않았습니다."),
             }
         )
