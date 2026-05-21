@@ -11,8 +11,8 @@
   --color-border:    #E6E7E3;
   --font-display:    'Sora', sans-serif;
   --font-body:       'Noto Sans KR', sans-serif;
-  --radius-card:     24px;
-  --radius-pill:     24px;
+  --radius-card:     10px;
+  --radius-pill:     20px;
   --shadow-card:     0 12px 32px rgba(0,0,0,0.08);
 }
 
@@ -37,7 +37,7 @@ body {
 }
 .auth-container {
   background: #fff;
-  border-radius: 24px;
+  border-radius: 12px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   padding: 48px 40px;
   width: 100%;
@@ -51,14 +51,14 @@ body {
   font-size: 24px;
   font-weight: 800;
   color: #1A1A1A;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
   margin-bottom: 4px;
 }
 .auth-input {
   width: 100%;
   padding: 13px 16px;
   border: 1.5px solid #E5E7EB;
-  border-radius: 12px;
+  border-radius: 8px;
   font-size: 14px;
   font-family: 'Noto Sans KR', sans-serif;
   color: #1A1A1A;
@@ -73,7 +73,7 @@ body {
   color: #fff;
   border: none;
   padding: 14px;
-  border-radius: 24px;
+  border-radius: 8px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;

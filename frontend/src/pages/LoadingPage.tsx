@@ -157,7 +157,7 @@ export default function LoadingPage() {
 
         {!error && (
           <p className="lp-sub">
-            {isDone ? '잠시 후 결과 페이지로 이동합니다' : '잠시만 기다려주세요. 금방 끝나요!'}
+            {isDone ? '잠시 후 결과 페이지로 이동합니다' : '잠시만 기다려주세요. 1~2분 정도 소요됩니다!'}
           </p>
         )}
 

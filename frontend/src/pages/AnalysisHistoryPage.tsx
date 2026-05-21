@@ -6,7 +6,11 @@ import './AnalysisHistoryPage.css';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${d.getHours()}시 ${String(d.getMinutes()).padStart(2, '0')}분`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}:${min}`;
 }
 
 export default function AnalysisHistoryPage() {
@@ -72,9 +76,27 @@ export default function AnalysisHistoryPage() {
                   {idx === 0 && <span className="ah-latest-badge">최신</span>}
                 </div>
                 <div className="ah-card-info">
-                  <div className="ah-card-date">{formatDate(r.analyzed_at)}</div>
-                  {r.skin_type && <div className="ah-card-type">{r.skin_type}</div>}
-                  <div className="ah-card-comment">{r.ai_comment}</div>
+                  <div className="ah-card-date-row">
+                    <div className="ah-card-date">{formatDate(r.analyzed_at)}</div>
+                    {r.skin_type && <span className="ah-card-skin-tag">{r.skin_type}</span>}
+                  </div>
+                  {r.display_scores && Object.keys(r.display_scores).length > 0 && (
+                    <div className="ah-card-scores">
+                      {([
+                        { key: 'acne',         label: '진정' },
+                        { key: 'dryness',      label: '수분' },
+                        { key: 'sagging',      label: '탄력' },
+                        { key: 'pore',         label: '모공' },
+                        { key: 'pigmentation', label: '색소침착' },
+                        { key: 'wrinkle',      label: '주름' },
+                      ] as const).map(({ key, label }, i, arr) => (
+                        <span key={key} className="ah-score-chip">
+                          {label} <b>{Math.round((1 - (r.display_scores[key] ?? 0)) * 100)}</b>
+                          {i < arr.length - 1 && <span className="ah-score-dot">·</span>}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <span className="ah-card-arrow">›</span>
               </div>

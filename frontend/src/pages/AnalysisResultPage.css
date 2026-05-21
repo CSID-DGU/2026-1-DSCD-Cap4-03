@@ -17,7 +17,7 @@
   font-weight: 700;
   padding: 0;
   margin-bottom: 12px;
-  letter-spacing: 2px;
+  letter-spacing: -0.05em;
   text-transform: uppercase;
 }
 .ar-badge-danger { background: none; color: #ef4444; }
@@ -28,7 +28,7 @@
   font-weight: 700;
   color: #1A1A1A;
   margin-bottom: 6px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 .ar-sec-sub {
   font-size: 13px;
@@ -59,7 +59,7 @@
   flex-direction: column;
   align-items: center;
   padding: 12px 24px;
-  border-radius: 24px;
+  border-radius: 10px;
   border: 1.5px solid;
   min-width: 80px;
 }
@@ -94,7 +94,7 @@
   font-size: 11px; font-weight: 700;
   padding: 0;
   margin-bottom: 20px;
-  letter-spacing: 2px;
+  letter-spacing: -0.05em;
   text-transform: uppercase;
 }
 .ar-hero-title {
@@ -102,7 +102,7 @@
   font-size: clamp(28px, 4vw, 48px);
   font-weight: 800; line-height: 1.25;
   color: #1A1A1A; margin-bottom: 14px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 .ar-hero-name { color: #1A1A1A; }
 .ar-hero-title em { color: #7c3aed; font-style: normal; }
@@ -111,14 +111,17 @@
 .ar-skin-tag {
   background: #fff; border: 1.5px solid #A78BFA;
   color: #7c3aed; font-size: 12px; font-weight: 600;
-  padding: 5px 14px; border-radius: 24px;
+  padding: 5px 14px; border-radius: 10px;
+}
+.ar-skin-tag--type {
+  background: #7c3aed; border-color: #7c3aed; color: #fff;
 }
 .ar-hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .ar-btn-primary {
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
-  padding: 13px 28px; border-radius: 24px; border: none; cursor: pointer;
+  padding: 13px 28px; border-radius: 10px; border: none; cursor: pointer;
   transition: all 0.2s; box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
 .ar-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
@@ -126,7 +129,7 @@
   background: transparent; color: #7c3aed;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 600;
-  padding: 13px 24px; border-radius: 24px;
+  padding: 13px 24px; border-radius: 10px;
   border: 1.5px solid #7c3aed; cursor: pointer; transition: all 0.2s;
 }
 .ar-btn-ghost:hover { background: #F9F7FF; }
@@ -147,7 +150,7 @@
 }
 .ar-score-badge {
   position: absolute; top: 0; right: -10px;
-  background: #fff; border-radius: 24px; padding: 10px 14px;
+  background: #fff; border-radius: 10px; padding: 10px 14px;
   text-align: center; font-size: 11px; color: #9CA3AF; font-weight: 600;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08); line-height: 1.6;
 }
@@ -157,7 +160,7 @@
 }
 .ar-age-badge {
   position: absolute; bottom: 10px; left: -10px;
-  background: #fff; border-radius: 24px; padding: 10px 14px;
+  background: #fff; border-radius: 10px; padding: 10px 14px;
   text-align: center; font-size: 11px; color: #9CA3AF; font-weight: 600;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08); line-height: 1.6;
 }
@@ -177,7 +180,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
-  align-items: start;
+  align-items: center;
   margin-bottom: 32px;
 }
 @media (max-width: 860px) {
@@ -185,9 +188,9 @@
 }
 
 .ar-radar-col {
-  background: #F9F7FF;
-  border-radius: 24px;
-  padding: 20px;
+  background: none;
+  border-radius: 0;
+  padding: 0;
   border: none;
 }
 .ar-radar-wrap { position: relative; }
@@ -212,7 +215,7 @@
 }
 
 .ar-metric-card {
-  background: #fff; border-radius: 24px; padding: 14px;
+  background: #fff; border-radius: 10px; padding: 14px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   border: none;
   transition: transform 0.18s;
@@ -246,7 +249,7 @@
 /* ── AI 한마디 ── */
 .ar-ai-box {
   background: #F9F7FF;
-  border-radius: 24px;
+  border-radius: 10px;
   padding: 28px 32px;
   border: none;
   border-left: 4px solid #7c3aed;
@@ -254,6 +257,51 @@
 .ar-ai-label { font-size: 13px; font-weight: 700; color: #7c3aed; margin-bottom: 12px; }
 .ar-ai-text { font-size: 15px; color: #1A1A1A; line-height: 1.85; font-weight: 500; margin: 0 0 14px; }
 .ar-ai-cta { font-size: 12px; color: #A78BFA; font-weight: 600; margin: 0; }
+
+/* ── 피부 변화 추이 ── */
+.ar-trend-box {
+  background: #fff;
+  border-radius: 10px;
+  padding: 28px 32px;
+  margin-top: 20px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+}
+.ar-trend-header { margin-bottom: 20px; }
+.ar-trend-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px; font-weight: 700; color: #1A1A1A;
+  margin: 0 0 4px; letter-spacing: -0.05em;
+}
+.ar-trend-sub { font-size: 12px; color: #9CA3AF; margin: 0; }
+
+.ar-trend-tabs {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 24px;
+}
+.ar-trend-tab {
+  padding: 7px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  font-size: 13px; font-weight: 600; color: #6b7280;
+  cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.15s;
+}
+.ar-trend-tab:hover { border-color: #a78bfa; color: #7c3aed; }
+.ar-trend-tab.active {
+  background: #7c3aed; border-color: #7c3aed; color: #fff;
+}
+
+.ar-trend-chart { width: 100%; }
+
+.ar-trend-empty {
+  text-align: center;
+  padding: 40px 20px;
+  background: #F9F7FF;
+  border-radius: 10px;
+  font-size: 14px; color: #6b7280; line-height: 1.7;
+}
+.ar-trend-empty strong { color: #7c3aed; }
 
 /* ── FOOTER CTA ── */
 .ar-cta-section {
@@ -264,14 +312,14 @@
   font-family: 'Sora', sans-serif;
   font-size: clamp(22px, 3vw, 32px); font-weight: 700;
   color: #1A1A1A; margin-bottom: 10px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 .ar-cta-section p { font-size: 14px; color: #5F5F5F; margin-bottom: 32px; line-height: 1.7; }
 .ar-btn-white {
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 15px; font-weight: 700; padding: 15px 40px;
-  border-radius: 24px; border: none; cursor: pointer;
+  border-radius: 10px; border: none; cursor: pointer;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08); transition: all 0.2s;
 }
 .ar-btn-white:hover { transform: translateY(-2px); }

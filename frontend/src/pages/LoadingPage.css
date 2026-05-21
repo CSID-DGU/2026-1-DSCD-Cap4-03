@@ -9,7 +9,7 @@
 
 .lp-card {
   background: #fff;
-  border-radius: 24px;
+  border-radius: 10px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   padding: 3rem 2.5rem;
   width: 100%;
@@ -204,7 +204,7 @@
   background: #7c3aed;
   color: #fff;
   border: none;
-  border-radius: 24px;
+  border-radius: 8px;
   padding: 0.75rem 1.8rem;
   font-size: 0.95rem;
   font-weight: 600;

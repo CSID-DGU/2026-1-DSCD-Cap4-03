@@ -26,7 +26,7 @@
   color: #7c3aed;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 2px;
+  letter-spacing: -0.05em;
   text-transform: uppercase;
   margin-bottom: 16px;
   font-family: 'Sora', sans-serif;
@@ -38,7 +38,7 @@
   font-weight: 800;
   color: #1A1A1A;
   margin: 0 0 12px 0;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 
 .policy-updated {
@@ -133,7 +133,7 @@
 /* 연락처 */
 .policy-contact {
   background: #F9F7FF;
-  border-radius: 24px;
+  border-radius: 10px;
   padding: 16px 20px;
   margin-top: 8px;
 }

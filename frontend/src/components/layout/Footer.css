@@ -23,7 +23,7 @@
   font-size: 20px;
   font-weight: 800;
   color: #fff;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.05em;
 }
 
 .site-footer-desc {
@@ -44,7 +44,7 @@
   font-weight: 700;
   color: #4B5563;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: -0.05em;
   margin-bottom: 4px;
 }
 
