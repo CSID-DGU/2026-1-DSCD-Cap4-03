@@ -50,7 +50,7 @@ SKIN_SCORE_KEYS = {
 
 
 def _ensure_llm_ready() -> None:
-    if not settings.openai_api_key:
+    if not (settings.dgu_llm_api_key or settings.openai_api_key):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="OPENAI_API_KEY is not set. backend/.env에 OPENAI_API_KEY를 설정하세요.",
