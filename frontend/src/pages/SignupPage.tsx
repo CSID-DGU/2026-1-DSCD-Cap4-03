@@ -21,9 +21,14 @@ export default function SignupPage() {
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
   const handleSignup = async () => {
     if (!form.user_name || !form.email || !form.password) {
       setError('이름, 이메일, 비밀번호는 필수입니다.'); return;
+    }
+    if (!EMAIL_REGEX.test(form.email)) {
+      setError('올바른 이메일 형식으로 입력해주세요. (예: example@gmail.com)'); return;
     }
     if (form.password !== form.passwordConfirm) {
       setError('비밀번호가 일치하지 않아요.'); return;
@@ -40,7 +45,12 @@ export default function SignupPage() {
       login(res.access_token, res.user_id, res.nickname);
       navigate('/userinfo');
     } catch (err) {
-      setError((err as Error).message || '회원가입에 실패했어요.');
+      const msg = (err as Error).message || '';
+      if (msg.toLowerCase().includes('email') || msg.includes('이메일') || msg.includes('already') || msg.includes('duplicate')) {
+        setError('이미 가입된 이메일이에요. 다른 이메일을 사용해주세요.');
+      } else {
+        setError(msg || '회원가입에 실패했어요.');
+      }
     } finally {
       setLoading(false);
     }

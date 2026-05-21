@@ -2,49 +2,36 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { Flame, Droplets, Layers, ScanLine, Cloud, Waves, Leaf, Sparkles, Bot } from 'lucide-react';
-import { analysisApi, type AnalysisResult } from '../api/analysis';
+import { Leaf, Sparkles, Bot } from 'lucide-react';
+import { analysisApi, type AnalysisResult, type SkinHistoryItem } from '../api/analysis';
+import { userApi } from '../api/user';
 import { useAuth } from '../context/useAuth';
 import './AnalysisResultPage.css';
 
-// ── 등급 변환 함수 (display_score 0-100 → 양호/보통/개선필요)
-// grade = round(score * 등급수 / 100), 최대 등급수-1 클램프
-function toGrade(score: number, levels: number) {
-  return Math.min(Math.round(score * levels / 100), levels - 1);
-}
-function getAcneGrade(score: number): Grade {
-  const g = toGrade(score, 4); // 0~3
-  return g === 0 ? '양호' : g === 1 ? '보통' : '개선필요';
-}
-function getDrynessGrade(score: number): Grade {
-  const g = toGrade(score, 5); // 0~4
-  return g <= 1 ? '양호' : g === 2 ? '보통' : '개선필요';
-}
-function getSaggingGrade(score: number): Grade {
-  const g = toGrade(score, 6); // 0~5
-  return g <= 1 ? '양호' : g <= 3 ? '보통' : '개선필요';
-}
-function getPoreGrade(score: number): Grade {
-  const g = toGrade(score, 5); // 0~4
-  return g <= 1 ? '양호' : g <= 3 ? '보통' : '개선필요';
-}
-function getPigmentationGrade(score: number): Grade {
-  const g = toGrade(score, 6); // 0~5
-  return g === 0 ? '양호' : g <= 3 ? '보통' : '개선필요';
-}
-function getWrinkleGrade(score: number): Grade {
-  const g = toGrade(score, 6); // 0~5
-  return g <= 1 ? '양호' : g === 2 ? '보통' : '개선필요';
+// ── 등급 변환 (1-score 기준, 높을수록 좋음)
+function toGrade(score: number): Grade {
+  return score >= 70 ? '좋음' : score >= 40 ? '보통' : '개선필요';
 }
 
-type Grade = '양호' | '보통' | '개선필요';
+type Grade = '좋음' | '보통' | '개선필요';
+
+const TREND_METRICS = [
+  { key: 'acne',         label: '진정' },
+  { key: 'dryness',      label: '수분' },
+  { key: 'sagging',      label: '탄력' },
+  { key: 'pore',         label: '모공' },
+  { key: 'pigmentation', label: '색소침착' },
+  { key: 'wrinkle',      label: '주름' },
+] as const;
+type MetricKey = typeof TREND_METRICS[number]['key'];
 
 const GRADE_COLOR: Record<Grade, string> = {
-  양호: '#22c55e', 보통: '#f59e0b', 개선필요: '#ef4444',
+  좋음: '#22c55e', 보통: '#f59e0b', 개선필요: '#ef4444',
 };
 const GRADE_BG: Record<Grade, string> = {
-  양호: '#f0fdf4', 보통: '#fffbeb', 개선필요: '#fef2f2',
+  좋음: '#f0fdf4', 보통: '#fffbeb', 개선필요: '#fef2f2',
 };
 
 function buildMetrics(result: AnalysisResult) {
@@ -52,27 +39,31 @@ function buildMetrics(result: AnalysisResult) {
   const comments = result.indicator_comments;
 
   const s = {
-    acne:         Math.round(raw.acne         * 100),
-    dryness:      Math.round(raw.dryness      * 100),
-    sagging:      Math.round(raw.sagging      * 100),
-    pore:         Math.round(raw.pore         * 100),
-    pigmentation: Math.round(raw.pigmentation * 100),
-    wrinkle:      Math.round(raw.wrinkle      * 100),
+    acne:         Math.round((1 - raw.acne)         * 100),
+    dryness:      Math.round((1 - raw.dryness)      * 100),
+    sagging:      Math.round((1 - raw.sagging)      * 100),
+    pore:         Math.round((1 - raw.pore)         * 100),
+    pigmentation: Math.round((1 - raw.pigmentation) * 100),
+    wrinkle:      Math.round((1 - raw.wrinkle)      * 100),
   };
 
   return [
-    { key: 'acne',         label: '트러블',   Icon: Flame,    grade: getAcneGrade(s.acne),               displayVal: s.acne,         desc: comments.acne },
-    { key: 'dryness',      label: '건조',     Icon: Droplets, grade: getDrynessGrade(s.dryness),         displayVal: s.dryness,      desc: comments.dryness },
-    { key: 'sagging',      label: '처짐',     Icon: Layers,   grade: getSaggingGrade(s.sagging),         displayVal: s.sagging,      desc: comments.sagging },
-    { key: 'pore',         label: '모공',     Icon: ScanLine, grade: getPoreGrade(s.pore),               displayVal: s.pore,         desc: comments.pore },
-    { key: 'pigmentation', label: '색소침착', Icon: Cloud,    grade: getPigmentationGrade(s.pigmentation), displayVal: s.pigmentation, desc: comments.pigmentation },
-    { key: 'wrinkle',      label: '주름',     Icon: Waves,    grade: getWrinkleGrade(s.wrinkle),         displayVal: s.wrinkle,      desc: comments.wrinkle },
+    { key: 'acne',         label: '진정',    grade: toGrade(s.acne),         displayVal: s.acne,         desc: comments.acne },
+    { key: 'dryness',      label: '수분',    grade: toGrade(s.dryness),      displayVal: s.dryness,      desc: comments.dryness },
+    { key: 'sagging',      label: '탄력',    grade: toGrade(s.sagging),      displayVal: s.sagging,      desc: comments.sagging },
+    { key: 'pore',         label: '모공',    grade: toGrade(s.pore),         displayVal: s.pore,         desc: comments.pore },
+    { key: 'pigmentation', label: '색소침착', grade: toGrade(s.pigmentation), displayVal: s.pigmentation, desc: comments.pigmentation },
+    { key: 'wrinkle',      label: '주름',    grade: toGrade(s.wrinkle),      displayVal: s.wrinkle,      desc: comments.wrinkle },
   ];
 }
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}:${min}`;
 }
 
 export default function AnalysisResultPage() {
@@ -86,12 +77,28 @@ export default function AnalysisResultPage() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<SkinHistoryItem[]>([]);
+  const [activeMetric, setActiveMetric] = useState<MetricKey>('acne');
+  const [skinConcerns, setSkinConcerns] = useState<string[]>([]);
 
   useEffect(() => {
     analysisApi.getResult(resultId)
       .then(setResult)
       .catch((err) => setError((err as Error).message || '분석 결과를 불러오지 못했어요.'))
       .finally(() => setLoading(false));
+
+    analysisApi.getHistory()
+      .then((res) => {
+        const sorted = [...res.items].sort(
+          (a, b) => new Date(a.analyzed_at).getTime() - new Date(b.analyzed_at).getTime()
+        );
+        setHistory(sorted);
+      })
+      .catch(() => {});
+
+    userApi.getMe()
+      .then((user) => setSkinConcerns(user.skin_concerns?.filter((c) => c !== 'none') ?? []))
+      .catch(() => {});
   }, [resultId]);
 
   if (loading) {
@@ -115,9 +122,9 @@ export default function AnalysisResultPage() {
   const radarData = metrics.map((m) => ({ metric: m.label, value: m.displayVal, fullMark: 100 }));
   const imageUrl = passedImageUrl || result.image_url;
   const displayName = nickname || '내';
-  const skinTags = [result.skin_type, '모공', '건조'].filter(Boolean) as string[];
+  const skinType = result.skin_type;
 
-  const gradeCounts: Record<Grade, number> = { 양호: 0, 보통: 0, 개선필요: 0 };
+  const gradeCounts: Record<Grade, number> = { 좋음: 0, 보통: 0, 개선필요: 0 };
   metrics.forEach((m) => { gradeCounts[m.grade]++; });
 
   return (
@@ -135,7 +142,8 @@ export default function AnalysisResultPage() {
             </h1>
             <p className="ar-hero-date">분석일 : {formatDate(result.analyzed_at || result.generated_at)}</p>
             <div className="ar-skin-tags">
-              {skinTags.map((t) => <span key={t} className="ar-skin-tag">{t}</span>)}
+              {skinType && <span className="ar-skin-tag ar-skin-tag--type">{skinType}</span>}
+              {skinConcerns.map((t) => <span key={t} className="ar-skin-tag">{t}</span>)}
             </div>
             <div className="ar-hero-btns">
               <button className="ar-btn-primary" onClick={() => navigate('/routine/budget', { state: { resultId: result.result_id, imageId: result.image_id } })}>
@@ -155,16 +163,16 @@ export default function AnalysisResultPage() {
         </div>
       </section>
 
-      {/* ── 위험 지표 + AI 한마디 ── */}
+      {/* ── 피부 지표 + AI 한마디 ── */}
       <section className="ar-report-section">
         <div className="ar-section-inner">
 
-          <div className="ar-sec-badge ar-badge-danger">위험 지표 분석</div>
-          <h2 className="ar-sec-title">내 피부 위험지표 리포트</h2>
+          <div className="ar-sec-badge">피부 지표 분석</div>
+          <h2 className="ar-sec-title">내 피부 지표 리포트</h2>
           <p className="ar-sec-sub">
-            높은 등급일수록 피부 상태가 심각해요 &nbsp;
+            높은 점수일수록 피부 상태가 좋아요 &nbsp;
             <span className="ar-grade-legend">
-              <span style={{ color: '#22c55e' }}>● 양호</span>
+              <span style={{ color: '#22c55e' }}>● 좋음</span>
               <span style={{ color: '#f59e0b' }}>● 보통</span>
               <span style={{ color: '#ef4444' }}>● 개선필요</span>
             </span>
@@ -172,7 +180,7 @@ export default function AnalysisResultPage() {
 
           {/* 등급 요약 */}
           <div className="ar-grade-summary">
-            {(['양호', '보통', '개선필요'] as Grade[]).map((g) => (
+            {(['좋음', '보통', '개선필요'] as Grade[]).map((g) => (
               <div className="ar-grade-summary-item" key={g} style={{ borderColor: GRADE_COLOR[g], background: GRADE_BG[g] }}>
                 <span className="ar-grade-count" style={{ color: GRADE_COLOR[g] }}>{gradeCounts[g]}</span>
                 <span className="ar-grade-label" style={{ color: GRADE_COLOR[g] }}>{g}</span>
@@ -184,8 +192,8 @@ export default function AnalysisResultPage() {
           <div className="ar-report-body">
             <div className="ar-radar-col">
               <div className="ar-radar-wrap">
-                <ResponsiveContainer width="100%" height={380}>
-                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="68%">
+                <ResponsiveContainer width="100%" height={460}>
+                  <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="78%">
                     <PolarGrid stroke="#ddd6fe" />
                     <PolarAngleAxis dataKey="metric" tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 600 }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
@@ -203,9 +211,7 @@ export default function AnalysisResultPage() {
                   return (
                     <div className="ar-metric-card" key={m.key} style={{ borderTop: `3px solid ${color}` }}>
                       <div className="ar-metric-card-top">
-                        <div className="ar-metric-icon-wrap" style={{ background: bg }}>
-                          <m.Icon size={18} color="#7c3aed" />
-                        </div>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0, display: 'inline-block' }} />
                         <div className="ar-metric-label-wrap">
                           <div className="ar-metric-name">{m.label}</div>
                           <div className="ar-metric-grade-badge" style={{ background: bg, color }}>{m.grade}</div>
@@ -227,7 +233,61 @@ export default function AnalysisResultPage() {
           <div className="ar-ai-box">
             <div className="ar-ai-label"><Bot size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />AI 한마디</div>
             <p className="ar-ai-text">{result.summary_comment}</p>
-            <p className="ar-ai-cta">아래 맞춤 루틴 추천을 확인해보세요 →</p>
+          </div>
+
+          {/* 피부 변화 추이 */}
+          <div className="ar-trend-box">
+            <div className="ar-trend-header">
+              <div className="ar-sec-badge" style={{ marginBottom: 4 }}>변화 추이</div>
+              <h3 className="ar-trend-title">피부 변화 추이</h3>
+              <p className="ar-trend-sub">지표를 선택하면 날짜별 점수 변화를 확인할 수 있어요</p>
+            </div>
+
+            {/* 지표 탭 */}
+            <div className="ar-trend-tabs">
+              {TREND_METRICS.map((m) => (
+                <button
+                  key={m.key}
+                  className={`ar-trend-tab${activeMetric === m.key ? ' active' : ''}`}
+                  onClick={() => setActiveMetric(m.key)}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            {/* 그래프 */}
+            {history.length < 2 ? (
+              <div className="ar-trend-empty">
+                <p> 분석을 <strong>{2 - history.length}회</strong> 더 하면 변화 추이를 볼 수 있어요</p>
+              </div>
+            ) : (
+              <div className="ar-trend-chart">
+                <ResponsiveContainer width="100%" height={240}>
+                  <LineChart
+                    data={history.map((h) => ({
+                      date: (() => { const d = new Date(h.analyzed_at); return `${String(d.getFullYear()).slice(2)}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; })(),
+                      value: Math.round((1 - (h.display_scores?.[activeMetric] ?? 0)) * 100),
+                    }))}
+                    margin={{ top: 10, right: 24, left: 0, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0ebff" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} width={32} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13 }}
+                      formatter={(v: number) => [`${v}점`, TREND_METRICS.find(m => m.key === activeMetric)?.label]}
+                    />
+                    <Line
+                      type="monotone" dataKey="value"
+                      stroke="#7c3aed" strokeWidth={2.5}
+                      dot={{ r: 5, fill: '#7c3aed', strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 7 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
         </div>

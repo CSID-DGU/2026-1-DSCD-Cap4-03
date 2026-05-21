@@ -46,6 +46,14 @@ export interface SkinHistoryItem {
   skin_type: string | null;
   image_url: string | null;
   ai_comment: string;
+  display_scores: {
+    acne: number;
+    dryness: number;
+    sagging: number;
+    pore: number;
+    pigmentation: number;
+    wrinkle: number;
+  };
 }
 
 export const analysisApi = {

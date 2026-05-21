@@ -7,7 +7,11 @@ import './RoutineHistoryPage.css';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}:${min}`;
 }
 
 export default function RoutineHistoryPage() {
@@ -62,16 +66,34 @@ export default function RoutineHistoryPage() {
                 <div
                   className="rh-result-card"
                   key={r.result_id}
-                  onClick={() => navigate('/routine/budget', { state: { resultId: r.result_id } })}
+                  onClick={() => navigate('/routine/budget', { state: { resultId: r.result_id, imageId: r.image_id } })}
                 >
                   <div className="rh-result-card-left">
                     {r.image_url && <img src={r.image_url} alt="썸네일" className="rh-result-thumb" />}
                     {idx === 0 && <span className="rh-latest-badge">최신</span>}
                   </div>
                   <div className="rh-result-info">
-                    <div className="rh-result-date">{formatDate(r.analyzed_at)} 분석</div>
-                    {r.skin_type && <div className="rh-result-type">{r.skin_type}</div>}
-                    <div className="rh-result-comment">{r.ai_comment}</div>
+                    <div className="rh-result-date-row">
+                      <div className="rh-result-date">{formatDate(r.analyzed_at)}</div>
+                      {r.skin_type && <span className="rh-result-skin-tag">{r.skin_type}</span>}
+                    </div>
+                    {r.display_scores && Object.keys(r.display_scores).length > 0 && (
+                      <div className="rh-result-scores">
+                        {([
+                          { key: 'acne',         label: '진정' },
+                          { key: 'dryness',      label: '수분' },
+                          { key: 'sagging',      label: '탄력' },
+                          { key: 'pore',         label: '모공' },
+                          { key: 'pigmentation', label: '색소침착' },
+                          { key: 'wrinkle',      label: '주름' },
+                        ] as const).map(({ key, label }, i, arr) => (
+                          <span key={key} className="rh-score-chip">
+                            {label} <b>{Math.round((1 - (r.display_scores[key] ?? 0)) * 100)}</b>
+                            {i < arr.length - 1 && <span className="rh-score-dot">·</span>}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="rh-result-cta">
                     <span className="rh-select-btn">이 결과로 추천받기 →</span>

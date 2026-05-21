@@ -6,7 +6,7 @@ import { productApi, type ProductDetail } from '../api/product';
 import { useAuth } from '../context/useAuth';
 import {
   Sun, Moon, Trophy, Wallet, Heart, Bot, ClipboardList,
-  AlertTriangle, FileText, Package, Timer, Banknote, Info,
+  AlertTriangle, FileText, Package, Timer, Banknote, Clock,
 } from 'lucide-react';
 import './RoutinePage.css';
 
@@ -31,9 +31,34 @@ const OPTIONAL_CATEGORIES = new Set([
   'Shaving Products', 'All-In-One', 'Face Mists',
 ]);
 
+const CATEGORY_DURATION: Record<string, { display: string; seconds: number }> = {
+  'Toner':                    { display: '약 30초',      seconds: 30 },
+  'Toner Pads':               { display: '약 30초',      seconds: 30 },
+  'Emulsions':                { display: '약 30초~1분',  seconds: 45 },
+  'Essences/Ampoules/Serums': { display: '약 1~2분',    seconds: 90 },
+  'Cream/Gel':                { display: '약 1~2분',    seconds: 90 },
+  'Face Mists':               { display: '약 10~20초',  seconds: 15 },
+  'Eye Treatments':           { display: '약 1분',      seconds: 60 },
+  'Balms/Multi-balms':        { display: '약 1~2분',    seconds: 90 },
+  'Facial Oils':              { display: '약 1분',      seconds: 60 },
+  'Shaving Products':         { display: '약 1~2분',    seconds: 90 },
+  'All-In-One':               { display: '약 1~2분',    seconds: 90 },
+};
+
+const OPTIONAL_USAGE_HINT: Record<string, string> = {
+  'Face Mists':        '수시로 분사',
+  'Eye Treatments':    '세럼 다음에 바르기',
+  'Balms/Multi-balms': '가장 마지막 단계',
+  'Facial Oils':       '크림 뒤에 소량',
+};
+
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
-  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}:${min}`;
 }
 
 interface EnrichedProduct extends ProductDetail {
@@ -154,6 +179,11 @@ export default function RoutinePage() {
   const enrichedProducts = allEnriched.filter((p) => !OPTIONAL_CATEGORIES.has(p.category));
   const optionalProducts  = allEnriched.filter((p) => OPTIONAL_CATEGORIES.has(p.category));
 
+  const totalSeconds = allEnriched.reduce(
+    (sum, p) => sum + (CATEGORY_DURATION[p.category]?.seconds ?? 60), 0
+  );
+  const totalMinutes = Math.ceil(totalSeconds / 60);
+
   const displayName = nickname || '내';
 
   return (
@@ -176,14 +206,6 @@ export default function RoutinePage() {
         </div>
       </section>
 
-      {/* ── 예산 폴백 배너 ── */}
-      {budgetFallbackApplied && budgetMessage && (
-        <div className="rp-budget-fallback-banner">
-          <span className="rp-budget-fallback-icon"><Info size={18} /></span>
-          <p className="rp-budget-fallback-text">{budgetMessage}</p>
-        </div>
-      )}
-
       {/* ── 루틴 탭 ── */}
       <div className="rp-tabs-wrap">
         <div className="rp-tabs">
@@ -203,6 +225,11 @@ export default function RoutinePage() {
 
       <div className="rp-body">
 
+        {/* ── 예산 폴백 알림 ── */}
+        {budgetFallbackApplied && budgetMessage && (
+          <p className="rp-budget-fallback-notice">{budgetMessage}</p>
+        )}
+
         {/* ── 루틴 요약 바 ── */}
         <div className="rp-summary-bar">
           <div className="rp-time-badge" style={{ background: timeMeta.bg, color: timeMeta.color }}>
@@ -212,12 +239,12 @@ export default function RoutinePage() {
           <div className="rp-summary-divider" />
           <div className="rp-summary-item">
             <Package size={14} color="#9CA3AF" />
-            <span>제품 <strong>{enrichedProducts.length}개</strong></span>
+            <span>제품 <strong>{allEnriched.length}개</strong></span>
           </div>
           <div className="rp-summary-divider" />
           <div className="rp-summary-item">
             <Timer size={14} color="#9CA3AF" />
-            <span>소요 <strong>{currentRoutine.duration}분</strong></span>
+            <span>소요 <strong>{totalMinutes}분</strong></span>
           </div>
           <div className="rp-summary-divider" />
           <div className="rp-summary-item">
@@ -287,7 +314,16 @@ export default function RoutinePage() {
                 <div className="rp-product-brand">{product.brand_name}</div>
                 <div className="rp-product-name">{product.product_name}</div>
                 <div className="rp-product-tags">
+                  {product.timeTag && (
+                    <span className={`rp-product-time-tag ${product.timeTag}`}>
+                      {product.timeTag === 'am' ? 'AM전용' : 'PM전용'}
+                    </span>
+                  )}
                   {product.tags.filter((t) => t !== product.category).slice(0, 2).map((t) => <span key={t} className="rp-product-tag">#{t}</span>)}
+                </div>
+                <div className="rp-product-duration">
+                  <Clock size={11} color="#9CA3AF" />
+                  <span>{CATEGORY_DURATION[product.category]?.display ?? '약 1분'}</span>
                 </div>
                 <div className="rp-product-price">{product.price.toLocaleString()}원</div>
                 <div className="rp-guide-panel" onClick={(e) => e.stopPropagation()}>
@@ -317,12 +353,26 @@ export default function RoutinePage() {
             <div className="rp-scroll">
               {optionalProducts.map((product) => (
                 <div key={product.product_id} className="rp-product-card rp-optional-card" onClick={() => navigate(`/products/${product.product_id}`)}>
-                  <div className="rp-product-category optional">{CATEGORY_KO[product.category] ?? product.category}</div>
+                  <div className="rp-card-header">
+                    <div className="rp-product-category optional">{CATEGORY_KO[product.category] ?? product.category}</div>
+                    {OPTIONAL_USAGE_HINT[product.category] && (
+                      <span className="rp-optional-hint">{OPTIONAL_USAGE_HINT[product.category]}</span>
+                    )}
+                  </div>
                   <img src={product.image_url} alt={product.product_name} className="rp-product-img" />
                   <div className="rp-product-brand">{product.brand_name}</div>
                   <div className="rp-product-name">{product.product_name}</div>
                   <div className="rp-product-tags">
+                    {product.timeTag && (
+                      <span className={`rp-product-time-tag ${product.timeTag}`}>
+                        {product.timeTag === 'am' ? 'AM전용' : 'PM전용'}
+                      </span>
+                    )}
                     {product.tags.filter((t) => t !== product.category).slice(0, 2).map((t) => <span key={t} className="rp-product-tag optional">#{t}</span>)}
+                  </div>
+                  <div className="rp-product-duration">
+                    <Clock size={11} color="#9CA3AF" />
+                    <span>{CATEGORY_DURATION[product.category]?.display ?? '약 1분'}</span>
                   </div>
                   <div className="rp-product-price">{product.price.toLocaleString()}원</div>
                   <div className="rp-guide-panel" onClick={(e) => e.stopPropagation()}>

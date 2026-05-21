@@ -165,56 +165,63 @@ export default function MyPage() {
               <p style={{ color: '#7c3aed' }}>불러오는 중...</p>
             ) : !isEditing ? (
               /* ── 뷰 모드 ── */
-              <div className="my-form">
-                <div className="my-info-row">
-                  <span className="my-label">닉네임</span>
-                  <span className="my-info-value">{profile?.nickname || profile?.user_name || '-'}</span>
-                </div>
-                <div className="my-info-row">
-                  <span className="my-label">이메일</span>
-                  <span className="my-info-value">{profile?.email || '-'}</span>
-                </div>
-                <div className="my-info-row">
-                  <span className="my-label">성별</span>
-                  <span className="my-info-value">{GENDER_LABEL[profile?.gender ?? ''] || '-'}</span>
-                </div>
-                <div className="my-info-row">
-                  <span className="my-label">피부 타입</span>
-                  <span className="my-info-value">{profile?.skin_type || '-'}</span>
-                </div>
-                <div className="my-info-row" style={{ alignItems: 'flex-start' }}>
-                  <span className="my-label">피부 고민</span>
-                  <span className="my-info-value">
-                    {profile?.skin_concerns?.filter((c) => c !== 'none').length
-                      ? profile.skin_concerns
+              <>
+                <div className="my-info-grid">
+                  <div className="my-info-row">
+                    <span className="my-info-label">닉네임</span>
+                    <span className="my-info-value">{profile?.nickname || profile?.user_name || '-'}</span>
+                  </div>
+                  <div className="my-info-row">
+                    <span className="my-info-label">이메일</span>
+                    <span className="my-info-value">{profile?.email || '-'}</span>
+                  </div>
+                  <div className="my-info-row">
+                    <span className="my-info-label">성별</span>
+                    <span className={`my-info-value ${!profile?.gender ? 'empty' : ''}`}>
+                      {GENDER_LABEL[profile?.gender ?? ''] || '미입력'}
+                    </span>
+                  </div>
+                  <div className="my-info-row">
+                    <span className="my-info-label">피부 타입</span>
+                    <span className={`my-info-value ${!profile?.skin_type ? 'empty' : ''}`}>
+                      {profile?.skin_type || '미입력'}
+                    </span>
+                  </div>
+                  <div className="my-info-row full">
+                    <span className="my-info-label">피부 고민</span>
+                    {profile?.skin_concerns?.filter((c) => c !== 'none').length ? (
+                      <div className="my-concern-tags">
+                        {profile.skin_concerns
                           .filter((c) => c !== 'none')
-                          .map((id) => CONCERNS.find((c) => c.id === id)?.label ?? id)
-                          .join(', ')
-                      : '-'}
-                  </span>
+                          .map((id) => (
+                            <span key={id} className="my-concern-tag">
+                              {CONCERNS.find((c) => c.id === id)?.label ?? id}
+                            </span>
+                          ))}
+                      </div>
+                    ) : (
+                      <span className="my-info-value empty">미입력</span>
+                    )}
+                  </div>
                 </div>
-                {saveMsg && <p style={{ fontSize: '0.875rem', color: '#22c55e' }}>{saveMsg}</p>}
-                <button className="my-save-btn" onClick={handleEdit}>수정하기</button>
-                <button
-                  className="my-save-btn"
-                  style={{ background: '#f3f4f6', color: '#6b7280', marginTop: '0.5rem' }}
-                  onClick={() => { logout(); navigate('/login'); }}
-                >
-                  로그아웃
-                </button>
-              </div>
+                {saveMsg && <p style={{ fontSize: '0.875rem', color: '#22c55e', marginBottom: 12 }}>{saveMsg}</p>}
+                <div className="my-view-btns">
+                  <button className="my-btn-primary" onClick={handleEdit}>수정하기</button>
+                  <button className="my-btn-ghost" onClick={() => { logout(); navigate('/login'); }}>로그아웃</button>
+                </div>
+              </>
             ) : (
               /* ── 수정 모드 ── */
               <div className="my-form">
-                <div>
+                <div className="my-field">
                   <label className="my-label">닉네임</label>
                   <input className="my-input" value={formName} onChange={(e) => setFormName(e.target.value)} />
                 </div>
-                <div>
+                <div className="my-field">
                   <label className="my-label">이메일</label>
                   <input className="my-input" value={profile?.email ?? ''} disabled />
                 </div>
-                <div>
+                <div className="my-field">
                   <label className="my-label">성별</label>
                   <select className="my-input" value={formGender} onChange={(e) => setFormGender(e.target.value)}>
                     <option value="">선택 안함</option>
@@ -222,14 +229,14 @@ export default function MyPage() {
                     <option value="male">남성</option>
                   </select>
                 </div>
-                <div>
+                <div className="my-field">
                   <label className="my-label">피부 타입</label>
                   <select className="my-input" value={formSkinType} onChange={(e) => setFormSkinType(e.target.value)}>
                     <option value="">선택 안함</option>
                     {SKIN_TYPES.map((t) => <option key={t}>{t}</option>)}
                   </select>
                 </div>
-                <div>
+                <div className="my-field">
                   <label className="my-label">피부 고민</label>
                   <div className="my-concern-grid">
                     {CONCERNS.map((c) => (
@@ -244,7 +251,7 @@ export default function MyPage() {
                     ))}
                   </div>
                 </div>
-                <div>
+                <div className="my-field">
                   <label className="my-label">알레르기 성분</label>
                   {allergyLoading
                     ? <p style={{ color: '#7c3aed', fontSize: '0.875rem' }}>알레르기 정보 불러오는 중...</p>
@@ -252,16 +259,12 @@ export default function MyPage() {
                   }
                 </div>
                 {saveMsg && <p style={{ fontSize: '0.875rem', color: '#ef4444' }}>{saveMsg}</p>}
-                <button className="my-save-btn" onClick={handleSave} disabled={saving}>
-                  {saving ? '저장 중...' : '수정 완료'}
-                </button>
-                <button
-                  className="my-save-btn"
-                  style={{ background: '#f3f4f6', color: '#6b7280', marginTop: '0.5rem' }}
-                  onClick={handleCancel}
-                >
-                  취소
-                </button>
+                <div className="my-view-btns">
+                  <button className="my-save-btn" onClick={handleSave} disabled={saving}>
+                    {saving ? '저장 중...' : '수정 완료'}
+                  </button>
+                  <button className="my-btn-ghost" onClick={handleCancel}>취소</button>
+                </div>
               </div>
             )}
           </div>

@@ -154,165 +154,176 @@ export default function DiagnosisPage() {
       </div>
 
       <div className="dp-body">
+        <div className="dp-layout">
 
-        {/* ── 가이드 ── */}
-        <div className="dp-guide-row">
-          {GUIDES.map((g) => (
-            <div className="dp-guide-item" key={g.text}>
-              <g.Icon size={18} color="#7c3aed" className="dp-guide-icon" />
-              <span className="dp-guide-text">{g.text}</span>
+          {/* ── 좌측: 가이드 박스 ── */}
+          <div className="dp-guide-col">
+            <div className="dp-guide-box">
+              <div className="dp-guide-box-title">
+                <Camera size={14} />
+                촬영 가이드
+              </div>
+              {GUIDES.map((g) => (
+                <div className="dp-guide-item" key={g.text}>
+                  <g.Icon size={16} color="#7c3aed" />
+                  <span>{g.text}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* ── 우측: 스텝 + 카드 ── */}
+          <div className="dp-main-col">
+
+            {/* 스텝 인디케이터 */}
+            <div className="dp-steps">
+              {(['upload', 'crop', 'preview'] as Step[]).map((s, idx) => {
+                const labels = ['사진 선택', '얼굴 맞추기', '확인 & 분석'];
+                const isActive = step === s;
+                const isDone = ['upload', 'crop', 'preview'].indexOf(step) > idx;
+                return (
+                  <div className="dp-step-item" key={s}>
+                    <div className={`dp-step-circle ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
+                      {isDone ? '✓' : idx + 1}
+                    </div>
+                    <span className={`dp-step-label ${isActive ? 'active' : ''}`}>{labels[idx]}</span>
+                    {idx < 2 && <div className={`dp-step-line ${isDone ? 'done' : ''}`} />}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* ── STEP 1: 사진 선택 ── */}
+            {step === 'upload' && (
+              <div className="dp-card dp-upload-card">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={onFileChange}
+                  style={{ display: 'none' }}
+                />
+                <div className="dp-upload-area" onClick={() => fileInputRef.current?.click()}>
+                  <div className="dp-upload-icon"><Camera size={36} color="#7c3aed" /></div>
+                  <div className="dp-upload-title">사진을 업로드하세요</div>
+                  <div className="dp-upload-sub">클릭하여 파일을 업로드 해주세요</div>
+                  <div className="dp-upload-hint">JPG, PNG · 최대 10MB</div>
+                  <button className="dp-btn-upload">사진 선택하기</button>
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 2: 크롭 ── */}
+            {step === 'crop' && image && (
+              <div className="dp-card dp-crop-card">
+                <div className="dp-crop-layout">
+
+                  {/* 크롭 영역 */}
+                  <div className="dp-crop-col">
+                    <div className="dp-crop-label">얼굴을 원형 가이드에 맞춰주세요</div>
+                    <div className="dp-crop-wrapper">
+                      <Cropper
+                        image={image}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={3 / 4}
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={onCropComplete}
+                      />
+                      <div className="dp-face-guide" />
+                      <span className="dp-face-eye dp-face-eye--left" />
+                      <span className="dp-face-eye dp-face-eye--right" />
+                      <span className="dp-face-mouth" />
+                    </div>
+
+                    {/* 줌 슬라이더 */}
+                    <div className="dp-zoom-row">
+                      <ZoomOut size={16} color="#7c3aed" className="dp-zoom-icon" />
+                      <input
+                        type="range"
+                        className="dp-zoom-slider"
+                        min={1} max={3} step={0.05}
+                        value={zoom}
+                        onChange={(e) => setZoom(Number(e.target.value))}
+                      />
+                      <ZoomIn size={16} color="#7c3aed" className="dp-zoom-icon" />
+                    </div>
+                  </div>
+
+                  {/* 안내 */}
+                  <div className="dp-crop-guide-col">
+                    <div className="dp-crop-guide-title">
+                      <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />이렇게 맞춰주세요
+                    </div>
+                    <ul className="dp-crop-guide-list">
+                      <li>눈, 코, 입이 가이드 안에 들어오게</li>
+                      <li>얼굴이 화면 중앙에 오도록</li>
+                      <li>최대한 가이드라인에 맞게</li>
+                      <li>슬라이더로 크기를 조절하세요</li>
+                    </ul>
+                    <div className="dp-crop-size-info">
+                      <Ruler size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />저장 크기
+                      <strong style={{ marginLeft: 6 }}>{TARGET_WIDTH} × {TARGET_HEIGHT}px</strong>
+                    </div>
+                    <div className="dp-crop-btns">
+                      <button className="dp-btn-secondary" onClick={handleReset}>다시 선택</button>
+                      <button className="dp-btn-primary" onClick={createCroppedImage}>얼굴 맞추기 완료</button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 3: 미리보기 & 분석 ── */}
+            {step === 'preview' && resultImage && (
+              <div className="dp-card dp-preview-card">
+                <div className="dp-preview-layout">
+
+                  <div className="dp-preview-img-col">
+                    <div className="dp-preview-label">최종 이미지</div>
+                    <div className="dp-preview-img-wrap">
+                      <img src={resultImage} alt="최종 이미지" className="dp-preview-img" />
+                      <div className="dp-preview-size-badge">{TARGET_WIDTH}×{TARGET_HEIGHT}</div>
+                    </div>
+                  </div>
+
+                  <div className="dp-preview-info-col">
+                    <div className="dp-preview-title">분석 준비 완료!</div>
+                    <p className="dp-preview-sub">
+                      사진이 잘 나왔나요?<br />
+                      얼굴이 선명하게 보이면 분석을 시작해보세요.
+                    </p>
+
+                    <div className="dp-preview-checklist">
+                      <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />480 × 640px 고정 크기</div>
+                      <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />JPEG 압축률 90%</div>
+                      <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />서버 전송 준비 완료</div>
+                    </div>
+
+                    <div className="dp-preview-btns">
+                      <button className="dp-btn-secondary" onClick={() => setStep('crop')}>
+                        다시 자르기
+                      </button>
+                      <button
+                        className={`dp-btn-primary ${isUploading ? 'loading' : ''}`}
+                        onClick={handleAnalyze}
+                        disabled={isUploading}
+                      >
+                        {isUploading
+                          ? '업로드 중...'
+                          : <><Microscope size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />분석 시작하기</>}
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
-
-        {/* ── 스텝 인디케이터 ── */}
-        <div className="dp-steps">
-          {(['upload', 'crop', 'preview'] as Step[]).map((s, idx) => {
-            const labels = ['사진 선택', '얼굴 맞추기', '확인 & 분석'];
-            const isActive = step === s;
-            const isDone = ['upload', 'crop', 'preview'].indexOf(step) > idx;
-            return (
-              <div className="dp-step-item" key={s}>
-                <div className={`dp-step-circle ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}>
-                  {isDone ? '✓' : idx + 1}
-                </div>
-                <span className={`dp-step-label ${isActive ? 'active' : ''}`}>{labels[idx]}</span>
-                {idx < 2 && <div className={`dp-step-line ${isDone ? 'done' : ''}`} />}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* ── STEP 1: 사진 선택 ── */}
-        {step === 'upload' && (
-          <div className="dp-card dp-upload-card">
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              onChange={onFileChange}
-              style={{ display: 'none' }}
-            />
-            <div className="dp-upload-area" onClick={() => fileInputRef.current?.click()}>
-              <div className="dp-upload-icon"><Camera size={36} color="#7c3aed" /></div>
-              <div className="dp-upload-title">사진을 업로드하세요</div>
-              <div className="dp-upload-sub">클릭하여 파일을 업로드 해주세요</div>
-              <div className="dp-upload-hint">JPG, PNG · 최대 10MB</div>
-              <button className="dp-btn-upload">사진 선택하기</button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 2: 크롭 ── */}
-        {step === 'crop' && image && (
-          <div className="dp-card dp-crop-card">
-            <div className="dp-crop-layout">
-
-              {/* 크롭 영역 */}
-              <div className="dp-crop-col">
-                <div className="dp-crop-label">얼굴을 원형 가이드에 맞춰주세요</div>
-                <div className="dp-crop-wrapper">
-                  <Cropper
-                    image={image}
-                    crop={crop}
-                    zoom={zoom}
-                    aspect={3 / 4}
-                    onCropChange={setCrop}
-                    onZoomChange={setZoom}
-                    onCropComplete={onCropComplete}
-                  />
-                  {/* 얼굴 가이드 오버레이 */}
-                  <div className="dp-face-guide" />
-                  <span className="dp-face-eye dp-face-eye--left" />
-                  <span className="dp-face-eye dp-face-eye--right" />
-                  <span className="dp-face-mouth" />
-                </div>
-
-                {/* 줌 슬라이더 */}
-                <div className="dp-zoom-row">
-                  <ZoomOut size={16} color="#7c3aed" className="dp-zoom-icon" />
-                  <input
-                    type="range"
-                    className="dp-zoom-slider"
-                    min={1} max={3} step={0.05}
-                    value={zoom}
-                    onChange={(e) => setZoom(Number(e.target.value))}
-                  />
-                  <ZoomIn size={16} color="#7c3aed" className="dp-zoom-icon" />
-                </div>
-              </div>
-
-              {/* 안내 */}
-              <div className="dp-crop-guide-col">
-                <div className="dp-crop-guide-title">
-                  <Check size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />이렇게 맞춰주세요
-                </div>
-                <ul className="dp-crop-guide-list">
-                  <li>눈, 코, 입이 가이드 안에 들어오게</li>
-                  <li>얼굴이 화면 중앙에 오도록</li>
-                  <li>턱선이 아래 원 안에 포함되게</li>
-                  <li>슬라이더로 크기를 조절하세요</li>
-                </ul>
-                <div className="dp-crop-size-info">
-                  <Ruler size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />저장 크기
-                  <strong style={{ marginLeft: 6 }}>{TARGET_WIDTH} × {TARGET_HEIGHT}px</strong>
-                </div>
-                <div className="dp-crop-btns">
-                  <button className="dp-btn-secondary" onClick={handleReset}>다시 선택</button>
-                  <button className="dp-btn-primary" onClick={createCroppedImage}>얼굴 맞추기 완료</button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 3: 미리보기 & 분석 ── */}
-        {step === 'preview' && resultImage && (
-          <div className="dp-card dp-preview-card">
-            <div className="dp-preview-layout">
-
-              <div className="dp-preview-img-col">
-                <div className="dp-preview-label">최종 이미지</div>
-                <div className="dp-preview-img-wrap">
-                  <img src={resultImage} alt="최종 이미지" className="dp-preview-img" />
-                  <div className="dp-preview-size-badge">{TARGET_WIDTH}×{TARGET_HEIGHT}</div>
-                </div>
-              </div>
-
-              <div className="dp-preview-info-col">
-                <div className="dp-preview-title">분석 준비 완료!</div>
-                <p className="dp-preview-sub">
-                  사진이 잘 나왔나요?<br />
-                  얼굴이 선명하게 보이면 분석을 시작해보세요.
-                </p>
-
-                <div className="dp-preview-checklist">
-                  <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />480 × 640px 고정 크기</div>
-                  <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />JPEG 압축률 90%</div>
-                  <div className="dp-check-item"><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />서버 전송 준비 완료</div>
-                </div>
-
-                <div className="dp-preview-btns">
-                  <button className="dp-btn-secondary" onClick={() => setStep('crop')}>
-                    다시 자르기
-                  </button>
-                  <button
-                    className={`dp-btn-primary ${isUploading ? 'loading' : ''}`}
-                    onClick={handleAnalyze}
-                    disabled={isUploading}
-                  >
-                    {isUploading
-                      ? '업로드 중...'
-                      : <><Microscope size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />분석 시작하기</>}
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   );

@@ -1,20 +1,20 @@
-import { useNavigate } from 'react-router-dom';
+﻿import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { ChevronRight } from 'lucide-react';
 import './MainPage.css';
 
 const ANALYSIS_METRICS = [
-  { label: '트러블',   value: 73, color: '#ef4444' },
-  { label: '건조',     value: 58, color: '#f59e0b' },
-  { label: '처짐',     value: 48, color: '#f59e0b' },
+  { label: '진정',   value: 73, color: '#ef4444' },
+  { label: '수분',     value: 58, color: '#f59e0b' },
+  { label: '탄력',     value: 48, color: '#f59e0b' },
   { label: '모공',     value: 65, color: '#f59e0b' },
   { label: '색소침착', value: 42, color: '#22c55e' },
   { label: '주름',     value: 23, color: '#22c55e' },
 ];
 
 const ROUTINE_ITEMS = [
-  { step: 1, cat: '클렌저', name: '부드러운 클렌징폼', price: '18,000원' },
-  { step: 2, cat: '토너',   name: '수분 토너',         price: '25,000원' },
+  { step: 1, cat: '토너', name: '수분 토너', price: '18,000원' },
+  { step: 2, cat: '세럼',   name: '진정 세럼',         price: '25,000원' },
   { step: 3, cat: '크림',   name: '보습 크림',         price: '38,000원' },
 ];
 
@@ -27,7 +27,7 @@ const HOW_STEPS = [
   {
     num: '02',
     title: '셀피 한 장 업로드 & 분석',
-    desc: '스마트폰 카메라 한 장이면 충분해요. 밝은 조명 아래 생얼 상태로 정면을 바라보고 찍은 사진을 업로드하면, AI가 트러블·건조·처짐·모공·색소침착·주름 6가지 지표를 수치화해 개인 피부 리포트를 완성해드려요.',
+    desc: '스마트폰 카메라 한 장이면 충분해요. 밝은 조명 아래 생얼 상태로 정면을 바라보고 찍은 사진을 업로드하면, AI가 진정·수분·탄력·모공·색소침착·주름 6가지 지표를 수치화해 개인 피부 리포트를 완성해드려요.',
   },
   {
     num: '03',
@@ -36,217 +36,188 @@ const HOW_STEPS = [
   },
 ];
 
-/* ── SVG 일러스트: Step 01 — 피부 설정 화면 ── */
+/* SVG illustration: Step 01 */
 function SkinSetupVisual() {
   return (
     <svg viewBox="0 0 480 300" className="mp-how-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="cs1" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="rgba(124,58,237,0.12)" />
+          <feDropShadow dx="0" dy="4" stdDeviation="10" floodColor="rgba(0,0,0,0.08)" />
         </filter>
       </defs>
-      <rect x="28" y="10" width="424" height="278" rx="18" fill="white" filter="url(#cs1)" />
-      <rect x="28" y="10" width="424" height="52" rx="18" fill="#7c3aed" />
-      <rect x="28" y="42" width="424" height="20" fill="#7c3aed" />
-      <text x="240" y="43" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="sans-serif">내 피부 설정</text>
 
-      <text x="50" y="80" fill="#9ca3af" fontSize="10" fontWeight="700" fontFamily="sans-serif">피부 타입</text>
-      <rect x="50"  y="87" width="54" height="26" rx="13" fill="#7c3aed" />
-      <text x="77"  y="105" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="sans-serif">건성</text>
-      <rect x="112" y="87" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="139" y="105" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">지성</text>
-      <rect x="174" y="87" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="201" y="105" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">중성</text>
-      <rect x="236" y="87" width="66" height="26" rx="13" fill="#f3f4f6" />
-      <text x="269" y="105" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">복합성</text>
-      <rect x="310" y="87" width="60" height="26" rx="13" fill="#f3f4f6" />
-      <text x="340" y="105" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">수부지</text>
+      <rect x="28" y="10" width="424" height="278" rx="10" fill="white" filter="url(#cs1)" />
 
-      <text x="50" y="136" fill="#9ca3af" fontSize="10" fontWeight="700" fontFamily="sans-serif">피부 고민 (복수 선택)</text>
-      <rect x="50"  y="144" width="66" height="26" rx="13" fill="#7c3aed" />
-      <text x="83"  y="162" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="sans-serif">여드름</text>
-      <rect x="124" y="144" width="62" height="26" rx="13" fill="#7c3aed" />
-      <text x="155" y="162" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily="sans-serif">속건조</text>
-      <rect x="194" y="144" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="221" y="162" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">모공</text>
-      <rect x="256" y="144" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="283" y="162" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">주름</text>
-      <rect x="318" y="144" width="62" height="26" rx="13" fill="#f3f4f6" />
-      <text x="349" y="162" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">민감성</text>
+      <text x="50" y="40" fill="#111827" fontSize="14" fontWeight="700" fontFamily="sans-serif">내 피부 설정</text>
+      <text x="50" y="56" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">피부 타입과 고민을 선택해주세요</text>
+      <line x1="28" y1="65" x2="452" y2="65" stroke="#f3f4f6" strokeWidth="1" />
 
-      <rect x="50"  y="178" width="62" height="26" rx="13" fill="#f3f4f6" />
-      <text x="81"  y="196" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">붉은기</text>
-      <rect x="120" y="178" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="147" y="196" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">미백</text>
-      <rect x="182" y="178" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="209" y="196" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">각질</text>
-      <rect x="244" y="178" width="54" height="26" rx="13" fill="#f3f4f6" />
-      <text x="271" y="196" textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="sans-serif">홍조</text>
+      <text x="50" y="83" fill="#6b7280" fontSize="10" fontWeight="700" fontFamily="sans-serif">피부 타입</text>
+      <rect x="50" y="90" width="50" height="24" rx="6" fill="#f5f3ff" stroke="#c4b5fd" strokeWidth="1.5" />
+      <text x="75" y="106" textAnchor="middle" fill="#7c3aed" fontSize="11" fontWeight="700" fontFamily="sans-serif">건성</text>
+      <rect x="108" y="90" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="133" y="106" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">지성</text>
+      <rect x="166" y="90" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="191" y="106" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">중성</text>
+      <rect x="224" y="90" width="62" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="255" y="106" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">복합성</text>
+      <rect x="294" y="90" width="62" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="325" y="106" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">수부지</text>
 
-      <rect x="50" y="228" width="380" height="40" rx="12" fill="#7c3aed" />
-      <text x="240" y="253" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="sans-serif">완료하기 →</text>
+      <text x="50" y="132" fill="#6b7280" fontSize="10" fontWeight="700" fontFamily="sans-serif">피부 고민 (복수 선택)</text>
+      <rect x="50" y="139" width="62" height="24" rx="6" fill="#f5f3ff" stroke="#c4b5fd" strokeWidth="1.5" />
+      <text x="81" y="155" textAnchor="middle" fill="#7c3aed" fontSize="11" fontWeight="700" fontFamily="sans-serif">여드름</text>
+      <rect x="120" y="139" width="62" height="24" rx="6" fill="#f5f3ff" stroke="#c4b5fd" strokeWidth="1.5" />
+      <text x="151" y="155" textAnchor="middle" fill="#7c3aed" fontSize="11" fontWeight="700" fontFamily="sans-serif">속건조</text>
+      <rect x="190" y="139" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="215" y="155" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">모공</text>
+      <rect x="248" y="139" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="273" y="155" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">주름</text>
+      <rect x="306" y="139" width="62" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="337" y="155" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">민감성</text>
+
+      <rect x="50" y="171" width="62" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="81" y="187" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">붉은기</text>
+      <rect x="120" y="171" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="145" y="187" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">미백</text>
+      <rect x="178" y="171" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="203" y="187" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">각질</text>
+      <rect x="236" y="171" width="50" height="24" rx="6" fill="#f9fafb" stroke="#e5e7eb" strokeWidth="1.5" />
+      <text x="261" y="187" textAnchor="middle" fill="#9ca3af" fontSize="11" fontFamily="sans-serif">홍조</text>
+
+      <rect x="50" y="220" width="380" height="40" rx="8" fill="#7c3aed" />
+      <text x="240" y="245" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="sans-serif">완료하기 →</text>
     </svg>
   );
 }
 
-/* ── SVG 일러스트: Step 02 — 피부 분석 레이더 차트 ── */
+/* SVG illustration: Step 02 */
 function AnalysisVisual() {
-  // 레이더 차트: center (240,178), r=64
-  // 6 axes starting from top (-90°), clockwise at 60° intervals
-  // Outer hex:
-  const outer = '240,114 295,146 295,210 240,242 185,210 185,146';
-  // 50% grid (r=32):
-  const grid50 = '240,146 268,162 268,194 240,210 212,194 212,162';
-  // 25% grid (r=16):
-  const grid25 = '240,162 254,170 254,186 240,194 226,186 226,170';
-  // Outer axis endpoints
-  const outerPts: [number, number][] = [[240,114],[295,146],[295,210],[240,242],[185,210],[185,146]];
-  // Data polygon: values 73,58,48,65,42,23 (r=64)
-  const data = '240,131 272,159 267,193 240,222 217,191 227,171';
-  // Data dots
-  const dots: [number, number][] = [[240,131],[272,159],[267,193],[240,222],[217,191],[227,171]];
-
-  const labels = [
-    { text: '트러블', x: 240, y: 98,  anchor: 'middle', val: 73, color: '#ef4444' },
-    { text: '건조',   x: 310, y: 138, anchor: 'start',  val: 58, color: '#f59e0b' },
-    { text: '처짐',   x: 310, y: 218, anchor: 'start',  val: 48, color: '#f59e0b' },
-    { text: '모공',   x: 240, y: 260, anchor: 'middle', val: 65, color: '#f59e0b' },
-    { text: '색소침착', x: 170, y: 218, anchor: 'end', val: 42, color: '#22c55e' },
-    { text: '주름',   x: 170, y: 138, anchor: 'end',   val: 23, color: '#22c55e' },
+  const metrics = [
+    { label: '진정', value: 73, color: '#ef4444' },
+    { label: '수분',   value: 58, color: '#f59e0b' },
+    { label: '탄력',   value: 48, color: '#f59e0b' },
+    { label: '모공',   value: 65, color: '#f59e0b' },
+    { label: '색소침착',   value: 42, color: '#22c55e' },
+    { label: '주름',   value: 23, color: '#22c55e' },
   ];
+  const BAR_W = 130;
+  const BAR_X = 292;
 
   return (
-    <svg viewBox="0 0 480 300" className="mp-how-svg" xmlns="http://www.w3.org/2000/svg">
+    <svg viewBox="0 0 490 318" className="mp-how-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="cs2" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="rgba(124,58,237,0.12)" />
+        <filter id="cs2a" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="4" stdDeviation="10" floodColor="rgba(0,0,0,0.08)" />
         </filter>
-        <linearGradient id="radarFill" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7c3aed" stopOpacity="0.28" />
-          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0.18" />
-        </linearGradient>
+        <filter id="cs2b" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="6" stdDeviation="14" floodColor="rgba(0,0,0,0.10)" />
+        </filter>
       </defs>
 
-      <rect x="28" y="10" width="424" height="278" rx="18" fill="white" filter="url(#cs2)" />
-      <rect x="28" y="10" width="424" height="52" rx="18" fill="#7c3aed" />
-      <rect x="28" y="42" width="424" height="20" fill="#7c3aed" />
-      <text x="140" y="43" textAnchor="middle" fill="white" fontSize="13" fontWeight="700" fontFamily="sans-serif">AI 피부 분석 리포트</text>
+      <rect x="12" y="10" width="263" height="268" rx="10" fill="white" filter="url(#cs2a)" />
+      <text x="30" y="38" fill="#111827" fontSize="12" fontWeight="700" fontFamily="sans-serif">피부 사진 분석</text>
+      <text x="30" y="52" fill="#9ca3af" fontSize="9" fontFamily="sans-serif">AI 스캔 중...</text>
+      <line x1="12" y1="60" x2="275" y2="60" stroke="#f3f4f6" strokeWidth="1" />
 
-      {/* Right side: skin type info */}
-      <text x="300" y="75" fill="#111" fontSize="15" fontWeight="700" fontFamily="sans-serif">건성 피부</text>
-      <text x="300" y="93" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">2026. 05. 19</text>
-      <line x1="290" y1="103" x2="430" y2="103" stroke="#f0f0f0" strokeWidth="1" />
+      <rect x="22" y="67" width="243" height="197" rx="8" fill="#f9f7ff" />
+      <ellipse cx="143" cy="162" rx="60" ry="76" fill="#fde8d8" />
+      <ellipse cx="125" cy="147" rx="8" ry="5" fill="#f3c4a0" />
+      <ellipse cx="161" cy="147" rx="8" ry="5" fill="#f3c4a0" />
+      <ellipse cx="125" cy="145" rx="5" ry="3" fill="#4b2e20" opacity="0.65" />
+      <ellipse cx="161" cy="145" rx="5" ry="3" fill="#4b2e20" opacity="0.65" />
+      <path d="M132 168 Q143 176 154 168" stroke="#c8856a" strokeWidth="1.5" fill="none" strokeLinecap="round" />
 
-      {/* Score summary */}
-      {[
-        { label: '개선필요', count: 4, color: '#f59e0b', y: 120 },
-        { label: '양호',     count: 2, color: '#22c55e', y: 148 },
-      ].map(s => (
-        <g key={s.label}>
-          <circle cx="300" cy={s.y} r="5" fill={s.color} opacity="0.7" />
-          <text x="312" y={s.y + 4} fill="#555" fontSize="11" fontFamily="sans-serif">{s.label} {s.count}개</text>
-        </g>
+      {[90, 115, 140, 165, 190, 215, 240].map(y => (
+        <line key={`h${y}`} x1="22" y1={y} x2="265" y2={y} stroke="#7c3aed" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.15" />
+      ))}
+      {[60, 90, 120, 143, 168, 200, 240].map(x => (
+        <line key={`v${x}`} x1={x} y1="67" x2={x} y2="264" stroke="#7c3aed" strokeWidth="0.5" strokeDasharray="4 4" opacity="0.15" />
       ))}
 
-      {/* Radar grid */}
-      <polygon points={outer}  fill="none" stroke="#e5e7eb" strokeWidth="1" />
-      <polygon points={grid50} fill="none" stroke="#e5e7eb" strokeWidth="0.7" strokeDasharray="3 2" />
-      <polygon points={grid25} fill="none" stroke="#e5e7eb" strokeWidth="0.7" strokeDasharray="3 2" />
+      <path d="M30 78 L30 68 L40 68" stroke="rgba(124,58,237,0.7)" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M256 78 L256 68 L246 68" stroke="rgba(124,58,237,0.7)" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M30 254 L30 264 L40 264" stroke="rgba(124,58,237,0.7)" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M256 254 L256 264 L246 264" stroke="rgba(124,58,237,0.7)" strokeWidth="2" fill="none" strokeLinecap="round" />
 
-      {/* Axis lines */}
-      {outerPts.map((pt, i) => (
-        <line key={i} x1="240" y1="178" x2={pt[0]} y2={pt[1]} stroke="#e5e7eb" strokeWidth="0.7" />
+      <rect x="82" y="70" width="102" height="18" rx="9" fill="rgba(124,58,237,0.75)" />
+      <text x="133" y="82" textAnchor="middle" fill="white" fontSize="8" fontWeight="700" fontFamily="sans-serif">AI 피부 분석 중</text>
+
+      {([[143,110],[108,142],[178,142],[123,178],[163,178],[143,220]] as [number,number][]).map(([x,y],i) => (
+        <circle key={i} cx={x} cy={y} r="3.5" fill="#7c3aed" stroke="white" strokeWidth="1.5" opacity="0.65" />
       ))}
 
-      {/* Data area */}
-      <polygon points={data} fill="url(#radarFill)" stroke="#7c3aed" strokeWidth="2" />
+      <rect x="218" y="40" width="263" height="268" rx="10" fill="white" filter="url(#cs2b)" />
+      <text x="236" y="68" fill="#111827" fontSize="12" fontWeight="700" fontFamily="sans-serif">AI 피부 리포트</text>
+      <text x="236" y="82" fill="#9ca3af" fontSize="9" fontFamily="sans-serif">건성 피부 · 2026.05.19</text>
+      <line x1="218" y1="90" x2="481" y2="90" stroke="#f3f4f6" strokeWidth="1" />
 
-      {/* Data dots */}
-      {dots.map((d, i) => (
-        <circle key={i} cx={d[0]} cy={d[1]} r="4" fill="#7c3aed" stroke="white" strokeWidth="1.5" />
-      ))}
+      {metrics.map((m, i) => {
+        const ry = 108 + i * 30;
+        const barW = Math.round(BAR_W * m.value / 100);
+        return (
+          <g key={m.label}>
+            <text x="236" y={ry + 5} fill="#374151" fontSize="10" fontFamily="sans-serif">{m.label}</text>
+            <rect x={BAR_X} y={ry - 5} width={BAR_W} height={8} rx="4" fill="#f3f4f6" />
+            <rect x={BAR_X} y={ry - 5} width={barW} height={8} rx="4" fill={m.color} opacity="0.85" />
+            <text x={BAR_X + BAR_W + 8} y={ry + 5} fill={m.color} fontSize="10" fontWeight="700" fontFamily="sans-serif">{m.value}%</text>
+          </g>
+        );
+      })}
 
-      {/* Axis labels */}
-      {labels.map(l => (
-        <g key={l.text}>
-          <text
-            x={l.x} y={l.y}
-            textAnchor={l.anchor as 'middle' | 'start' | 'end'}
-            fill={l.color}
-            fontSize="10"
-            fontWeight="700"
-            fontFamily="sans-serif"
-          >{l.text}</text>
-          <text
-            x={l.anchor === 'start' ? l.x + 2 : l.anchor === 'end' ? l.x - 2 : l.x}
-            y={l.y + 13}
-            textAnchor={l.anchor as 'middle' | 'start' | 'end'}
-            fill="#9ca3af"
-            fontSize="9"
-            fontFamily="sans-serif"
-          >{l.val}</text>
-        </g>
-      ))}
+      <line x1="218" y1="283" x2="481" y2="283" stroke="#f3f4f6" strokeWidth="1" />
+      <circle cx="238" cy="298" r="3" fill="#ef4444" opacity="0.8" />
+      <text x="246" y="302" fill="#6b7280" fontSize="9" fontFamily="sans-serif">개선필요 4개</text>
+      <circle cx="328" cy="298" r="3" fill="#22c55e" opacity="0.8" />
+      <text x="336" y="302" fill="#6b7280" fontSize="9" fontFamily="sans-serif">양호 2개</text>
     </svg>
   );
 }
 
-/* ── SVG 일러스트: Step 03 — 루틴 리포트 ── */
+/* SVG illustration: Step 03 */
 function RoutineVisual() {
   const items = [
-    { step: 1, cat: '클렌저', name: '순한 클렌징폼',  price: '18,000원' },
-    { step: 2, cat: '토너',   name: '수분 진정 토너', price: '25,000원' },
+    { step: 1, cat: '토너', name: '수분 진정 토너',  price: '18,000원' },
+    { step: 2, cat: '에멀젼',   name: '수분 에멀젼', price: '25,000원' },
     { step: 3, cat: '앰플',   name: '진정 앰플',      price: '45,000원' },
-    { step: 4, cat: '크림',   name: '수분 크림',      price: '38,000원' },
+    { step: 4, cat: '크림',   name: '보습 크림',      price: '38,000원' },
   ];
 
   return (
     <svg viewBox="0 0 480 300" className="mp-how-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <filter id="cs3" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="6" stdDeviation="12" floodColor="rgba(124,58,237,0.12)" />
+          <feDropShadow dx="0" dy="4" stdDeviation="10" floodColor="rgba(0,0,0,0.08)" />
         </filter>
       </defs>
 
-      <rect x="28" y="10" width="424" height="278" rx="18" fill="white" filter="url(#cs3)" />
-      <rect x="28" y="10" width="424" height="52" rx="18" fill="#7c3aed" />
-      <rect x="28" y="42" width="424" height="20" fill="#7c3aed" />
-      <text x="68" y="43" fill="white" fontSize="13" fontWeight="700" fontFamily="sans-serif">AI 추천 루틴</text>
-      <text x="402" y="43" textAnchor="end" fill="rgba(255,255,255,0.75)" fontSize="11" fontFamily="sans-serif">총 126,000원</text>
+      <rect x="28" y="10" width="424" height="278" rx="10" fill="white" filter="url(#cs3)" />
 
-      {/* Subtitle */}
-      <text x="50" y="80" fill="#7c3aed" fontSize="11" fontWeight="600" fontFamily="sans-serif">건성 피부 맞춤 · 예산 범위 내 최적 조합</text>
+      <text x="50" y="40" fill="#111827" fontSize="14" fontWeight="700" fontFamily="sans-serif">AI 추천 루틴</text>
+      <text x="50" y="56" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">건성 피부 맞춤 · 예산 범위 내 최적 조합</text>
+      <line x1="28" y1="65" x2="452" y2="65" stroke="#f3f4f6" strokeWidth="1" />
 
-      {/* Product rows */}
       {items.map((item, i) => {
-        const ry = 105 + i * 38;
+        const ry = 87 + i * 40;
         return (
           <g key={item.step}>
             {i > 0 && (
               <line x1="50" y1={ry - 12} x2="430" y2={ry - 12} stroke="#f5f5f5" strokeWidth="1" />
             )}
-            {/* STEP badge */}
-            <rect x="50" y={ry - 10} width="52" height="20" rx="10" fill="#7c3aed" />
-            <text x="76" y={ry + 4} textAnchor="middle" fill="white" fontSize="9" fontWeight="700" fontFamily="sans-serif">STEP {item.step}</text>
-            {/* Category */}
+            <rect x="50" y={ry - 10} width="52" height="20" rx="4" fill="#f3f4f6" />
+            <text x="76" y={ry + 4} textAnchor="middle" fill="#374151" fontSize="9" fontWeight="700" fontFamily="sans-serif">STEP {item.step}</text>
             <text x="114" y={ry - 1} fill="#9ca3af" fontSize="9" fontFamily="sans-serif">{item.cat}</text>
-            {/* Name */}
-            <text x="114" y={ry + 12} fill="#111" fontSize="12" fontWeight="600" fontFamily="sans-serif">{item.name}</text>
-            {/* Price */}
-            <text x="402" y={ry + 12} textAnchor="end" fill="#374151" fontSize="12" fontWeight="600" fontFamily="sans-serif">{item.price}</text>
+            <text x="114" y={ry + 12} fill="#111827" fontSize="12" fontWeight="600" fontFamily="sans-serif">{item.name}</text>
+            <text x="430" y={ry + 12} textAnchor="end" fill="#374151" fontSize="12" fontWeight="500" fontFamily="sans-serif">{item.price}</text>
           </g>
         );
       })}
 
-      {/* Divider + total */}
-      <line x1="50" y1="252" x2="430" y2="252" stroke="#f0f0f0" strokeWidth="1" />
-      <text x="50"  y="268" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">소요 약 8분</text>
-      <circle cx="116" cy="265" r="2" fill="#d1d5db" />
-      <text x="122" y="268" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">제품 4개</text>
-      <text x="402" y="268" textAnchor="end" fill="#7c3aed" fontSize="11" fontWeight="700" fontFamily="sans-serif">총 126,000원</text>
-
-      {/* Bottom CTA-like strip */}
-      <rect x="50" y="276" width="380" height="2" rx="1" fill="#f5f3ff" />
+      <line x1="50" y1="247" x2="430" y2="247" stroke="#e5e7eb" strokeWidth="1" />
+      <text x="50"  y="263" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">소요 약 8분</text>
+      <circle cx="116" cy="260" r="2" fill="#d1d5db" />
+      <text x="122" y="263" fill="#9ca3af" fontSize="10" fontFamily="sans-serif">제품 4개</text>
+      <text x="430" y="263" textAnchor="end" fill="#7c3aed" fontSize="11" fontWeight="700" fontFamily="sans-serif">총 126,000원</text>
     </svg>
   );
 }
@@ -265,63 +236,44 @@ export default function MainPage() {
   return (
     <main className="mp">
 
-      {/* ── HERO ── */}
+      {/* HERO */}
       <section className="mp-hero">
+        <div className="mp-hero-photo-wrap">
+          <img
+            src="/hero-photo.png"
+            alt="스킨케어 모델"
+            className="mp-hero-photo"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        </div>
+
         <div className="mp-hero-inner">
           <div className="mp-hero-text">
-            <p className="mp-eyebrow">AI Skin Analysis Platform</p>
             <h1 className="mp-hero-h1">
-              내 피부를<br />AI로 읽다
+              피부는 모두 다르기에<br />케어도 달라야 합니다
             </h1>
             <p className="mp-hero-desc">
-              사진 한 장으로 6가지 피부 지표를 분석하고<br />
-              나에게 맞는 스킨케어 루틴을 AI가 설계합니다.
+              피부 분석부터 맞춤 화장품 추천까지,<br />
+              당신에게 맞는 스킨케어 루틴을 AI가 설계합니다.
             </p>
             <div className="mp-hero-btns">
               <button className="mp-btn-white" onClick={handleStart}>
-                무료로 시작하기
+                피부 분석 시작하기
                 <ChevronRight size={15} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }} />
               </button>
-              <button className="mp-btn-ghost" onClick={() => navigate('/products')}>제품 둘러보기</button>
-            </div>
-          </div>
-
-          {/* 사람 사진: /public/hero-photo.jpg 에 추가하세요 */}
-          <div className="mp-hero-photo-wrap">
-            <img
-              src="/hero-photo.jpg"
-              alt="스킨케어 모델"
-              className="mp-hero-photo"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
-            {/* AI 분석 오버레이 */}
-            <div className="mp-hero-overlay">
-              <span className="mp-corner mp-corner--tl" />
-              <span className="mp-corner mp-corner--tr" />
-              <span className="mp-corner mp-corner--bl" />
-              <span className="mp-corner mp-corner--br" />
-              <div className="mp-hero-scan-badge">
-                <span className="mp-scan-dot" />
-                AI 피부 분석 중
-              </div>
-              <div className="mp-hero-chips">
-                <div className="mp-hero-chip mp-hero-chip--red">트러블 <b>73</b></div>
-                <div className="mp-hero-chip mp-hero-chip--amber">건조 <b>58</b></div>
-                <div className="mp-hero-chip mp-hero-chip--green">주름 <b>23</b></div>
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SHOWCASE ── */}
+      {/* SHOWCASE */}
       <section className="mp-showcase">
         <div className="mp-container">
           <div className="mp-showcase-head">
             <p className="mp-eyebrow mp-eyebrow--purple">피부 분석부터 루틴까지</p>
-            <h2 className="mp-showcase-h2">나에게 맞는<br />스킨케어를 찾다</h2>
+            <h2 className="mp-showcase-h2">나에게 맞는<br />스킨케어 루틴을 찾다</h2>
             <p className="mp-showcase-sub">
-              AI가 6가지 피부 지표를 분석하고, 예산에 맞는 루틴까지 한번에 제안해요.
+              AI가 6가지 피부 지표를 분석하고, 예산에 맞는 스킨케어 루틴까지 한번에 제안해요.
             </p>
           </div>
 
@@ -365,7 +317,7 @@ export default function MainPage() {
         </div>
       </section>
 
-      {/* ── HOW TO ── */}
+      {/* HOW TO */}
       <section className="mp-how">
         <div className="mp-container">
           <div className="mp-how-head">
@@ -389,14 +341,14 @@ export default function MainPage() {
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* CTA */}
       <section className="mp-cta">
         <div className="mp-container mp-cta-inner">
-          <p className="mp-eyebrow mp-eyebrow--purple">무료로 시작하기</p>
+          <p className="mp-eyebrow mp-eyebrow--purple">AI 피부 분석 시작하기</p>
           <h2 className="mp-cta-h2">내 피부에 맞는 루틴,<br />지금 바로 찾아볼까요?</h2>
           <p className="mp-cta-desc">회원가입 후 즉시 시작할 수 있어요. 3분이면 충분합니다.</p>
           <button className="mp-btn-purple" onClick={handleStart}>
-            무료로 시작하기
+            AI 피부 분석 시작하기
             <ChevronRight size={15} style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 4 }} />
           </button>
         </div>

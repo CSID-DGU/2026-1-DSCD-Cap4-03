@@ -19,14 +19,14 @@
   font-size: 11px; font-weight: 700;
   padding: 0;
   margin-bottom: 14px;
-  letter-spacing: 2px;
+  letter-spacing: -0.05em;
   text-transform: uppercase;
 }
 .ui-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(24px, 4vw, 38px);
   font-weight: 800; color: #1A1A1A; margin-bottom: 8px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 .ui-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
@@ -40,7 +40,7 @@
 /* ── 카드 ── */
 .ui-card {
   background: #fff;
-  border-radius: 24px;
+  border-radius: 10px;
   padding: 0;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   overflow: hidden;
@@ -104,7 +104,7 @@
   padding: 10px 20px;
   background: #ffffff;
   border: 1.5px solid #A78BFA;
-  border-radius: 24px;
+  border-radius: 10px;
   font-size: 13px; font-weight: 600; color: #5F5F5F;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
@@ -144,7 +144,7 @@
   padding: 10px 20px;
   background: #ffffff;
   border: 1.5px solid #A78BFA;
-  border-radius: 24px;
+  border-radius: 10px;
   font-size: 13px; font-weight: 600; color: #5F5F5F;
   cursor: pointer;
   font-family: 'Noto Sans KR', sans-serif;
@@ -178,7 +178,7 @@
 .ui-summary-tag {
   background: #F9F7FF; color: #7c3aed;
   font-size: 12px; font-weight: 700;
-  padding: 4px 12px; border-radius: 24px;
+  padding: 4px 12px; border-radius: 10px;
   border: 1.5px solid #A78BFA;
 }
 .ui-summary-tag.allergy { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
@@ -187,7 +187,7 @@
   background: #7c3aed; color: #fff;
   font-family: 'Sora', sans-serif;
   font-size: 15px; font-weight: 700;
-  padding: 14px 40px; border-radius: 24px; border: none; cursor: pointer;
+  padding: 14px 40px; border-radius: 10px; border: none; cursor: pointer;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: all 0.2s; white-space: nowrap;
 }

@@ -19,14 +19,14 @@
   font-size: 11px; font-weight: 700;
   padding: 0;
   margin-bottom: 14px;
-  letter-spacing: 2px;
+  letter-spacing: -0.05em;
   text-transform: uppercase;
 }
 .dp-title {
   font-family: 'Sora', sans-serif;
   font-size: clamp(24px, 4vw, 38px);
   font-weight: 800; color: #1A1A1A; margin-bottom: 8px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 .dp-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
@@ -37,36 +37,56 @@
   padding: 28px 80px 80px;
 }
 
-/* ── 가이드 행 ── */
-.dp-guide-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
+/* ── 2열 레이아웃 ── */
+.dp-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── 좌측 가이드 박스 ── */
+.dp-guide-col {
+  position: sticky;
+  top: 88px;
+}
+.dp-guide-box {
+  background: #F9F7FF;
+  border-radius: 12px;
+  padding: 22px 20px;
+  border: 1.5px solid #A78BFA;
+}
+.dp-guide-box-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 700; color: #7c3aed;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 6px;
 }
 .dp-guide-item {
   display: flex;
-  align-items: center;
-  gap: 7px;
-  background: #fff;
-  border: 1.5px solid #A78BFA;
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 13px;
-  color: #5F5F5F;
-  font-weight: 500;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #ede9fe;
+  font-size: 13px; color: #5F5F5F; font-weight: 500;
+  line-height: 1.4;
 }
-.dp-guide-icon { font-size: 15px; }
-.dp-guide-text { white-space: nowrap; }
+.dp-guide-item:last-child { border-bottom: none; }
+
+/* ── 우측 메인 ── */
+.dp-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 
 /* ── 스텝 인디케이터 ── */
 .dp-steps {
   display: flex;
   align-items: center;
   gap: 0;
-  margin-bottom: 24px;
   background: #fff;
-  border-radius: 24px;
+  border-radius: 10px;
   padding: 16px 24px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
@@ -104,7 +124,7 @@
 /* ── 공통 카드 ── */
 .dp-card {
   background: #fff;
-  border-radius: 24px;
+  border-radius: 10px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   overflow: hidden;
 }
@@ -118,7 +138,7 @@
   justify-content: center;
   padding: 80px 40px;
   border: 2px dashed #A78BFA;
-  border-radius: 24px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s;
   text-align: center;
@@ -140,7 +160,7 @@
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
-  padding: 12px 32px; border-radius: 24px; border: none; cursor: pointer;
+  padding: 12px 32px; border-radius: 10px; border: none; cursor: pointer;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: all 0.2s;
 }
@@ -167,7 +187,7 @@
   aspect-ratio: 3 / 4;
   margin: 0 auto;
   background: #000;
-  border-radius: 24px;
+  border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
@@ -289,7 +309,7 @@
 .dp-preview-img {
   width: 220px; height: 293px;
   object-fit: cover;
-  border-radius: 24px;
+  border-radius: 10px;
   border: 3px solid #F5F3FF;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   display: block;
@@ -310,7 +330,7 @@
 .dp-preview-title {
   font-family: 'Sora', sans-serif;
   font-size: 22px; font-weight: 800; color: #1A1A1A; margin-bottom: 10px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.05em;
 }
 .dp-preview-sub {
   font-size: 14px; color: #5F5F5F; line-height: 1.8; margin-bottom: 20px;
@@ -330,7 +350,7 @@
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
-  padding: 13px 28px; border-radius: 24px; border: none; cursor: pointer;
+  padding: 13px 28px; border-radius: 10px; border: none; cursor: pointer;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
   transition: all 0.2s;
 }
@@ -342,7 +362,7 @@
   background: transparent; color: #7c3aed;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
-  padding: 13px 24px; border-radius: 24px;
+  padding: 13px 24px; border-radius: 10px;
   border: 1.5px solid #7c3aed; cursor: pointer;
   transition: all 0.2s;
 }
@@ -351,4 +371,7 @@
 @media (max-width: 900px) {
   .dp-banner { padding: 40px 24px 32px; }
   .dp-body { padding: 24px 24px 64px; }
+  .dp-layout { grid-template-columns: 1fr; }
+  .dp-guide-col { position: static; }
+  .dp-guide-box { display: flex; flex-direction: column; gap: 0; }
 }
