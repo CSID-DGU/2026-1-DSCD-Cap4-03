@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.db.memory import store
+from app.db.memory import save_skin_summaries, store
 from app.db.session import get_db
 from app.schemas.skin_analysis import (
     SkinAnalysisCreateRequest,
@@ -18,6 +18,22 @@ from app.services.skin_model_service import analyze_skin_image
 
 
 router = APIRouter()
+
+SKIN_INDICATORS = ("acne", "dryness", "sagging", "pore", "pigmentation", "wrinkle")
+
+
+def _empty_skin_summary(result_id: int) -> dict:
+    return {
+        "result_id": result_id,
+        "llm_model": "",
+        "prompt_version": "",
+        "summary_comment": "아직 분석 요약이 생성되지 않았습니다.",
+        "indicator_comments": {
+            key: "아직 분석 요약이 생성되지 않았습니다."
+            for key in SKIN_INDICATORS
+        },
+        "generated_at": "",
+    }
 
 
 def _next_result_id(db: Session) -> int:
@@ -151,18 +167,11 @@ def get_skin_analysis(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis result not found")
     image = get_user_image(db, result["image_id"])
     summary = store.skin_summaries.get(result_id)
+    if summary:
+        save_skin_summaries(store.skin_summaries)
+    else:
+        summary = _empty_skin_summary(result_id)
     profile = ensure_profile(db, current_user["user_id"])
-    if not summary:
-        llm_result = generate_skin_summary_llm(result)
-        summary = {
-            "result_id": result_id,
-            "llm_model": llm_result["model_name"],
-            "prompt_version": llm_result["prompt_version"],
-            "summary_comment": llm_result["summary_comment"],
-            "indicator_comments": llm_result["indicator_comments"],
-            "generated_at": llm_result["generated_at"],
-        }
-        store.skin_summaries[result_id] = summary
     return SkinAnalysisDetailResponse(
         result_id=result_id,
         user_id=result["user_id"],
@@ -194,6 +203,11 @@ def create_skin_summary(
     if not result or result["user_id"] != current_user["user_id"]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis result not found")
 
+    summary = store.skin_summaries.get(payload.result_id)
+    if summary:
+        save_skin_summaries(store.skin_summaries)
+        return SkinSummaryResponse(**summary)
+
     llm_result = generate_skin_summary_llm(result)
     summary = {
         "result_id": payload.result_id,
@@ -204,4 +218,5 @@ def create_skin_summary(
         "generated_at": llm_result["generated_at"],
     }
     store.skin_summaries[payload.result_id] = summary
+    save_skin_summaries(store.skin_summaries)
     return SkinSummaryResponse(**summary)

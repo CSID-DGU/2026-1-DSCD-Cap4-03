@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.db.memory import store
+from app.db.memory import save_recommendation_explanations, store
 from app.db.session import get_db
 from app.schemas.recommendations import (
     RecommendationExplanationRequest,
@@ -110,6 +110,11 @@ def create_recommendation_explanation(
 ) -> RecommendationExplanationResponse:
     session = get_recommendation_session_or_404(db, payload.session_id, current_user["user_id"])
 
+    cached = store.recommendation_explanations.get(payload.session_id)
+    if cached:
+        save_recommendation_explanations(store.recommendation_explanations)
+        return RecommendationExplanationResponse(**cached)
+
     llm_result = generate_routine_explanation_llm(session)
     metadata = _routine_metadata(session)
     routines = [
@@ -150,4 +155,18 @@ def create_recommendation_explanation(
         "routines": response_routines,
     }
     store.recommendation_explanations[payload.session_id] = explanation
+    save_recommendation_explanations(store.recommendation_explanations)
+    return RecommendationExplanationResponse(**explanation)
+
+
+@router.get("/recommendation-explanations/{session_id}", response_model=RecommendationExplanationResponse)
+def get_recommendation_explanation(
+    session_id: int,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RecommendationExplanationResponse:
+    get_recommendation_session_or_404(db, session_id, current_user["user_id"])
+    explanation = store.recommendation_explanations.get(session_id)
+    if not explanation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Recommendation explanation not found")
     return RecommendationExplanationResponse(**explanation)

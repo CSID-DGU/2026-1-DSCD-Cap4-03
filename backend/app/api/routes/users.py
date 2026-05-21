@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.memory import store
 from app.db.session import get_db
 from app.schemas.users import UpdateAllergiesRequest, UpdateAllergiesResponse, UpdateProfileRequest, UserProfileResponse
-from app.services.db_catalog import list_wishlist_products
+from app.services.db_catalog import list_wishlist_products, serialize_product_list_item
 from app.services.db_user import (
     ensure_profile,
     get_user_allergies,
@@ -16,6 +16,7 @@ from app.services.db_user import (
     update_user_profile,
 )
 from app.services.deps import get_current_user
+from app.services.recommendation_model import get_recommendation_session_or_404, serialize_recommendation_session
 
 
 router = APIRouter()
@@ -61,9 +62,77 @@ def get_my_wishlist(current_user: dict = Depends(get_current_user), db: Session 
 
 
 @router.get("/me/routines")
-def get_my_routines(current_user: dict = Depends(get_current_user)) -> dict:
-    routines = [row for row in store.saved_routines.values() if row["user_id"] == current_user["user_id"]]
-    return {"items": routines}
+def get_my_routines(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+    sessions = db.execute(
+        text(
+            """
+            SELECT session_id, created_at
+            FROM recommendation_session
+            WHERE user_id = :user_id
+              AND session_status = 'SUCCESS'
+            ORDER BY created_at DESC, session_id DESC
+            """
+        ),
+        {"user_id": current_user["user_id"]},
+    ).mappings().all()
+
+    results = []
+    seen = set()
+    for session in sessions:
+        session_id = int(session["session_id"])
+        session_obj = get_recommendation_session_or_404(db, session_id, current_user["user_id"])
+        session_data = serialize_recommendation_session(db, session_obj)
+        saved_at = session["created_at"].isoformat() if hasattr(session["created_at"], "isoformat") else str(session["created_at"])
+
+        for routine in session_data["routines"]:
+            key = (session_obj.result_id, session_obj.image_id, routine["type"])
+            if key in seen:
+                continue
+            seen.add(key)
+
+            routine_obj = next(
+                (row for row in session_obj.routines if str(row.routine_id) == routine["routine_id"]),
+                None,
+            )
+            product_map = {}
+            if routine_obj:
+                for item in routine_obj.items:
+                    if item.product:
+                        product_map[item.product.product_id] = item.product
+
+            detailed_products = []
+            for item in routine["products"]:
+                product = product_map.get(item["product_id"])
+                if not product:
+                    continue
+                product_data = serialize_product_list_item(db, product)
+                detailed_products.append(
+                    {
+                        "product_id": item["product_id"],
+                        "step": item["step"],
+                        "product_name": product_data["product_name"],
+                        "brand_name": product_data["brand_name"],
+                        "category": product_data["category"],
+                        "price": int(product_data["price"] or 0),
+                        "image_url": product_data["image_url"],
+                    }
+                )
+
+            results.append(
+                {
+                    "saved_routine_id": int(routine["routine_id"]),
+                    "session_id": session_id,
+                    "routine_type": routine["type"],
+                    "label": routine["label"],
+                    "routine_time": routine["routine_time"],
+                    "total_cost": routine["total_cost"],
+                    "duration": routine["duration"],
+                    "saved_at": saved_at,
+                    "products": detailed_products,
+                }
+            )
+
+    return {"items": results}
 
 
 @router.get("/me/skin-analysis")
