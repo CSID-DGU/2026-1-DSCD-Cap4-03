@@ -287,23 +287,17 @@ def _format_price_text(price: Any) -> str:
 
 
 def _print_am_pm_details(routine: dict[str, Any]) -> None:
-    label = routine.get("am_pm_label")
-    if label == "am+pm":
-        return
+    pm_hits = routine.get("am_hit_details", [])
+    if pm_hits:
+        print("  pm_only products:")
+        for hit in pm_hits:
+            print(f"    - {hit['brand']} - {hit['product_name']} | ingredient={hit['ingredient']}")
 
-    if label in {"pm_only", "check_required"}:
-        pm_hits = routine.get("am_hit_details", [])
-        if pm_hits:
-            print("  pm_only products:")
-            for hit in pm_hits:
-                print(f"    - {hit['brand']} - {hit['product_name']} | ingredient={hit['ingredient']}")
-
-    if label in {"am_only", "check_required"}:
-        am_hits = routine.get("pm_hit_details", [])
-        if am_hits:
-            print("  am_only products:")
-            for hit in am_hits:
-                print(f"    - {hit['brand']} - {hit['product_name']} | ingredient={hit['ingredient']}")
+    am_hits = routine.get("pm_hit_details", [])
+    if am_hits:
+        print("  am_only products:")
+        for hit in am_hits:
+            print(f"    - {hit['brand']} - {hit['product_name']} | ingredient={hit['ingredient']}")
 
 
 def _print_conflict_details(routine: dict[str, Any]) -> None:

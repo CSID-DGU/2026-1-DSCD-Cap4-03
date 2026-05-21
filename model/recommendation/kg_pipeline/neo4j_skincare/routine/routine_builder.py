@@ -173,6 +173,24 @@ def _apply_item_time_tags(products: list[dict], am_pm: dict) -> None:
             product["time_tag"] = None
 
 
+def _core_products(products: list[dict]) -> list[dict]:
+    core = [p for p in products if p.get("_slot_type") != "optional"]
+    return core or products
+
+
+def _apply_time_tags_and_get_routine_am_pm(products: list[dict]) -> tuple[dict, dict]:
+    all_keys = [p["product_key"] for p in products]
+    item_am_pm = check_am_pm(all_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
+    _apply_item_time_tags(products, item_am_pm)
+
+    core_keys = [p["product_key"] for p in _core_products(products)]
+    if core_keys == all_keys:
+        routine_am_pm = item_am_pm
+    else:
+        routine_am_pm = check_am_pm(core_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
+    return item_am_pm, routine_am_pm
+
+
 
 # Routine Builder
 def build_routines(
@@ -266,22 +284,21 @@ def build_routines(
             skipped_conflict += 1
             continue
 
-        am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        _apply_item_time_tags(products, am_pm)
+        item_am_pm, routine_am_pm = _apply_time_tags_and_get_routine_am_pm(products)
         total_score = _routine_search_score(float(approx_score), products)
 
         routines.append(
             {
                 "products": products,
                 "total_score": round(total_score, 4),
-                "am_pm_label": am_pm["am_pm_label"],
+                "am_pm_label": routine_am_pm["am_pm_label"],
                 "conflict_log": conflict["conflict_log"],
                 "rule_conflict_log": conflict.get("rule_conflict_log", []),
                 "smiles_conflict_log": conflict.get("smiles_conflict_log", []),
-                "am_avoid_hits": am_pm["am_avoid_hits"],
-                "pm_avoid_hits": am_pm.get("pm_avoid_hits", []),
-                "am_hit_details": am_pm.get("am_hit_details", []),
-                "pm_hit_details": am_pm.get("pm_hit_details", []),
+                "am_avoid_hits": item_am_pm["am_avoid_hits"],
+                "pm_avoid_hits": item_am_pm.get("pm_avoid_hits", []),
+                "am_hit_details": item_am_pm.get("am_hit_details", []),
+                "pm_hit_details": item_am_pm.get("pm_hit_details", []),
                 "slot_count": len(products),
             }
         )
@@ -390,8 +407,7 @@ def build_value_routines(
             skipped_conflict += 1
             continue
 
-        am_pm = check_am_pm(product_keys, AM_AVOID_INGREDIENTS, PM_AVOID_INGREDIENTS)
-        _apply_item_time_tags(products, am_pm)
+        item_am_pm, routine_am_pm = _apply_time_tags_and_get_routine_am_pm(products)
         score_sum = sum(float(p.get("S_rerank", 0.0)) for p in products)
         total_score = _routine_search_score(score_sum, products)
 
@@ -399,14 +415,14 @@ def build_value_routines(
             {
                 "products": products,
                 "total_score": round(float(total_score), 4),
-                "am_pm_label": am_pm["am_pm_label"],
+                "am_pm_label": routine_am_pm["am_pm_label"],
                 "conflict_log": conflict["conflict_log"],
                 "rule_conflict_log": conflict.get("rule_conflict_log", []),
                 "smiles_conflict_log": conflict.get("smiles_conflict_log", []),
-                "am_avoid_hits": am_pm["am_avoid_hits"],
-                "pm_avoid_hits": am_pm.get("pm_avoid_hits", []),
-                "am_hit_details": am_pm.get("am_hit_details", []),
-                "pm_hit_details": am_pm.get("pm_hit_details", []),
+                "am_avoid_hits": item_am_pm["am_avoid_hits"],
+                "pm_avoid_hits": item_am_pm.get("pm_avoid_hits", []),
+                "am_hit_details": item_am_pm.get("am_hit_details", []),
+                "pm_hit_details": item_am_pm.get("pm_hit_details", []),
                 "slot_count": len(products),
                 "_total_price": float(total_price),
             }
