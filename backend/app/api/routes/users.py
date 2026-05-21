@@ -66,7 +66,7 @@ def get_my_routines(current_user: dict = Depends(get_current_user), db: Session 
     sessions = db.execute(
         text(
             """
-            SELECT session_id, created_at
+            SELECT session_id, result_id, image_id, created_at
             FROM recommendation_session
             WHERE user_id = :user_id
               AND session_status = 'SUCCESS'
@@ -85,7 +85,7 @@ def get_my_routines(current_user: dict = Depends(get_current_user), db: Session 
         saved_at = session["created_at"].isoformat() if hasattr(session["created_at"], "isoformat") else str(session["created_at"])
 
         for routine in session_data["routines"]:
-            key = (session_obj.result_id, session_obj.image_id, routine["type"])
+            key = (session["result_id"], session["image_id"], routine["type"])
             if key in seen:
                 continue
             seen.add(key)
@@ -122,6 +122,7 @@ def get_my_routines(current_user: dict = Depends(get_current_user), db: Session 
                 {
                     "saved_routine_id": int(routine["routine_id"]),
                     "session_id": session_id,
+                    "result_id": int(session["result_id"] or 0),
                     "routine_type": routine["type"],
                     "label": routine["label"],
                     "routine_time": routine["routine_time"],

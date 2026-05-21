@@ -18,6 +18,21 @@ from app.services.skin_model_service import analyze_skin_image
 
 
 router = APIRouter()
+SKIN_INDICATORS = ("acne", "dryness", "sagging", "pore", "pigmentation", "wrinkle")
+
+
+def _empty_skin_summary(result_id: int) -> dict:
+    return {
+        "result_id": result_id,
+        "llm_model": "",
+        "prompt_version": "",
+        "summary_comment": "아직 분석 요약이 생성되지 않았습니다.",
+        "indicator_comments": {
+            key: "아직 분석 요약이 생성되지 않았습니다."
+            for key in SKIN_INDICATORS
+        },
+        "generated_at": "",
+    }
 
 SKIN_INDICATORS = ("acne", "dryness", "sagging", "pore", "pigmentation", "wrinkle")
 
