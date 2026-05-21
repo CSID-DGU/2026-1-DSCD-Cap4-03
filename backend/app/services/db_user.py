@@ -171,6 +171,34 @@ def replace_user_allergies(db: Session, user_id: int, payload: UpdateAllergiesRe
     }
 
 
+def get_user_allergies(db: Session, user_id: int) -> dict:
+    rows = list(
+        db.scalars(
+            select(UserAllergy)
+            .where(UserAllergy.user_id == user_id)
+            .order_by(UserAllergy.allergy_id.asc())
+        )
+    )
+
+    categories = []
+    ingredient_ids = []
+    for row in rows:
+        if row.allergy_category:
+            categories.append(row.allergy_category)
+        if row.allergy_ingredient:
+            try:
+                ingredient_ids.append(int(row.allergy_ingredient))
+            except ValueError:
+                continue
+
+    return {
+        "user_id": user_id,
+        "allergy_categories": list(dict.fromkeys(categories)),
+        "allergy_ingredient_ids": list(dict.fromkeys(ingredient_ids)),
+        "saved_count": len(set(ingredient_ids)),
+    }
+
+
 def create_user_image(db: Session, user_id: int, payload) -> UserImage:
     image = UserImage(
         user_id=user_id,

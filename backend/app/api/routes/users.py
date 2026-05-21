@@ -8,6 +8,7 @@ from app.schemas.users import UpdateAllergiesRequest, UpdateAllergiesResponse, U
 from app.services.db_catalog import list_wishlist_products
 from app.services.db_user import (
     ensure_profile,
+    get_user_allergies,
     get_user_by_id,
     get_user_image,
     replace_user_allergies,
@@ -44,6 +45,14 @@ def update_allergies(
     db: Session = Depends(get_db),
 ) -> UpdateAllergiesResponse:
     return UpdateAllergiesResponse(**replace_user_allergies(db, current_user["user_id"], payload))
+
+
+@router.get("/me/allergies", response_model=UpdateAllergiesResponse)
+def get_allergies(
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> UpdateAllergiesResponse:
+    return UpdateAllergiesResponse(**get_user_allergies(db, current_user["user_id"]))
 
 
 @router.get("/me/wishlist")
