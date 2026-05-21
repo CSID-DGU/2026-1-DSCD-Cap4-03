@@ -49,6 +49,7 @@ DEVELOPMENT_FLOW.md
 # Not My Code
 model/skin_analysis/
 model/llm/
+frontend/
 
 # Local dumps / temporary outputs
 freeze
