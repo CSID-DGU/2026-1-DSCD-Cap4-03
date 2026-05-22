@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -62,7 +62,14 @@ def get_my_wishlist(current_user: dict = Depends(get_current_user), db: Session 
 
 
 @router.get("/me/routines")
-def get_my_routines(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)) -> dict:
+def get_my_routines(
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     sessions = db.execute(
         text(
             """
