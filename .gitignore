@@ -42,6 +42,8 @@ model/recommendation/kg_pipeline/output
 model/recommendation/kg_pipeline/llm
 model/vanity/experiments/
 backend/llm_outputs/
+backend/app/db/skin_summaries.json
+backend/app/db/recommendation_explanations.json
 backend/uploads/
 model/llm/outputs/
 /DB/

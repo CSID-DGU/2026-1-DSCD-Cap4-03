@@ -35,6 +35,11 @@ class RecommendationResponse(BaseModel):
     budget_check_passed: bool = True
     budget_fallback_applied: bool = False
     budget_message: str | None = None
+    total_budget: int | None = None
+    toner_budget: int | None = None
+    emulsion_budget: int | None = None
+    ampoule_budget: int | None = None
+    cream_budget: int | None = None
     routines: list[RecommendationRoutine]
 
 
