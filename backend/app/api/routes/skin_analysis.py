@@ -34,22 +34,6 @@ def _empty_skin_summary(result_id: int) -> dict:
         "generated_at": "",
     }
 
-SKIN_INDICATORS = ("acne", "dryness", "sagging", "pore", "pigmentation", "wrinkle")
-
-
-def _empty_skin_summary(result_id: int) -> dict:
-    return {
-        "result_id": result_id,
-        "llm_model": "",
-        "prompt_version": "",
-        "summary_comment": "아직 분석 요약이 생성되지 않았습니다.",
-        "indicator_comments": {
-            key: "아직 분석 요약이 생성되지 않았습니다."
-            for key in SKIN_INDICATORS
-        },
-        "generated_at": "",
-    }
-
 
 def _next_result_id(db: Session) -> int:
     max_db_id = db.scalar(text("SELECT COALESCE(MAX(result_id), 0) FROM skin_analysis_result")) or 0
@@ -182,11 +166,11 @@ def get_skin_analysis(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Analysis result not found")
     image = get_user_image(db, result["image_id"])
     summary = store.skin_summaries.get(result_id)
+    profile = ensure_profile(db, current_user["user_id"])
     if summary:
         save_skin_summaries(store.skin_summaries)
     else:
         summary = _empty_skin_summary(result_id)
-    profile = ensure_profile(db, current_user["user_id"])
     return SkinAnalysisDetailResponse(
         result_id=result_id,
         user_id=result["user_id"],

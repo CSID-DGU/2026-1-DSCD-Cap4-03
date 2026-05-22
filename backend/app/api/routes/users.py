@@ -77,7 +77,6 @@ def get_my_routines(current_user: dict = Depends(get_current_user), db: Session 
     ).mappings().all()
 
     results = []
-    seen = set()
     for session in sessions:
         session_id = int(session["session_id"])
         session_obj = get_recommendation_session_or_404(db, session_id, current_user["user_id"])
@@ -85,11 +84,6 @@ def get_my_routines(current_user: dict = Depends(get_current_user), db: Session 
         saved_at = session["created_at"].isoformat() if hasattr(session["created_at"], "isoformat") else str(session["created_at"])
 
         for routine in session_data["routines"]:
-            key = (session["result_id"], session["image_id"], routine["type"])
-            if key in seen:
-                continue
-            seen.add(key)
-
             routine_obj = next(
                 (row for row in session_obj.routines if str(row.routine_id) == routine["routine_id"]),
                 None,
@@ -120,7 +114,7 @@ def get_my_routines(current_user: dict = Depends(get_current_user), db: Session 
 
             results.append(
                 {
-                    "saved_routine_id": int(routine["routine_id"]),
+                    "routine_id": int(routine["routine_id"]),
                     "session_id": session_id,
                     "result_id": int(session["result_id"] or 0),
                     "routine_type": routine["type"],
