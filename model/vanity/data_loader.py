@@ -105,6 +105,52 @@ def load_skin_result(user_id: int, result_id: int | None = None) -> dict[str, An
     return row
 
 
+def load_user_allergies(user_id: int) -> list[str]:
+    conn = mysql_connect()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT allergy_ingredient
+                FROM USER_ALLERGY
+                WHERE user_id = %s
+                  AND allergy_ingredient IS NOT NULL
+                  AND TRIM(allergy_ingredient) <> ''
+                ORDER BY allergy_id
+                """,
+                (user_id,),
+            )
+            rows = cur.fetchall()
+    finally:
+        conn.close()
+    return [str(row["allergy_ingredient"]) for row in rows if row.get("allergy_ingredient")]
+
+
+def load_wishlist_product_keys(user_id: int) -> list[str]:
+    conn = mysql_connect()
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    """
+                    SELECT DISTINCT CONCAT(p.brand_name, '::', p.product_name) AS product_key
+                    FROM USER_WISHLIST uw
+                    JOIN PRODUCT p ON p.product_id = uw.product_id
+                    WHERE uw.user_id = %s
+                      AND p.brand_name IS NOT NULL
+                      AND p.product_name IS NOT NULL
+                    ORDER BY product_key
+                    """,
+                    (user_id,),
+                )
+                rows = cur.fetchall()
+            except pymysql.MySQLError:
+                rows = []
+    finally:
+        conn.close()
+    return [str(row["product_key"]) for row in rows if row.get("product_key")]
+
+
 def load_vanity_product_ids(user_id: int) -> list[int]:
     conn = mysql_connect()
     try:
@@ -190,7 +236,7 @@ def load_products(product_ids: list[int]) -> list[VanityProduct]:
         for row in review_rows
     }
 
-    return [
+    products = [
         VanityProduct(
             product_id=int(row["product_id"]),
             brand_name=row.get("brand_name"),
@@ -205,6 +251,8 @@ def load_products(product_ids: list[int]) -> list[VanityProduct]:
         )
         for row in product_rows
     ]
+    product_by_id = {product.product_id: product for product in products}
+    return [product_by_id[product_id] for product_id in product_ids if product_id in product_by_id]
 
 
 def load_vanity_context(

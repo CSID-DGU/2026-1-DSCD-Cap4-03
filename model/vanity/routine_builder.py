@@ -47,6 +47,25 @@ def product_to_routine_item(
     )
 
 
+def validate_single_fixed_product_per_category(fixed_products: list[VanityProduct]) -> None:
+    seen: dict[str, VanityProduct] = {}
+    duplicates = []
+    for product in fixed_products:
+        category_norm = normalize_category(product.category)
+        if category_norm in seen:
+            prev = seen[category_norm]
+            prev_name = prev.product_name_kor or prev.product_name or str(prev.product_id)
+            product_name = product.product_name_kor or product.product_name or str(product.product_id)
+            duplicates.append(f"{product.category}: {prev_name}, {product_name}")
+            continue
+        seen[category_norm] = product
+    if duplicates:
+        raise ValueError(
+            "fixed_product_ids must contain only one product per category. "
+            f"Duplicate categories: {'; '.join(duplicates)}"
+        )
+
+
 def get_target_categories(gender: str, fixed_products: list[VanityProduct]) -> list[str]:
     fixed_categories = {normalize_category(product.category) for product in fixed_products}
     targets = []
@@ -93,6 +112,8 @@ def build_vanity_routine(
     profile = load_user_profile(user_id)
     gender = str(profile.get("gender") or "female").lower()
     fixed_products = load_products(fixed_product_ids)
+    validate_single_fixed_product_per_category(fixed_products)
+    fixed_product_id_set = {product.product_id for product in fixed_products}
     target_categories = get_target_categories(gender, fixed_products)
 
     used_product_ids = {product.product_id for product in fixed_products}
@@ -115,7 +136,7 @@ def build_vanity_routine(
         product_to_routine_item(
             product=product,
             slot_order=index,
-            source="vanity" if product.product_id in fixed_product_ids else "recommendation",
+            source="vanity" if product.product_id in fixed_product_id_set else "recommendation",
             product_score=score_by_product_id.get(product.product_id),
         )
         for index, product in enumerate(final_products, start=1)

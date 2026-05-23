@@ -127,13 +127,12 @@ def save_skin_match_result(
                         concern_match_score,
                         skin_type_bonus,
                         review_score,
-                        category_need_score,
                         irritation_penalty,
                         fit_label,
                         recommend_action,
                         reason_tags,
                         caution_tags
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         match_session_id,
@@ -142,7 +141,6 @@ def save_skin_match_result(
                         match.scores.get("concern_match_score"),
                         match.scores.get("skin_type_bonus"),
                         match.scores.get("review_score"),
-                        match.scores.get("category_need_score"),
                         match.scores.get("irritation_penalty"),
                         match.fit_label,
                         match.recommend_action,
