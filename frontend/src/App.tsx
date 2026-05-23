@@ -21,6 +21,7 @@ import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
 
 import { AuthProvider } from "./context/AuthProvider";
+import ScrollToTop from "./components/ScrollToTop";
 
 const P = ({ children }: { children: React.ReactNode }) => (
   <ProtectedRoute>{children}</ProtectedRoute>
@@ -30,6 +31,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollToTop />
         <Navbar />
         <Routes>
           {/* 공개 */}

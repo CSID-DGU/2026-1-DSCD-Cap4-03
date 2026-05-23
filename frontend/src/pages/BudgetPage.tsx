@@ -9,7 +9,6 @@ type Category = typeof CATEGORIES[number];
 const BUDGET_OPTIONS: Record<Category, { label: string; value: number | null }[]> = {
   전체: [
     { label: '설정 안함', value: null },
-    { label: '~5만원', value: 50000 },
     { label: '~10만원', value: 100000 },
     { label: '~15만원', value: 150000 },
     { label: '~20만원', value: 200000 },

@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { routineApi, type RoutineItem } from '../api/routine';
 import { analysisApi, type AnalysisResult } from '../api/analysis';
 import { productApi, type ProductDetail } from '../api/product';
+import { userApi } from '../api/user';
 import { useAuth } from '../context/useAuth';
 import {
-  Sun, Moon, Trophy, Wallet, Heart, Bot, ClipboardList,
+  Sun, Moon, Trophy, Wallet, Bot, ClipboardList,
   AlertTriangle, FileText, Package, Timer, Banknote, Clock,
 } from 'lucide-react';
 import './RoutinePage.css';
@@ -91,15 +92,24 @@ export default function RoutinePage() {
   const [routines, setRoutines] = useState<RoutineItem[]>([]);
   const [productMap, setProductMap] = useState<Map<number, ProductDetail>>(new Map());
   const [skinResult, setSkinResult] = useState<AnalysisResult | null>(null);
+  const [skinConcerns, setSkinConcerns] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fetchedExplanations, setFetchedExplanations] = useState(explanationRoutines);
 
   const [activeType, setActiveType] = useState<'best' | 'value'>('best');
-  const [savedTypes, setSavedTypes] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    userApi.getMe()
+      .then((user) => setSkinConcerns(user.skin_concerns?.filter((c) => c !== 'none') ?? []))
+      .catch(() => {});
+
     const load = async () => {
+      if (!sessionId) {
+        setError('루틴 세션 정보가 없어요. 저장된 루틴 목록에서 다시 시도해주세요.');
+        setLoading(false);
+        return;
+      }
       try {
         const rec = await routineApi.getRecommendation(sessionId);
         const actualResultId = resultId || rec.result_id;
@@ -107,6 +117,15 @@ export default function RoutinePage() {
 
         setSkinResult(analysis);
         setRoutines(rec.routines);
+
+        if (explanationRoutines.length === 0 && sessionId) {
+          try {
+            const expRes = await routineApi.getExplanation(sessionId);
+            setFetchedExplanations(expRes.routines);
+          } catch {
+            // 백엔드 미지원 시 무시
+          }
+        }
 
         const allIds = [...new Set(rec.routines.flatMap((r) => r.products.map((p) => p.product_id)))];
         const details = await Promise.all(allIds.map((id) => productApi.getDetail(id)));
@@ -123,19 +142,6 @@ export default function RoutinePage() {
     load();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const handleSave = async () => {
-    if (saving) return;
-    setSaving(true);
-    try {
-      await routineApi.save(sessionId, { routine_type: activeType });
-      setSavedTypes((prev) => new Set(prev).add(activeType));
-    } catch {
-      // 저장 실패 시 무시 (토스트 없이)
-    } finally {
-      setSaving(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -156,9 +162,7 @@ export default function RoutinePage() {
 
   const currentRoutine = routines.find((r) => r.type === activeType) ?? routines[0];
   const timeMeta = TIME_META[currentRoutine.routine_time as RoutineTime] ?? TIME_META.both;
-  const isSaved = savedTypes.has(currentRoutine.type);
-
-  const explanationRoutine = explanationRoutines.find((r) => r.routine_type === activeType);
+  const explanationRoutine = fetchedExplanations.find((r) => r.routine_type === activeType);
   const usageGuide = explanationRoutine?.ampm_comment ?? '';
   const warningText = explanationRoutine?.cautions.join('\n') ?? '';
   const stepGuideMap = new Map(
@@ -198,11 +202,16 @@ export default function RoutinePage() {
           </h1>
           <p className="rp-hero-sub">AI가 분석한 피부 상태에 맞는 제품을 추천해드려요</p>
           {skinResult && (
-            <>
-              <p className="rp-hero-date">분석일 : {formatDate(skinResult.analyzed_at || skinResult.generated_at)}</p>
-              <div className="rp-skin-type-badge">{skinResult.skin_type}</div>
-            </>
+            <p className="rp-hero-date">분석일 : {formatDate(skinResult.analyzed_at || skinResult.generated_at)}</p>
           )}
+          <div className="rp-skin-tags">
+            {skinResult?.skin_type && (
+              <span className="rp-skin-tag rp-skin-tag--type">{skinResult.skin_type}</span>
+            )}
+            {skinConcerns.map((c) => (
+              <span key={c} className="rp-skin-tag">{c}</span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -251,14 +260,6 @@ export default function RoutinePage() {
             <Banknote size={14} color="#9CA3AF" />
             <span>총 <strong>{currentRoutine.total_cost.toLocaleString()}원</strong></span>
           </div>
-          <button
-            className={`rp-save-btn ${isSaved ? 'saved' : ''}`}
-            onClick={handleSave}
-            disabled={saving}
-          >
-            <Heart size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-            {isSaved ? '저장됨' : saving ? '저장 중...' : '루틴 저장'}
-          </button>
         </div>
 
         {/* ── AI 루틴 설명 ── */}
@@ -387,18 +388,6 @@ export default function RoutinePage() {
             </div>
           </div>
         )}
-
-        {/* ── 저장 CTA ── */}
-        <div className="rp-bottom-cta">
-          <button
-            className={`rp-full-save-btn ${isSaved ? 'saved' : ''}`}
-            onClick={handleSave}
-            disabled={saving}
-          >
-            <Heart size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />
-            {isSaved ? '루틴 저장 완료!' : saving ? '저장 중...' : '현재 루틴 저장하기'}
-          </button>
-        </div>
 
       </div>
 

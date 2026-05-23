@@ -51,13 +51,6 @@ export default function UserInfoPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleBirthdate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
-    let formatted = digits;
-    if (digits.length > 6) formatted = digits.slice(0, 4) + '-' + digits.slice(4, 6) + '-' + digits.slice(6);
-    else if (digits.length > 4) formatted = digits.slice(0, 4) + '-' + digits.slice(4);
-    setBirthdate(formatted);
-  };
 
   const handleConcern = (id: string) => {
     if (id === 'none') { setConcerns(['none']); return; }
@@ -120,7 +113,13 @@ export default function UserInfoPage() {
           <div className="ui-divider" />
 
           <Section step={2} title="생년월일">
-            <input type="text" className="ui-input" value={birthdate} onChange={handleBirthdate} placeholder="yyyy-mm-dd" maxLength={10} />
+            <input
+              type="date"
+              className="ui-input"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]}
+            />
           </Section>
 
           <div className="ui-divider" />

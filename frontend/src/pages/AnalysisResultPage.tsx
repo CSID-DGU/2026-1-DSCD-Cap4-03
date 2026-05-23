@@ -4,7 +4,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis,
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { Leaf, Sparkles, Bot } from 'lucide-react';
+import { Sparkles, Bot, Wand2 } from 'lucide-react';
 import { analysisApi, type AnalysisResult, type SkinHistoryItem } from '../api/analysis';
 import { userApi } from '../api/user';
 import { useAuth } from '../context/useAuth';
@@ -147,7 +147,7 @@ export default function AnalysisResultPage() {
             </div>
             <div className="ar-hero-btns">
               <button className="ar-btn-primary" onClick={() => navigate('/routine/budget', { state: { resultId: result.result_id, imageId: result.image_id } })}>
-                <Leaf size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />루틴 추천받기
+                <Wand2 size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />루틴 추천받기
               </button>
               <button className="ar-btn-ghost" onClick={() => navigate('/analysis-history')}>
                 이전 분석 보기
@@ -299,7 +299,7 @@ export default function AnalysisResultPage() {
         <h2>{displayName}님을 위한 루틴</h2>
         <p>AI가 분석한 피부 상태에 맞는 제품을 추천해드려요</p>
         <button className="ar-btn-white" onClick={() => navigate('/routine/budget', { state: { resultId: result.result_id, imageId: result.image_id } })}>
-          <Sparkles size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />맞춤 루틴 바로 받기
+          <Wand2 size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />맞춤 루틴 바로 받기
         </button>
       </section>
 
