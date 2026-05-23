@@ -1,7 +1,47 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from itertools import count
+from pathlib import Path
+
+
+SUMMARIES_PATH = Path(__file__).parent / "skin_summaries.json"
+EXPLANATIONS_PATH = Path(__file__).parent / "recommendation_explanations.json"
+
+
+def load_skin_summaries() -> dict[int, dict]:
+    if not SUMMARIES_PATH.exists():
+        return {}
+    try:
+        with SUMMARIES_PATH.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return {int(key): value for key, value in raw.items()}
+
+
+def save_skin_summaries(summaries: dict[int, dict]) -> None:
+    SUMMARIES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with SUMMARIES_PATH.open("w", encoding="utf-8") as f:
+        json.dump({str(key): value for key, value in summaries.items()}, f, ensure_ascii=False, indent=2)
+
+
+def load_recommendation_explanations() -> dict[int, dict]:
+    if not EXPLANATIONS_PATH.exists():
+        return {}
+    try:
+        with EXPLANATIONS_PATH.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return {int(key): value for key, value in raw.items()}
+
+
+def save_recommendation_explanations(explanations: dict[int, dict]) -> None:
+    EXPLANATIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with EXPLANATIONS_PATH.open("w", encoding="utf-8") as f:
+        json.dump({str(key): value for key, value in explanations.items()}, f, ensure_ascii=False, indent=2)
 
 
 @dataclass
@@ -11,9 +51,9 @@ class MemoryStore:
     user_allergies: dict[int, list[dict]] = field(default_factory=dict)
     user_images: dict[int, dict] = field(default_factory=dict)
     skin_results: dict[int, dict] = field(default_factory=dict)
-    skin_summaries: dict[int, dict] = field(default_factory=dict)
+    skin_summaries: dict[int, dict] = field(default_factory=load_skin_summaries)
     recommendation_sessions: dict[int, dict] = field(default_factory=dict)
-    recommendation_explanations: dict[int, dict] = field(default_factory=dict)
+    recommendation_explanations: dict[int, dict] = field(default_factory=load_recommendation_explanations)
     saved_routines: dict[int, dict] = field(default_factory=dict)
     wishlists: dict[int, set[int]] = field(default_factory=dict)
     products: dict[int, dict] = field(default_factory=dict)

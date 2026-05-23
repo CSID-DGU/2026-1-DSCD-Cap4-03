@@ -55,6 +55,7 @@ RETURN
 
 _HAS_WISHLIST_GRAPH_CACHE: Optional[bool] = None
 _GRAPH_SCHEMA_CACHE: Optional[dict] = None
+CONCERN_SCORE_SCALE = 5.0
 
 WISHLIST_BONUS_QUERY = """
 MATCH (u:UserSession {session_id: $sid})-[:HAS_WISHLIST]->(w:Product)
@@ -343,7 +344,7 @@ def soft_score(product_key: str, session_id: str, vector_score: float, user_id: 
             wishlist_bonus = 0.0
 
     vector_score = max(0.0, min(1.0, float(vector_score)))
-    concern_score = 1.0 - math.exp(-raw_concern_score)
+    concern_score = 1.0 - math.exp(-raw_concern_score / CONCERN_SCORE_SCALE)
     skin_bonus = max(0.0, min(1.0, (raw_skin_bonus + 1.0) / 2.0))
 
     raw_review_score = _profile_review_match_score(product_key, user_id)

@@ -157,30 +157,26 @@ FUNCTION_KEYWORD_TO_CONCERN = {
     # dryness / hydration
     "moisturizer": ("dryness", 1.0),
     "moisturizing": ("dryness", 1.0),
-    "humectant": ("dryness", 1.0),
-    "emollient": ("dryness", 0.9),
-    "skin conditioning": ("dryness", 0.8),
-    "soothing": ("dryness", 0.7),
+    "humectant": ("dryness", 0.9),
+    "emollient": ("dryness", 0.8),
     "hydration": ("dryness", 1.0),
     # pore / texture / sebum
     "astringent": ("pore", 0.8),
-    "sebum": ("pore", 0.9),
-    "oil control": ("pore", 0.9),
+    "sebum": ("pore", 1.0),
+    "oil control": ("pore", 1.0),
     "exfoliant": ("pore", 0.8),
     "exfoliation": ("pore", 0.8),
     "keratolytic": ("pore", 0.8),
-    "surfactant/cleansing": ("pore", 0.5),
-    "cleansing": ("pore", 0.5),
     # wrinkle / aging
     "anti-aging": ("wrinkle", 1.0),
     "anti aging": ("wrinkle", 1.0),
-    "antioxidant": ("wrinkle", 0.8),
+    "antioxidant": ("wrinkle", 0.7),
     "wrinkle": ("wrinkle", 1.0),
     # sagging / elasticity
-    "firming": ("sagging", 0.9),
-    "lifting": ("sagging", 0.9),
+    "firming": ("sagging", 1.0),
+    "lifting": ("sagging", 1.0),
     "tightening": ("sagging", 0.8),
-    "elasticity": ("sagging", 0.8),
+    "elasticity": ("sagging", 0.9),
     # pigmentation / tone
     "brightening": ("pigmentation", 1.0),
     "whitening": ("pigmentation", 1.0),
@@ -191,7 +187,8 @@ FUNCTION_KEYWORD_TO_CONCERN = {
     "anti acne": ("acne", 1.0),
     "anti-blemish": ("acne", 0.9),
     "blemish": ("acne", 0.9),
-    "anti-inflammatory": ("acne", 0.8),
+    "anti-inflammatory": ("acne", 0.7),
+    "soothing": ("acne", 0.5),
 }
 
 

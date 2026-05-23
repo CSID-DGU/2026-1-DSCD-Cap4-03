@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import json
 from pathlib import Path
 from typing import Any
 
@@ -344,6 +345,13 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
         else None
     )
 
+    slot_budget_max = {}
+    if session.slot_budget_max_json:
+        try:
+            slot_budget_max = json.loads(session.slot_budget_max_json)
+        except json.JSONDecodeError:
+            slot_budget_max = {}
+
     return {
         "session_id": session.session_id,
         "user_id": session.user_id,
@@ -352,5 +360,10 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
         "budget_check_passed": bool(session.budget_check_passed),
         "budget_fallback_applied": budget_fallback_applied,
         "budget_message": budget_message,
+        "total_budget": session.total_budget_max,
+        "toner_budget": slot_budget_max.get("Toner"),
+        "emulsion_budget": slot_budget_max.get("Emulsions"),
+        "ampoule_budget": slot_budget_max.get("Essences/Ampoules/Serums"),
+        "cream_budget": slot_budget_max.get("Cream/Gel"),
         "routines": routines,
     }
