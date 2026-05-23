@@ -49,8 +49,8 @@ METRICS = ["dryness", "pore", "wrinkle", "pigmentation", "sagging", "acne"]
 METRIC_TO_FUNCTIONS_M2 = {
     "dryness": {"primary": ["Hydration", "Moisturizing"], "secondary": ["Soothing"]},
     "pore": {"primary": ["Pores"], "secondary": ["Exfoliation"]},
-    "wrinkle": {"primary": ["Anti-Aging"], "secondary": ["Soothing"]},
-    "pigmentation": {"primary": ["Brightening"], "secondary": ["Soothing"]},
+    "wrinkle": {"primary": ["Anti-Aging"], "secondary": []},
+    "pigmentation": {"primary": ["Brightening"], "secondary": []},
     "sagging": {"primary": ["Anti-Aging"], "secondary": ["Hydration"]},
-    "acne": {"primary": ["Blemishes"], "secondary": ["Soothing", "Exfoliation", "Pores"]},
+    "acne": {"primary": ["Blemishes"], "secondary": ["Soothing", "Exfoliation"]},
 }
