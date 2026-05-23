@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { productApi, type ProductDetail, type ProductSummary } from '../api/product';
-import { Heart, Microscope, ThumbsUp, ThumbsDown, ClipboardList, Timer, LayoutGrid } from 'lucide-react';
+import { Heart, Microscope, ThumbsUp, ThumbsDown, LayoutGrid } from 'lucide-react';
 import './ProductDetailPage.css';
 
 export default function ProductDetailPage() {
@@ -107,12 +107,6 @@ export default function ProductDetailPage() {
             <h3><ThumbsDown size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />단점</h3>
             {product.cons.map((c) => <div key={c} className="pd-procon-item">✗ {c}</div>)}
           </div>
-        </div>
-
-        <div className="pd-section">
-          <h2 className="pd-section-title"><ClipboardList size={16} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />사용 방법</h2>
-          <p className="pd-how-to">{product.how_to_use}</p>
-          <div className="pd-apply-time"><Timer size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />평균 흡수 시간: <strong>{product.apply_time}</strong></div>
         </div>
 
         {similar.length > 0 && (

@@ -65,7 +65,9 @@ export default function AnalysisHistoryPage() {
 
         {!loading && !error && results.length > 0 && (
           <div className="ah-list">
-            {[...results].reverse().map((r, idx) => (
+            {[...results]
+              .sort((a, b) => new Date(b.analyzed_at).getTime() - new Date(a.analyzed_at).getTime())
+              .map((r, idx) => (
               <div
                 className="ah-card"
                 key={r.result_id}

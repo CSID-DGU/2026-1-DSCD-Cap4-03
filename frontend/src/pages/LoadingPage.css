@@ -100,8 +100,8 @@
 }
 
 .lp-step.done {
-  background: #F9F7FF;
-  border-color: #A78BFA;
+  background: #f0fdf4;
+  border-color: #22c55e;
 }
 
 .lp-step.pending {

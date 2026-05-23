@@ -15,6 +15,7 @@ dist-ssr
 #  Not my code
 model
 backend
+public
 
 # Editor directories and files
 .vscode/*

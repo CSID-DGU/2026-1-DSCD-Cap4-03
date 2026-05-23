@@ -25,11 +25,17 @@ export interface RecommendationResponse {
   budget_check_passed: boolean;
   budget_fallback_applied: boolean;
   budget_message: string | null;
+  total_budget?: number | null;
+  toner_budget?: number | null;
+  emulsion_budget?: number | null;
+  ampoule_budget?: number | null;
+  cream_budget?: number | null;
 }
 
 export interface SavedRoutineItem {
   saved_routine_id: number;
   session_id: number;
+  result_id?: number;
   routine_type: string;
   label: string;
   routine_time: string;
@@ -83,9 +89,24 @@ export const routineApi = {
       }[];
     }>('/recommendation-explanations', body),
 
-  save: (sessionId: number, body: { routine_type: string }) =>
-    api.post<{ saved_routine_id: number; saved_at: string }>(`/routines/${sessionId}/save`, body),
-
   getHistory: () =>
     api.get<{ items: SavedRoutineItem[] }>('/users/me/routines'),
+
+  getExplanation: (sessionId: number) =>
+    api.get<{
+      session_id: number;
+      llm_model: string;
+      prompt_version: string;
+      routines: {
+        routine_id: number;
+        routine_type: 'best' | 'value';
+        routine_rank: number;
+        ampm_mode: string;
+        recommend_summary: string;
+        ampm_comment: string;
+        step_guides: { slot_order: number; category: string; usage_guide: string }[];
+        strengths: string[];
+        cautions: string[];
+      }[];
+    }>(`/recommendation-explanations/${sessionId}`),
 };

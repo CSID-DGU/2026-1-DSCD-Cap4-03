@@ -24,26 +24,29 @@
 /* 메인 */
 .pd-main {
   background: #F9F7FF;
-  padding: 32px 80px;
+  padding: 0 80px;
 }
 .pd-main-inner {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
   gap: 40px;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: stretch;
 }
 
-.pd-img-wrap { position: relative; flex-shrink: 0; }
+.pd-img-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 300px;
+}
 .pd-img {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  display: block;
   border-radius: 10px;
   border: 2px solid #F5F3FF;
 }
-@media (max-width: 640px) { .pd-img { width: 200px; height: 200px; } }
 
 .pd-wish-btn {
   position: absolute;
@@ -64,7 +67,7 @@
 }
 .pd-wish-btn.wished { background: #7c3aed; border-color: #7c3aed; color: #fff; }
 
-.pd-info { flex: 1; min-width: 240px; padding-top: 8px; }
+.pd-info { flex: 1; min-width: 240px; padding-top: 40px; padding-bottom: 40px; }
 .pd-category-badge {
   display: inline-block;
   background: none;
@@ -158,11 +161,6 @@
 .pd-procon.pro .pd-procon-item { color: #15803d; }
 .pd-procon.con .pd-procon-item { color: #b91c1c; }
 
-/* 사용법 */
-.pd-how-to { font-size: 14px; color: #5F5F5F; line-height: 1.8; margin-bottom: 10px; }
-.pd-apply-time { font-size: 13px; color: #9CA3AF; }
-.pd-apply-time strong { color: #7c3aed; }
-
 /* 유사 제품 */
 .pd-similar-grid {
   display: grid;
@@ -196,6 +194,9 @@
 
 @media (max-width: 900px) {
   .pd-back { padding: 20px 24px; }
-  .pd-main { padding: 32px 24px; }
+  .pd-main { padding: 0 24px; }
+  .pd-main-inner { flex-wrap: wrap; }
+  .pd-img-wrap { width: 200px; }
+  .pd-info { padding-top: 24px; padding-bottom: 24px; }
   .pd-body { padding: 24px 24px 64px; }
 }
