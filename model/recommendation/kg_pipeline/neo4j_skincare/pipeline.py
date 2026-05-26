@@ -206,6 +206,17 @@ def _build_value_with_expand(
     return []
 
 
+def _score_candidates_for_routine(filtered: pd.DataFrame, session_id: str, user_id: int) -> pd.DataFrame:
+    if filtered.empty:
+        return pd.DataFrame()
+
+    scored_rows = []
+    for _, row in filtered.iterrows():
+        scores = soft_score(row["product_key"], session_id, float(row["score"]), user_id=user_id)
+        scored_rows.append({**row.to_dict(), **scores})
+    return pd.DataFrame(scored_rows).sort_values("S_rerank", ascending=False)
+
+
 def _safe_price(value: Any) -> float | None:
     if value is None or str(value) == "nan":
         return None
@@ -345,6 +356,14 @@ def run_pipeline(
     session_id = f"user::{user_id}::image::{ctx['image_id']}"
     effective_total_budget_max = total_budget_max if total_budget_max is not None else total_budget
     effective_slot_budget_max_map = slot_budget_max_map if slot_budget_max_map is not None else slot_budget_map
+    has_budget_input = any([
+        total_budget is not None,
+        total_budget_min is not None,
+        total_budget_max is not None,
+        bool(slot_budget_map),
+        bool(slot_budget_min_map),
+        bool(slot_budget_max_map),
+    ])
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     with driver.session() as s:
         s.execute_write(
@@ -355,6 +374,7 @@ def run_pipeline(
             ctx["allergies"],
             ctx.get("wishlist_product_keys", []),
             (ctx.get("profile") or {}).get("skin_type"),
+            (ctx.get("profile") or {}).get("skin_concern"),
         )
     filtered, drop_log = hard_filter(
         candidates,
@@ -392,16 +412,27 @@ def run_pipeline(
         )
         routines = []
     else:
-        scored_rows = []
-        for _, row in filtered.iterrows():
-            scores = soft_score(row["product_key"], session_id, float(row["score"]), user_id=user_id)
-            scored_rows.append({**row.to_dict(), **scores})
-        reranked = pd.DataFrame(scored_rows).sort_values("S_rerank", ascending=False)
+        reranked = _score_candidates_for_routine(filtered, session_id, user_id)
         # Keep All-In-One in the optional slot pool so it can be rendered as an option item.
         all_in_one_df = reranked[
             reranked["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
         ].copy()
         all_in_one_pick = all_in_one_df.iloc[0].to_dict() if not all_in_one_df.empty else None
+        reranked_for_value = reranked
+        if has_budget_input:
+            filtered_value, _ = hard_filter(
+                candidates,
+                session_id,
+                gender=ctx["gender"],
+                total_budget=None,
+                slot_budget_map=None,
+                total_budget_min=None,
+                total_budget_max=None,
+                slot_budget_min_map=None,
+                slot_budget_max_map=None,
+            )
+            if not filtered_value.empty:
+                reranked_for_value = _score_candidates_for_routine(filtered_value, session_id, user_id)
         reranked_for_routine = reranked.copy()
         beam_top_n = 8 if top_n is None else max(int(top_n), 2)
         best_candidates = build_routines(
@@ -416,17 +447,17 @@ def run_pipeline(
             slot_budget_max_map=effective_slot_budget_max_map,
         )
         value_candidates = _build_value_with_expand(
-            reranked_for_routine,
+            reranked_for_value.copy(),
             ctx["gender"],
             session_id,
             top_n=20,
             start_beam=500,
             step=100,
             max_beam=1500,
-            total_budget_min=total_budget_min,
-            total_budget_max=effective_total_budget_max,
-            slot_budget_min_map=slot_budget_min_map,
-            slot_budget_max_map=effective_slot_budget_max_map,
+            total_budget_min=None,
+            total_budget_max=None,
+            slot_budget_min_map=None,
+            slot_budget_max_map=None,
         )
         routines = []
         if best_candidates:
@@ -456,15 +487,6 @@ def run_pipeline(
 
     # Case 3: budget provided but no routine -> fallback to no-budget pipeline result
     fallback_applied = False
-    has_budget_input = any([
-        total_budget is not None,
-        total_budget_min is not None,
-        total_budget_max is not None,
-        bool(slot_budget_map),
-        bool(slot_budget_min_map),
-        bool(slot_budget_max_map),
-    ])
-
     if has_budget_input and (filtered.empty or len(routines) == 0):
         filtered_fb, _ = hard_filter(
             candidates,
@@ -543,7 +565,8 @@ def run_pipeline(
         routines = [
             r
             for r in routines
-            if _routine_budget_ok(
+            if str(r.get("routine_label") or "").lower().startswith("value")
+            or _routine_budget_ok(
                 r,
                 price_map=price_map,
                 total_budget_min=total_budget_min,

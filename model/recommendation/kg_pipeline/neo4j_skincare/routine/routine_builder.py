@@ -1,4 +1,5 @@
 import heapq
+import hashlib
 from typing import Any
 
 import pandas as pd
@@ -7,6 +8,8 @@ from model.recommendation.kg_pipeline.neo4j_skincare.config import AM_AVOID_INGR
 from model.recommendation.kg_pipeline.neo4j_skincare.routine.conflict_checker import check_am_pm, check_conflicts
 
 OPTIONAL_SLOT_BONUS = 0.01
+VALUE_PRICE_PENALTY = 0.05
+OPTIONAL_DIVERSITY_TIE_BREAK = 0.006
 
 
 def _routine_average_score(score_sum: float, products: list[dict]) -> float:
@@ -22,6 +25,19 @@ def _optional_slot_bonus(products: list[dict]) -> float:
 
 def _routine_search_score(score_sum: float, products: list[dict]) -> float:
     return _routine_average_score(score_sum, products) + _optional_slot_bonus(products)
+
+
+def _optional_diversity_bonus(item: dict, session_id: str) -> float:
+    if item.get("_slot_type") != "optional":
+        return 0.0
+    key = f"{session_id}::{item.get('category')}::{item.get('product_key')}"
+    digest = hashlib.sha1(key.encode("utf-8")).hexdigest()
+    fraction = int(digest[:8], 16) / 0xFFFFFFFF
+    return fraction * OPTIONAL_DIVERSITY_TIE_BREAK
+
+
+def _selection_score(item: dict) -> float:
+    return float(item.get("_selection_score", item.get("S_rerank", 0.0)))
 
 
 
@@ -226,6 +242,7 @@ def build_routines(
             for r in rows:
                 r["S_rerank"] = score_map.get(str(r["product_key"]).strip().lower(), 0.0)
                 r["_slot_type"] = slot_type
+                r["_selection_score"] = r["S_rerank"] + _optional_diversity_bonus(r, session_id)
 
             rows = [
                 r
@@ -238,7 +255,7 @@ def build_routines(
                     slot_budget_max_map=slot_budget_max_map,
                 )
             ]
-            rows.sort(key=lambda x: x["S_rerank"], reverse=True)
+            rows.sort(key=lambda x: _selection_score(x), reverse=True)
             if _has_budget_constraint(total_budget_min, total_budget_max, slot_budget_min_map, slot_budget_max_map):
                 rows = rows[:5] if slot_type == "optional" else rows[:12]
             else:
@@ -265,7 +282,7 @@ def build_routines(
                 new_total = _routine_total_price(new_partial)
                 if total_budget_max is not None and (new_total is None or new_total > float(total_budget_max)):
                     continue
-                new_score = score + float(item.get("S_rerank", 0.0))
+                new_score = score + _selection_score(item)
                 cand_next.append((new_score, new_partial))
         beam = _top_b(cand_next, beam_width)
 
@@ -352,6 +369,7 @@ def build_value_routines(
                 r["S_rerank"] = score_map.get(str(r["product_key"]).strip().lower(), 0.0)
                 r["_price"] = _safe_price(r.get("price"))
                 r["_slot_type"] = slot_type
+                r["_selection_score"] = r["S_rerank"] + _optional_diversity_bonus(r, session_id)
 
             rows = [
                 r
@@ -365,7 +383,7 @@ def build_value_routines(
                 )
             ]
             # price-first candidate pool
-            rows.sort(key=lambda x: (x["_price"], -x["S_rerank"]))
+            rows.sort(key=lambda x: (x["_price"], -_selection_score(x)))
             rows = rows[:3] if slot_type == "optional" else rows[:12]
             if slot_type == "optional":
                 rows = [None] + rows
@@ -408,7 +426,7 @@ def build_value_routines(
             continue
 
         item_am_pm, routine_am_pm = _apply_time_tags_and_get_routine_am_pm(products)
-        score_sum = sum(float(p.get("S_rerank", 0.0)) for p in products)
+        score_sum = sum(_selection_score(p) for p in products)
         total_score = _routine_search_score(score_sum, products)
 
         candidate_routines.append(
@@ -433,8 +451,13 @@ def build_value_routines(
     if not candidate_routines:
         return []
 
-    # highest score first, then lower price tie-break
-    candidate_routines.sort(key=lambda r: (-r["total_score"], r["_total_price"]))
+    # Value routines should still be relevant, but expensive combinations need to lose ground.
+    candidate_routines.sort(
+        key=lambda r: (
+            -(r["total_score"] - VALUE_PRICE_PENALTY * (r["_total_price"] / 100000)),
+            r["_total_price"],
+        )
+    )
 
     out = []
     for r in candidate_routines[:top_n]:
