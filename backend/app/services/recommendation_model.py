@@ -139,13 +139,23 @@ def _run_recommendation_pipeline(payload: RecommendationRequest, user_id: int) -
     kg_config.MYSQL_PASSWORD = settings.mysql_password
     kg_config.MYSQL_DB = settings.mysql_db
 
-    slot_budget_map = {
+    slot_budget_min_map = {
         key: value
         for key, value in {
-            "Toner": payload.toner_budget,
-            "Emulsions": payload.emulsion_budget,
-            "Essences/Ampoules/Serums": payload.ampoule_budget,
-            "Cream/Gel": payload.cream_budget,
+            "Toner": payload.toner_budget_min,
+            "Emulsions": payload.emulsion_budget_min,
+            "Essences/Ampoules/Serums": payload.ampoule_budget_min,
+            "Cream/Gel": payload.cream_budget_min,
+        }.items()
+        if value is not None
+    }
+    slot_budget_max_map = {
+        key: value
+        for key, value in {
+            "Toner": payload.toner_budget_max,
+            "Emulsions": payload.emulsion_budget_max,
+            "Essences/Ampoules/Serums": payload.ampoule_budget_max,
+            "Cream/Gel": payload.cream_budget_max,
         }.items()
         if value is not None
     }
@@ -155,8 +165,10 @@ def _run_recommendation_pipeline(payload: RecommendationRequest, user_id: int) -
             user_id=user_id,
             image_id=payload.image_id,
             top_n=3,
-            total_budget_max=payload.total_budget,
-            slot_budget_max_map=slot_budget_map or None,
+            total_budget_min=payload.total_budget_min,
+            total_budget_max=payload.total_budget_max,
+            slot_budget_min_map=slot_budget_min_map or None,
+            slot_budget_max_map=slot_budget_max_map or None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
@@ -345,7 +357,13 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
         else None
     )
 
+    slot_budget_min = {}
     slot_budget_max = {}
+    if session.slot_budget_min_json:
+        try:
+            slot_budget_min = json.loads(session.slot_budget_min_json)
+        except json.JSONDecodeError:
+            slot_budget_min = {}
     if session.slot_budget_max_json:
         try:
             slot_budget_max = json.loads(session.slot_budget_max_json)
@@ -360,10 +378,15 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
         "budget_check_passed": bool(session.budget_check_passed),
         "budget_fallback_applied": budget_fallback_applied,
         "budget_message": budget_message,
-        "total_budget": session.total_budget_max,
-        "toner_budget": slot_budget_max.get("Toner"),
-        "emulsion_budget": slot_budget_max.get("Emulsions"),
-        "ampoule_budget": slot_budget_max.get("Essences/Ampoules/Serums"),
-        "cream_budget": slot_budget_max.get("Cream/Gel"),
+        "total_budget_min": session.total_budget_min,
+        "total_budget_max": session.total_budget_max,
+        "toner_budget_min": slot_budget_min.get("Toner"),
+        "toner_budget_max": slot_budget_max.get("Toner"),
+        "emulsion_budget_min": slot_budget_min.get("Emulsions"),
+        "emulsion_budget_max": slot_budget_max.get("Emulsions"),
+        "ampoule_budget_min": slot_budget_min.get("Essences/Ampoules/Serums"),
+        "ampoule_budget_max": slot_budget_max.get("Essences/Ampoules/Serums"),
+        "cream_budget_min": slot_budget_min.get("Cream/Gel"),
+        "cream_budget_max": slot_budget_max.get("Cream/Gel"),
         "routines": routines,
     }

@@ -1,14 +1,35 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class RecommendationRequest(BaseModel):
     result_id: int
     image_id: int
-    total_budget: int | None = Field(default=None, ge=0)
-    toner_budget: int | None = Field(default=None, ge=0)
-    emulsion_budget: int | None = Field(default=None, ge=0)
-    ampoule_budget: int | None = Field(default=None, ge=0)
-    cream_budget: int | None = Field(default=None, ge=0)
+    total_budget_min: int | None = Field(default=None, ge=0)
+    total_budget_max: int | None = Field(default=None, ge=0)
+    toner_budget_min: int | None = Field(default=None, ge=0)
+    toner_budget_max: int | None = Field(default=None, ge=0)
+    emulsion_budget_min: int | None = Field(default=None, ge=0)
+    emulsion_budget_max: int | None = Field(default=None, ge=0)
+    ampoule_budget_min: int | None = Field(default=None, ge=0)
+    ampoule_budget_max: int | None = Field(default=None, ge=0)
+    cream_budget_min: int | None = Field(default=None, ge=0)
+    cream_budget_max: int | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def validate_budget_ranges(self) -> "RecommendationRequest":
+        pairs = (
+            ("total_budget_min", "total_budget_max"),
+            ("toner_budget_min", "toner_budget_max"),
+            ("emulsion_budget_min", "emulsion_budget_max"),
+            ("ampoule_budget_min", "ampoule_budget_max"),
+            ("cream_budget_min", "cream_budget_max"),
+        )
+        for min_field, max_field in pairs:
+            min_value = getattr(self, min_field)
+            max_value = getattr(self, max_field)
+            if min_value is not None and max_value is not None and min_value > max_value:
+                raise ValueError(f"{min_field} must be less than or equal to {max_field}")
+        return self
 
 
 class RecommendationProduct(BaseModel):
@@ -35,11 +56,16 @@ class RecommendationResponse(BaseModel):
     budget_check_passed: bool = True
     budget_fallback_applied: bool = False
     budget_message: str | None = None
-    total_budget: int | None = None
-    toner_budget: int | None = None
-    emulsion_budget: int | None = None
-    ampoule_budget: int | None = None
-    cream_budget: int | None = None
+    total_budget_min: int | None = None
+    total_budget_max: int | None = None
+    toner_budget_min: int | None = None
+    toner_budget_max: int | None = None
+    emulsion_budget_min: int | None = None
+    emulsion_budget_max: int | None = None
+    ampoule_budget_min: int | None = None
+    ampoule_budget_max: int | None = None
+    cream_budget_min: int | None = None
+    cream_budget_max: int | None = None
     routines: list[RecommendationRoutine]
 
 
