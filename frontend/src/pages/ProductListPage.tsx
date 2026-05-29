@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { productApi, type ProductSummary } from '../api/product';
 import { Heart } from 'lucide-react';
 import './ProductListPage.css';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 type CategoryKey =
   | '전체' | '토너' | '에멀젼' | '에센스/앰플' | '크림/젤'
@@ -91,9 +92,9 @@ export default function ProductListPage() {
 
       <div className="pl-banner">
         <div className="pl-banner-inner">
-          <div className="pl-banner-badge">PRODUCTS</div>
-          <h1 className="pl-banner-title">전체 제품</h1>
-          <p className="pl-banner-sub">내 피부에 맞는 제품을 찾아보세요</p>
+          <div className="pl-banner-badge">PRODUCT DATABASE</div>
+          <h1 className="pl-banner-title">어떤 제품을 찾고 계세요?</h1>
+          <p className="pl-banner-sub">피부 타입, 카테고리, 키워드로 내 피부에 맞는 제품을 찾아보세요</p>
         </div>
       </div>
 
@@ -111,7 +112,7 @@ export default function ProductListPage() {
         </div>
 
         {loading ? (
-          <p style={{ textAlign: 'center', color: '#7c3aed', padding: '3rem' }}>불러오는 중...</p>
+          <LoadingSpinner text="제품을 불러오는 중이에요" />
         ) : products.length === 0 ? (
           <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem' }}>제품이 없어요.</p>
         ) : (() => {

@@ -4,7 +4,7 @@
   min-height: 100vh;
   background: #ffffff;
   font-family: 'Noto Sans KR', sans-serif;
-  color: #1A1A1A;
+  color: #111827;
 }
 
 .ar-section-inner { max-width: 1200px; margin: 0 auto; }
@@ -26,13 +26,13 @@
   font-family: 'Sora', sans-serif;
   font-size: clamp(22px, 3vw, 30px);
   font-weight: 700;
-  color: #1A1A1A;
+  color: #111827;
   margin-bottom: 6px;
   letter-spacing: -0.05em;
 }
 .ar-sec-sub {
   font-size: 13px;
-  color: #9CA3AF;
+  color: #6B7280;
   margin-bottom: 24px;
   line-height: 1.7;
   display: flex;
@@ -74,8 +74,9 @@
 
 /* ── HERO ── */
 .ar-hero {
-  background: #F9F7FF;
-  padding: 48px 80px 56px;
+  background: #fff;
+  border-bottom: 1px solid #F3F4F6;
+  padding: 56px 80px 64px;
 }
 .ar-hero-inner {
   max-width: 1200px;
@@ -101,38 +102,32 @@
   font-family: 'Sora', sans-serif;
   font-size: clamp(28px, 4vw, 48px);
   font-weight: 800; line-height: 1.25;
-  color: #1A1A1A; margin-bottom: 14px;
+  color: #111827; margin-bottom: 14px;
   letter-spacing: -0.05em;
 }
-.ar-hero-name { color: #1A1A1A; }
+.ar-hero-name { color: #111827; }
 .ar-hero-title em { color: #7c3aed; font-style: normal; }
-.ar-hero-date { font-size: 13px; color: #5F5F5F; margin-bottom: 18px; }
+.ar-hero-date { font-size: 13px; color: #4B5563; margin-bottom: 18px; }
 .ar-skin-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
 .ar-skin-tag {
-  background: rgba(255,255,255,0.6);
-  border: 1.5px solid rgba(167,139,250,0.45);
-
-  color: #835aff;
+  background: #F9FAFB;
+  border: 1.5px solid #E5E7EB;
+  color: #374151;
   font-size: 12px;
   font-weight: 600;
-
   padding: 6px 16px;
-
   border-radius: 999px;
-
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
-.ar-skin-tag--type { background: #835aff; border-color: #835aff; color: #fff; }
+.ar-skin-tag--type { background: #111827; border-color: #111827; color: #fff; }
 .ar-hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
 .ar-btn-primary {
   background: #7c3aed; color: #fff;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
   padding: 13px 28px; border-radius: 12px; border: none; cursor: pointer;
-  transition: all 0.2s; box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  transition: all 0.2s;
 }
-.ar-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
+.ar-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.25); }
 .ar-btn-ghost {
   background: transparent; color: #7c3aed;
   font-family: 'Noto Sans KR', sans-serif;
@@ -140,18 +135,18 @@
   padding: 13px 24px; border-radius: 12px;
   border: 1.5px solid #7c3aed; cursor: pointer; transition: all 0.2s;
 }
-.ar-btn-ghost:hover { background: #F9F7FF; }
+.ar-btn-ghost:hover { background: #F5F3FF; }
 
 .ar-hero-right {
   position: relative;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  transform: translateX(-60px);  /* ← 숫자 키워서 더 왼쪽으로 */
+  transform: translateX(-60px);
 }
 .ar-photo-ring {
   width: 300px; height: 300px; border-radius: 50%;
-  background: #F5F3FF;
+  background: #F3F4F6;
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08);
 }
 .ar-photo {
   width: 280px; height: 280px; border-radius: 50%;
@@ -159,9 +154,10 @@
 }
 .ar-score-badge {
   position: absolute; top: 0; right: -10px;
-  background: #fff; border-radius: 10px; padding: 10px 14px;
-  text-align: center; font-size: 11px; color: #9CA3AF; font-weight: 600;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08); line-height: 1.6;
+  background: #fff; border-radius: 12px; padding: 10px 14px;
+  text-align: center; font-size: 11px; color: #6B7280; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1); line-height: 1.6;
+  border: 1px solid #F3F4F6;
 }
 .ar-score-badge strong {
   font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800;
@@ -169,16 +165,17 @@
 }
 .ar-age-badge {
   position: absolute; bottom: 10px; left: -10px;
-  background: #fff; border-radius: 10px; padding: 10px 14px;
-  text-align: center; font-size: 11px; color: #9CA3AF; font-weight: 600;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08); line-height: 1.6;
+  background: #fff; border-radius: 12px; padding: 10px 14px;
+  text-align: center; font-size: 11px; color: #6B7280; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1); line-height: 1.6;
+  border: 1px solid #F3F4F6;
 }
 .ar-age-badge strong {
   font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800;
   color: #7c3aed; display: block;
 }
 
-/* ── 위험 지표 섹션 (AI 한마디 포함) ── */
+/* ── 지표 섹션 ── */
 .ar-report-section {
   background: #fff;
   padding: 72px 80px 64px;
@@ -212,7 +209,7 @@
   font-family: 'Sora', sans-serif;
   font-size: 32px; font-weight: 800; line-height: 1;
 }
-.ar-radar-label { font-size: 12px; color: #9CA3AF; font-weight: 600; margin-top: 2px; }
+.ar-radar-label { font-size: 12px; color: #6B7280; font-weight: 600; margin-top: 2px; }
 
 .ar-metric-grid {
   display: grid;
@@ -224,21 +221,27 @@
 }
 
 .ar-metric-card {
-  background: #fff; border-radius: 10px; padding: 14px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-  border: none;
-  transition: transform 0.18s;
+  background: #fff; border-radius: 12px; padding: 14px;
+  border: 1px solid #F3F4F6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  transition: all 0.2s;
 }
-.ar-metric-card:hover { transform: translateY(-2px); }
+.ar-metric-card:hover {
+  border-color: #ede9fe;
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 50px rgba(124, 58, 237, 0.08),
+    0 8px 20px rgba(0,0,0,0.05);
+}
 .ar-metric-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .ar-metric-icon-wrap {
   width: 32px; height: 32px; border-radius: 8px;
-  background: #F9F7FF;
+  background: #F9FAFB;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; flex-shrink: 0;
 }
 .ar-metric-label-wrap { flex: 1; min-width: 0; }
-.ar-metric-name { font-size: 13px; font-weight: 700; color: #1A1A1A; }
+.ar-metric-name { font-size: 13px; font-weight: 700; color: #111827; }
 .ar-metric-grade-badge {
   display: inline-block; font-size: 10px; font-weight: 700;
   padding: 2px 8px; border-radius: 8px; margin-top: 2px;
@@ -249,39 +252,40 @@
   flex-shrink: 0; line-height: 1;
 }
 .ar-metric-bar-bg {
-  width: 100%; height: 4px; background: #F5F3FF;
+  width: 100%; height: 4px; background: #F3F4F6;
   border-radius: 99px; overflow: hidden; margin-bottom: 8px;
 }
 .ar-metric-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
-.ar-metric-desc { font-size: 11px; color: #5F5F5F; line-height: 1.6; margin: 0; }
+.ar-metric-desc { font-size: 11px; color: #4B5563; line-height: 1.6; margin: 0; }
 
 /* ── AI 한마디 ── */
 .ar-ai-box {
   background: #F9F7FF;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 28px 32px;
-  border: none;
-  border-left: 4px solid #7c3aed;
+  border: 1.5px solid #EDE9FE;
+  border-left: 3px solid #7c3aed;
 }
 .ar-ai-label { font-size: 13px; font-weight: 700; color: #7c3aed; margin-bottom: 12px; }
-.ar-ai-text { font-size: 15px; color: #1A1A1A; line-height: 1.85; font-weight: 500; margin: 0 0 14px; }
-.ar-ai-cta { font-size: 12px; color: #A78BFA; font-weight: 600; margin: 0; }
+.ar-ai-text { font-size: 15px; color: #111827; line-height: 1.85; font-weight: 500; margin: 0 0 14px; }
+.ar-ai-cta { font-size: 12px; color: #6B7280; font-weight: 600; margin: 0; }
 
 /* ── 피부 변화 추이 ── */
 .ar-trend-box {
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 28px 32px;
   margin-top: 20px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
+  border: 1px solid #F3F4F6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .ar-trend-header { margin-bottom: 20px; }
 .ar-trend-title {
   font-family: 'Sora', sans-serif;
-  font-size: 18px; font-weight: 700; color: #1A1A1A;
+  font-size: 18px; font-weight: 700; color: #111827;
   margin: 0 0 4px; letter-spacing: -0.05em;
 }
-.ar-trend-sub { font-size: 12px; color: #9CA3AF; margin: 0; }
+.ar-trend-sub { font-size: 12px; color: #6B7280; margin: 0; }
 
 .ar-trend-tabs {
   display: flex; flex-wrap: wrap; gap: 8px;
@@ -290,9 +294,9 @@
 .ar-trend-tab {
   padding: 7px 16px;
   border-radius: 10px;
-  border: 1.5px solid #e5e7eb;
+  border: 1.5px solid #E5E7EB;
   background: #fff;
-  font-size: 13px; font-weight: 600; color: #6b7280;
+  font-size: 13px; font-weight: 600; color: #6B7280;
   cursor: pointer; font-family: 'Noto Sans KR', sans-serif;
   transition: all 0.15s;
 }
@@ -306,36 +310,39 @@
 .ar-trend-empty {
   text-align: center;
   padding: 40px 20px;
-  background: #F9F7FF;
+  background: #F9FAFB;
   border-radius: 10px;
-  font-size: 14px; color: #6b7280; line-height: 1.7;
+  border: 1px solid #E5E7EB;
+  font-size: 14px; color: #6B7280; line-height: 1.7;
 }
 .ar-trend-empty strong { color: #7c3aed; }
 
 /* ── FOOTER CTA ── */
 .ar-cta-section {
-  background: #F9F7FF;
+  background: #111827;
   padding: 72px 80px; text-align: center;
 }
 .ar-cta-section h2 {
   font-family: 'Sora', sans-serif;
   font-size: clamp(22px, 3vw, 32px); font-weight: 700;
-  color: #1A1A1A; margin-bottom: 10px;
+  color: #fff; margin-bottom: 10px;
   letter-spacing: -0.05em;
 }
-.ar-cta-section p { font-size: 14px; color: #5F5F5F; margin-bottom: 32px; line-height: 1.7; }
+.ar-cta-section p { font-size: 14px; color: rgba(255,255,255,0.65); margin-bottom: 32px; line-height: 1.7; }
 .ar-btn-white {
-  background: #7c3aed; color: #fff;
+  background: #fff; color: #111827;
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 15px; font-weight: 700; padding: 15px 40px;
   border-radius: 999px; border: none; cursor: pointer;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08); transition: all 0.2s;
+  transition: all 0.2s;
 }
-.ar-btn-white:hover { transform: translateY(-2px); }
+.ar-btn-white:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(255,255,255,0.2); }
 
 /* ── FOOTER ── */
 .ar-footer {
-  background: #F9F7FF; padding: 24px 80px;
+  background: #F9FAFB;
+  border-top: 1px solid #F3F4F6;
+  padding: 24px 80px;
   display: flex; justify-content: space-between; flex-wrap: wrap;
   gap: 8px; font-size: 11px; color: #9CA3AF;
 }

@@ -3,16 +3,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #7B61FF, #A78BFA);
+  background: #F9FAFB;
 }
 
 .auth-container {
   width: 380px;
   padding: 40px;
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(123, 97, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
   text-align: center;
+  border: 1px solid #F3F4F6;
 }
 
 .auth-input {
@@ -46,12 +47,16 @@
   width: 100%;
   padding: 12px;
   margin-top: 20px;
-  background: #7B61FF;
+  background: #7c3aed;
   color: white;
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.18s;
 }
+.btn-primary:hover { background: #6d28d9; transform: translateY(-1px); }
 
 .btn-google {
   width: 100%;

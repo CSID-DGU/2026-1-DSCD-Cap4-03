@@ -19,6 +19,11 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import MyPage from "./pages/MyPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import TermsPage from "./pages/TermsPage";
+import VanityMainPage from "./pages/VanityMainPage";
+import SkinMatchPage from "./pages/SkinMatchPage";
+import VanityRoutineBudgetPage from "./pages/VanityRoutineBudgetPage";
+import VanityRoutinePage from "./pages/VanityRoutinePage";
+import VanityRoutineHistoryPage from "./pages/VanityRoutineHistoryPage";
 
 import { AuthProvider } from "./context/AuthProvider";
 import ScrollToTop from "./components/ScrollToTop";
@@ -53,6 +58,12 @@ export default function App() {
           <Route path="/products"          element={<P><ProductListPage /></P>} />
           <Route path="/products/:id"      element={<P><ProductDetailPage /></P>} />
           <Route path="/mypage"            element={<P><MyPage /></P>} />
+          {/* 스킨핏 — 내 화장대 */}
+          <Route path="/vanity"                    element={<P><VanityMainPage /></P>} />
+          <Route path="/vanity/skin-match"         element={<P><SkinMatchPage /></P>} />
+          <Route path="/vanity/routine/budget"     element={<P><VanityRoutineBudgetPage /></P>} />
+          <Route path="/vanity/routine"            element={<P><VanityRoutinePage /></P>} />
+          <Route path="/vanity/routine/history"    element={<P><VanityRoutineHistoryPage /></P>} />
         </Routes>
         <Footer />
       </BrowserRouter>

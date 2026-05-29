@@ -7,7 +7,7 @@ import { userApi } from '../api/user';
 import { useAuth } from '../context/useAuth';
 import {
   Sun, Moon, Trophy, Wallet, Bot, ClipboardList,
-  AlertTriangle, FileText, Package, Timer, Banknote, Clock,
+  AlertTriangle, FileText, Package, Timer, Banknote, Clock, Info,
 } from 'lucide-react';
 import './RoutinePage.css';
 
@@ -53,6 +53,13 @@ const OPTIONAL_USAGE_HINT: Record<string, string> = {
   'Facial Oils':       '크림 뒤에 소량',
 };
 
+function formatBudgetRange(min: number | null | undefined, max: number | null | undefined, label: string): string | null {
+  if ((min == null) && (max == null)) return null;
+  if (max == null) return `${label} ${(min ?? 0).toLocaleString()}원+`;
+  if (min == null || min === 0) return `${label} ~${max.toLocaleString()}원`;
+  return `${label} ${min.toLocaleString()}~${max.toLocaleString()}원`;
+}
+
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -96,6 +103,13 @@ export default function RoutinePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchedExplanations, setFetchedExplanations] = useState(explanationRoutines);
+  const [budgetInfo, setBudgetInfo] = useState<{
+    total_budget_min?: number | null; total_budget_max?: number | null;
+    toner_budget_min?: number | null; toner_budget_max?: number | null;
+    emulsion_budget_min?: number | null; emulsion_budget_max?: number | null;
+    ampoule_budget_min?: number | null; ampoule_budget_max?: number | null;
+    cream_budget_min?: number | null; cream_budget_max?: number | null;
+  } | null>(null);
 
   const [activeType, setActiveType] = useState<'best' | 'value'>('best');
 
@@ -117,6 +131,18 @@ export default function RoutinePage() {
 
         setSkinResult(analysis);
         setRoutines(rec.routines);
+        setBudgetInfo({
+          total_budget_min:    rec.total_budget_min,
+          total_budget_max:    rec.total_budget_max,
+          toner_budget_min:    rec.toner_budget_min,
+          toner_budget_max:    rec.toner_budget_max,
+          emulsion_budget_min: rec.emulsion_budget_min,
+          emulsion_budget_max: rec.emulsion_budget_max,
+          ampoule_budget_min:  rec.ampoule_budget_min,
+          ampoule_budget_max:  rec.ampoule_budget_max,
+          cream_budget_min:    rec.cream_budget_min,
+          cream_budget_max:    rec.cream_budget_max,
+        });
 
         if (explanationRoutines.length === 0 && sessionId) {
           try {
@@ -212,6 +238,27 @@ export default function RoutinePage() {
               <span key={c} className="rp-skin-tag">{c}</span>
             ))}
           </div>
+
+          {budgetInfo && (() => {
+            const chips = [
+              formatBudgetRange(budgetInfo.total_budget_min,    budgetInfo.total_budget_max,    '전체'),
+              formatBudgetRange(budgetInfo.toner_budget_min,    budgetInfo.toner_budget_max,    '토너'),
+              formatBudgetRange(budgetInfo.emulsion_budget_min, budgetInfo.emulsion_budget_max, '에멀젼'),
+              formatBudgetRange(budgetInfo.ampoule_budget_min,  budgetInfo.ampoule_budget_max,  '앰플'),
+              formatBudgetRange(budgetInfo.cream_budget_min,    budgetInfo.cream_budget_max,    '크림'),
+            ].filter(Boolean) as string[];
+
+            if (chips.length === 0) return null;
+            return (
+              <div className="rp-budget-row">
+                <Wallet size={13} color="#9CA3AF" style={{ flexShrink: 0, marginTop: 1 }} />
+                <span className="rp-budget-row-label">예산 조건</span>
+                {chips.map((chip) => (
+                  <span key={chip} className="rp-budget-chip">{chip}</span>
+                ))}
+              </div>
+            );
+          })()}
         </div>
       </section>
 
@@ -261,6 +308,14 @@ export default function RoutinePage() {
             <span>총 <strong>{currentRoutine.total_cost.toLocaleString()}원</strong></span>
           </div>
         </div>
+
+        {/* ── 가성비 안내 문구 ── */}
+        {activeType === 'value' && (
+          <div className="rp-value-notice">
+            <Info size={15} color="#7c3aed" style={{ flexShrink: 0, marginTop: 1 }} />
+            가성비 루틴은 예산 조건과 관계없이 가장 합리적인 가격 대비 성능 조합으로 추천돼요.
+          </div>
+        )}
 
         {/* ── AI 루틴 설명 ── */}
         <div className="rp-ai-desc-box">
