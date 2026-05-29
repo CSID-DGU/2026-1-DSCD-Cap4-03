@@ -261,6 +261,7 @@ def delete_vanity_product(db: Session, user_id: int, product_id: int) -> dict[st
     return {
         "product_id": product_id,
         "saved": False,
+        "match_session_id": _latest_match_session_id(db, user_id),
         "message": "내 화장대에서 제품이 삭제되었습니다.",
     }
 
@@ -688,6 +689,50 @@ def _latest_match_session_id(db: Session, user_id: int) -> int | None:
     return int(value) if value is not None else None
 
 
+def _latest_skin_match_summary(db: Session, user_id: int) -> dict[str, Any] | None:
+    match_session_id = _latest_match_session_id(db, user_id)
+    if match_session_id is None:
+        return None
+
+    session_row = db.execute(
+        text(
+            """
+            SELECT match_session_id, created_at
+            FROM vanity_match_session
+            WHERE match_session_id = :match_session_id AND user_id = :user_id
+            LIMIT 1
+            """
+        ),
+        {"match_session_id": match_session_id, "user_id": user_id},
+    ).mappings().first()
+    if not session_row:
+        return None
+
+    rows = db.execute(
+        text(
+            """
+            SELECT fit_label, COUNT(*) AS count
+            FROM vanity_match_item vmi
+            JOIN user_vanity uv ON uv.user_id = :user_id AND uv.product_id = vmi.product_id
+            WHERE vmi.match_session_id = :match_session_id
+            GROUP BY fit_label
+            """
+        ),
+        {"match_session_id": match_session_id, "user_id": user_id},
+    ).mappings().all()
+
+    summary = {key: 0 for key in DISPLAY_LABELS}
+    for row in rows:
+        fit_label = str(row.get("fit_label") or "")
+        summary[fit_label] = int(row.get("count") or 0)
+
+    return {
+        "match_session_id": int(session_row["match_session_id"]),
+        "created_at": str(session_row["created_at"]) if session_row.get("created_at") is not None else None,
+        "summary": summary,
+    }
+
+
 def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
     match_session_id = _latest_match_session_id(db, user_id)
     if match_session_id is None:
@@ -726,11 +771,12 @@ def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
                 vmi.caution_tags
             FROM vanity_match_item vmi
             JOIN product p ON p.product_id = vmi.product_id
+            JOIN user_vanity uv ON uv.user_id = :user_id AND uv.product_id = vmi.product_id
             WHERE vmi.match_session_id = :match_session_id
             ORDER BY vmi.vanity_fit_score DESC, vmi.match_item_id
             """
         ),
-        {"match_session_id": match_session_id},
+        {"match_session_id": match_session_id, "user_id": user_id},
     ).mappings().all()
 
     import json
@@ -766,12 +812,7 @@ def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
     basis = basis_skin_result(db, user_id, int(session_row["result_id"]))
     llm_explanation = store.vanity_skin_match_explanations.get(int(match_session_id))
     if llm_explanation is None:
-        llm_explanation = generate_vanity_llm_explanation(
-            db=db,
-            user_id=user_id,
-            result_id=basis["result_id"],
-            product_match_results=results,
-        )
+        llm_explanation = build_vanity_llm_explanation(results, None)
         store.vanity_skin_match_explanations[int(match_session_id)] = llm_explanation
         save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
 
@@ -900,6 +941,40 @@ def get_latest_vanity_routine(db: Session, user_id: int) -> dict[str, Any]:
     return get_vanity_routine_detail(db, user_id, int(session_id))
 
 
+def _latest_vanity_routine_summary(db: Session, user_id: int) -> dict[str, Any] | None:
+    row = db.execute(
+        text(
+            """
+            SELECT
+                rs.session_id AS recommendation_session_id,
+                rs.created_at,
+                SUM(CASE WHEN COALESCE(ri.source, 'recommendation') = 'vanity' THEN 1 ELSE 0 END) AS fixed_product_count,
+                SUM(COALESCE(p.price, 0)) AS total_price
+            FROM recommendation_session rs
+            JOIN recommendation_routine rr ON rr.session_id = rs.session_id
+            JOIN recommendation_item ri ON ri.routine_id = rr.routine_id
+            JOIN product p ON p.product_id = ri.product_id
+            WHERE rs.user_id = :user_id
+              AND COALESCE(rs.recommendation_type, 'basic') = 'vanity'
+              AND rr.routine_label = 'Vanity'
+            GROUP BY rs.session_id, rs.created_at
+            ORDER BY rs.created_at DESC, rs.session_id DESC
+            LIMIT 1
+            """
+        ),
+        {"user_id": user_id},
+    ).mappings().first()
+    if not row:
+        return None
+
+    return {
+        "recommendation_session_id": int(row["recommendation_session_id"]),
+        "created_at": str(row["created_at"]) if row.get("created_at") is not None else None,
+        "fixed_product_count": int(row["fixed_product_count"] or 0),
+        "total_price": int(row["total_price"] or 0),
+    }
+
+
 def list_vanity_routines(db: Session, user_id: int) -> list[dict[str, Any]]:
     rows = db.execute(
         text(
@@ -943,28 +1018,9 @@ def get_vanity_summary(db: Session, user_id: int) -> dict[str, Any]:
         basis = None
 
     latest_match = None
-    try:
-        match = get_latest_skin_match(db, user_id)
-        latest_match = {
-            "match_session_id": match["match_session_id"],
-            "created_at": match["created_at"],
-            "summary": match["summary"],
-        }
-    except HTTPException:
-        pass
+    latest_match = _latest_skin_match_summary(db, user_id)
 
-    latest_routine = None
-    try:
-        routine = get_latest_vanity_routine(db, user_id)
-        routine_result = routine["routine_recommendation_results"]
-        latest_routine = {
-            "recommendation_session_id": routine["recommendation_session_id"],
-            "created_at": routine["created_at"],
-            "fixed_product_count": len(routine_result.get("fixed_products") or []),
-            "total_price": routine_result.get("total_price"),
-        }
-    except HTTPException:
-        pass
+    latest_routine = _latest_vanity_routine_summary(db, user_id)
 
     return {
         "product_summary": {
