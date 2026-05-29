@@ -38,12 +38,16 @@ model/skin_analysis_resnet/
 model/recommendation/embedding_old/
 model/recommendation/embedding_pipeline/embedding_results/
 model/recommendation/embedding_test/
+model/recommendation/evaluation_outputs/
 model/recommendation/kg_pipeline/output
 model/recommendation/kg_pipeline/llm
 model/vanity/experiments/
+model/recommendation/\evaluation_metrics.ipynb
 backend/llm_outputs/
 backend/app/db/skin_summaries.json
 backend/app/db/recommendation_explanations.json
+backend/app/db/vanity_skin_match_explanations.json
+backend/app/db/vanity_routine_explanations.json
 backend/uploads/
 model/llm/outputs/
 /DB/

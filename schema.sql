@@ -1,5 +1,5 @@
 -- MySQL 8.0+
--- Core entities DDL (0519 modified flow)
+-- Core entities DDL (0521 modified flow)
 
 CREATE DATABASE IF NOT EXISTS Rouple_db
     DEFAULT CHARACTER SET utf8mb4
@@ -20,11 +20,15 @@ DROP TABLE IF EXISTS USER;
 DROP TABLE IF EXISTS USER_PROFILE;
 DROP TABLE IF EXISTS USER_ALLERGY;
 DROP TABLE IF EXISTS USER_WISHLIST;
+DROP TABLE IF EXISTS USER_VANITY;
 
 DROP TABLE IF EXISTS USER_IMAGE;
 DROP TABLE IF EXISTS SKIN_ANALYSIS_RESULT;
+DROP TABLE IF EXISTS VANITY_MATCH_ITEM;
+DROP TABLE IF EXISTS VANITY_MATCH_SESSION;
 
 DROP TABLE IF EXISTS RECOMMENDATION_CANDIDATE;
+DROP TABLE IF EXISTS RECOMMENDATION_RERANKED;
 DROP TABLE IF EXISTS RECOMMENDATION_SESSION;
 DROP TABLE IF EXISTS RECOMMENDATION_ROUTINE;
 DROP TABLE IF EXISTS RECOMMENDATION_ITEM;
@@ -194,6 +198,22 @@ CREATE TABLE USER_WISHLIST (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE USER_VANITY (
+    vanity_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    product_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_vanity_user_product (user_id, product_id),
+    KEY idx_vanity_user (user_id),
+    KEY idx_vanity_product (product_id),
+    CONSTRAINT fk_vanity_user
+        FOREIGN KEY (user_id) REFERENCES USER(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_vanity_product
+        FOREIGN KEY (product_id) REFERENCES PRODUCT(product_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 
 -- SKIN IMAGE ANALYSIS
 CREATE TABLE USER_IMAGE (
@@ -234,6 +254,45 @@ CREATE TABLE SKIN_ANALYSIS_RESULT (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- MY VANITY: SKIN MATCH
+CREATE TABLE VANITY_MATCH_SESSION (
+    match_session_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    result_id INT NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_vanity_match_user (user_id),
+    KEY idx_vanity_match_result (result_id),
+    CONSTRAINT fk_vanity_match_user
+        FOREIGN KEY (user_id) REFERENCES USER(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_vanity_match_result
+        FOREIGN KEY (result_id) REFERENCES SKIN_ANALYSIS_RESULT(result_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE VANITY_MATCH_ITEM (
+    match_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    match_session_id BIGINT NOT NULL,
+    product_id BIGINT NOT NULL,
+    vanity_fit_score DECIMAL(8,4) NULL,
+    concern_match_score DECIMAL(8,4) NULL,
+    skin_type_bonus DECIMAL(8,4) NULL,
+    review_score DECIMAL(8,4) NULL,
+    irritation_penalty DECIMAL(8,4) NULL,
+    fit_label VARCHAR(20) NULL,
+    recommend_action VARCHAR(20) NULL,
+    reason_tags JSON NULL,
+    caution_tags JSON NULL,
+    KEY idx_vanity_match_item_session (match_session_id),
+    KEY idx_vanity_match_item_product (product_id),
+    CONSTRAINT fk_vanity_match_item_session
+        FOREIGN KEY (match_session_id) REFERENCES VANITY_MATCH_SESSION(match_session_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_vanity_match_item_product
+        FOREIGN KEY (product_id) REFERENCES PRODUCT(product_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- RECOMMENDTATION
 CREATE TABLE RECOMMENDATION_CANDIDATE (
     candidate_id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -258,6 +317,7 @@ CREATE TABLE RECOMMENDATION_SESSION (
     user_id INT NOT NULL,
     image_id INT NULL,
     result_id INT NULL,
+    recommendation_type VARCHAR(30) NOT NULL DEFAULT 'basic',
     strict_budget BOOLEAN NOT NULL DEFAULT FALSE,
     total_budget_min INT NULL,
     total_budget_max INT NULL,
@@ -270,6 +330,7 @@ CREATE TABLE RECOMMENDATION_SESSION (
     KEY idx_rec_session_user_id (user_id),
     KEY idx_rec_session_image_id (image_id),
     KEY idx_rec_session_result_id (result_id),
+    KEY idx_rec_session_type (recommendation_type),
     CONSTRAINT fk_rec_session_user
         FOREIGN KEY (user_id) REFERENCES USER(user_id)
         ON DELETE CASCADE ON UPDATE CASCADE,
@@ -279,6 +340,52 @@ CREATE TABLE RECOMMENDATION_SESSION (
     CONSTRAINT fk_rec_session_result
         FOREIGN KEY (result_id) REFERENCES SKIN_ANALYSIS_RESULT(result_id)
         ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE RECOMMENDATION_RERANKED (
+    reranked_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT NULL,
+    user_id INT NOT NULL,
+    image_id INT NULL,
+    result_id INT NULL,
+    product_id BIGINT NOT NULL,
+    product_key VARCHAR(255) NULL,
+    category VARCHAR(30) NOT NULL,
+    brand_name VARCHAR(100) NULL,
+    product_name VARCHAR(255) NULL,
+    price INT NULL,
+    embedding_rank INT NULL,
+    embedding_score DECIMAL(12,8) NULL,
+    rerank_rank_global INT NULL,
+    rerank_rank_in_category INT NULL,
+    rerank_score DECIMAL(8,4) NOT NULL,
+    raw_rerank_score DECIMAL(8,4) NULL,
+    vector_score DECIMAL(8,4) NULL,
+    concern_score DECIMAL(8,4) NULL,
+    skin_bonus DECIMAL(8,4) NULL,
+    wishlist_bonus DECIMAL(8,4) NULL,
+    review_score DECIMAL(8,4) NULL,
+    irritation_penalty DECIMAL(8,4) NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_reranked_lookup (user_id, result_id, image_id),
+    KEY idx_reranked_session (session_id),
+    KEY idx_reranked_product (product_id),
+    KEY idx_reranked_category_rank (category, rerank_rank_in_category),
+    CONSTRAINT fk_reranked_session
+        FOREIGN KEY (session_id) REFERENCES RECOMMENDATION_SESSION(session_id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_reranked_user
+        FOREIGN KEY (user_id) REFERENCES USER(user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_reranked_image
+        FOREIGN KEY (image_id) REFERENCES USER_IMAGE(image_id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_reranked_result
+        FOREIGN KEY (result_id) REFERENCES SKIN_ANALYSIS_RESULT(result_id)
+        ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT fk_reranked_product
+        FOREIGN KEY (product_id) REFERENCES PRODUCT(product_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE RECOMMENDATION_ROUTINE (
@@ -306,8 +413,11 @@ CREATE TABLE RECOMMENDATION_ITEM (
     product_id BIGINT NULL,
     product_score DECIMAL(8,4) NULL,
     time_tag VARCHAR(10) NULL,
+    source VARCHAR(20) NOT NULL DEFAULT 'recommendation',
+    item_snapshot_json TEXT NULL,
     KEY idx_item_routine_id (routine_id),
     KEY idx_item_product_id (product_id),
+    KEY idx_item_source (source),
     UNIQUE KEY uq_item_slot_per_routine (routine_id, slot_order),
     CONSTRAINT fk_recommendation_item_routine
         FOREIGN KEY (routine_id) REFERENCES RECOMMENDATION_ROUTINE(routine_id)
@@ -316,6 +426,3 @@ CREATE TABLE RECOMMENDATION_ITEM (
         FOREIGN KEY (product_id) REFERENCES PRODUCT(product_id)
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
-

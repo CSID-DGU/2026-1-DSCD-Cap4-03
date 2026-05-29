@@ -28,6 +28,7 @@ class VanityProductMutationResponse(BaseModel):
     vanity_id: int | None = None
     product_id: int
     saved: bool = True
+    match_session_id: int | None = None
     message: str
 
 
@@ -92,7 +93,7 @@ class VanityRoutineExplanation(BaseModel):
 class VanityLLMExplanation(BaseModel):
     prompt_version: str = "vanity_v1"
     generated_at: str
-    skin_match: SkinMatchExplanation | None = None
+    skin_match: dict[str, Any] | None = None
     vanity_routine: VanityRoutineExplanation | None = None
 
 

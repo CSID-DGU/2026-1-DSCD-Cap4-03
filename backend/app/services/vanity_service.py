@@ -12,6 +12,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.db.memory import (
+    save_vanity_routine_explanations,
+    save_vanity_skin_match_explanations,
+    store,
+)
 from app.services.db_catalog import get_product_or_404, serialize_product_list_item
 
 
@@ -19,11 +24,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 DISPLAY_LABELS = {
-    "excellent_match": "아주 적합",
-    "good_match": "적합",
-    "so_so": "쏘쏘",
-    "weak_match": "아쉬움",
-    "poor_match": "잘 맞지 않아요",
+    "excellent_match": "아주 잘 맞아요",
+    "good_match": "괜찮은 편이에요",
+    "so_so": "보통이에요",
+    "weak_match": "아쉬워요",
+    "poor_match": "주의가 필요해요",
 }
 
 
@@ -184,6 +189,26 @@ def list_vanity_products(db: Session, user_id: int) -> list[dict[str, Any]]:
 
 def add_vanity_product(db: Session, user_id: int, product_id: int) -> dict[str, Any]:
     get_product_or_404(db, product_id)
+    existing_vanity_id = db.scalar(
+        text(
+            """
+            SELECT vanity_id
+            FROM user_vanity
+            WHERE user_id = :user_id AND product_id = :product_id
+            LIMIT 1
+            """
+        ),
+        {"user_id": user_id, "product_id": product_id},
+    )
+    if existing_vanity_id is not None:
+        return {
+            "vanity_id": int(existing_vanity_id),
+            "product_id": product_id,
+            "saved": True,
+            "match_session_id": _latest_match_session_id(db, user_id),
+            "message": "내 화장대에 이미 등록된 제품입니다.",
+        }
+
     db.execute(
         text(
             """
@@ -206,10 +231,18 @@ def add_vanity_product(db: Session, user_id: int, product_id: int) -> dict[str, 
         ),
         {"user_id": user_id, "product_id": product_id},
     )
+    skin_match_session_id = None
+    try:
+        skin_match = run_skin_match(db, user_id, product_ids=None)
+        skin_match_session_id = skin_match.get("match_session_id")
+    except HTTPException:
+        pass
+
     return {
         "vanity_id": int(vanity_id) if vanity_id is not None else None,
         "product_id": product_id,
         "saved": True,
+        "match_session_id": skin_match_session_id,
         "message": "내 화장대에 제품이 등록되었습니다.",
     }
 
@@ -421,6 +454,28 @@ def _build_vanity_llm_input(
     }
 
 
+def _skin_match_only_routine(product_match_results: list[dict[str, Any]]) -> dict[str, Any]:
+    final_routine = []
+    for idx, product in enumerate(product_match_results, start=1):
+        final_routine.append(
+            {
+                "slot_order": idx,
+                "product_id": int(product["product_id"]),
+                "category": product.get("category"),
+                "brand_name": product.get("brand_name"),
+                "product_name": product.get("product_name"),
+                "source": "vanity",
+                "product_score": float(product.get("vanity_fit_score") or 0.0),
+                "price": int(product.get("price") or 0),
+            }
+        )
+    return {
+        "final_routine": final_routine,
+        "warnings": [],
+        "total_price": None,
+    }
+
+
 def generate_vanity_llm_explanation(
     db: Session,
     user_id: int,
@@ -428,12 +483,12 @@ def generate_vanity_llm_explanation(
     product_match_results: list[dict[str, Any]],
     routine_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    if not routine_result or not routine_result.get("final_routine"):
-        return build_vanity_llm_explanation(product_match_results, routine_result)
-
     _prepare_llm_env()
     try:
         from model.llm.vanity_llm import generate_vanity_llm_result
+
+        if not routine_result or not routine_result.get("final_routine"):
+            routine_result = _skin_match_only_routine(product_match_results)
 
         llm_input = _build_vanity_llm_input(
             db=db,
@@ -446,7 +501,8 @@ def generate_vanity_llm_explanation(
             llm_input=llm_input,
             output_dir=str(BACKEND_ROOT / "llm_outputs" / "vanity"),
         )
-    except Exception:
+    except Exception as exc:
+        print(f"[vanity-llm] failed: {type(exc).__name__}: {exc}")
         return build_vanity_llm_explanation(product_match_results, routine_result)
 
 
@@ -484,12 +540,23 @@ def run_skin_match(db: Session, user_id: int, product_ids: list[int] | None = No
         raise _http_error(status.HTTP_500_INTERNAL_SERVER_ERROR, "VANITY_SKIN_MATCH_FAILED", str(exc)) from exc
 
     matches = [_normalize_product_match(item) for item in result["product_match_results"]]
+    llm_explanation = generate_vanity_llm_explanation(
+        db=db,
+        user_id=user_id,
+        result_id=basis["result_id"],
+        product_match_results=matches,
+    )
+    match_session_id = result.get("match_session_id")
+    if match_session_id is not None:
+        store.vanity_skin_match_explanations[int(match_session_id)] = llm_explanation
+        save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
+
     return {
-        "match_session_id": result.get("match_session_id"),
+        "match_session_id": match_session_id,
         "user_id": user_id,
         "basis_skin_result": basis,
         "product_match_results": matches,
-        "llm_explanation": build_vanity_llm_explanation(matches),
+        "llm_explanation": llm_explanation,
     }
 
 
@@ -583,19 +650,25 @@ def run_vanity_routine(db: Session, user_id: int, fixed_product_ids: list[int], 
     _update_vanity_budget_session(db, result.get("recommendation_session_id"), budget_payload)
     matches = [_normalize_product_match(item) for item in result.get("product_match_results", [])]
     routine_result = _routine_results_from_pipeline(result.get("routine_recommendation_results"))
+    llm_explanation = generate_vanity_llm_explanation(
+        db=db,
+        user_id=user_id,
+        result_id=basis["result_id"],
+        product_match_results=matches,
+        routine_result=routine_result,
+    )
+    recommendation_session_id = result.get("recommendation_session_id")
+    if recommendation_session_id is not None:
+        store.vanity_routine_explanations[int(recommendation_session_id)] = llm_explanation
+        save_vanity_routine_explanations(store.vanity_routine_explanations)
+
     return {
-        "recommendation_session_id": result.get("recommendation_session_id"),
+        "recommendation_session_id": recommendation_session_id,
         "user_id": user_id,
         "basis_skin_result": basis,
         "product_match_results": matches,
         "routine_recommendation_results": routine_result,
-        "llm_explanation": generate_vanity_llm_explanation(
-            db=db,
-            user_id=user_id,
-            result_id=basis["result_id"],
-            product_match_results=matches,
-            routine_result=routine_result,
-        ),
+        "llm_explanation": llm_explanation,
     }
 
 
@@ -690,13 +763,25 @@ def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
             )
         )
 
+    basis = basis_skin_result(db, user_id, int(session_row["result_id"]))
+    llm_explanation = store.vanity_skin_match_explanations.get(int(match_session_id))
+    if llm_explanation is None:
+        llm_explanation = generate_vanity_llm_explanation(
+            db=db,
+            user_id=user_id,
+            result_id=basis["result_id"],
+            product_match_results=results,
+        )
+        store.vanity_skin_match_explanations[int(match_session_id)] = llm_explanation
+        save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
+
     return {
         "match_session_id": match_session_id,
         "created_at": str(session_row["created_at"]) if session_row and session_row.get("created_at") is not None else None,
-        "basis_skin_result": basis_skin_result(db, user_id, int(session_row["result_id"])),
+        "basis_skin_result": basis,
         "summary": summary,
         "product_match_results": results,
-        "llm_explanation": build_vanity_llm_explanation(results),
+        "llm_explanation": llm_explanation,
     }
 
 
@@ -772,18 +857,27 @@ def get_vanity_routine_detail(db: Session, user_id: int, session_id: int) -> dic
         "warnings": warnings,
         "total_price": sum(int(item.get("price") or 0) for item in final_routine),
     }
+    basis = basis_skin_result(db, user_id, int(session_row["result_id"]))
+    llm_explanation = store.vanity_routine_explanations.get(int(session_id))
+    if llm_explanation is None:
+        match = get_latest_skin_match(db, user_id)
+        llm_explanation = generate_vanity_llm_explanation(
+            db=db,
+            user_id=user_id,
+            result_id=basis["result_id"],
+            product_match_results=match.get("product_match_results") or [],
+            routine_result=routine_result,
+        )
+        store.vanity_routine_explanations[int(session_id)] = llm_explanation
+        save_vanity_routine_explanations(store.vanity_routine_explanations)
+
     return {
         "recommendation_session_id": session_id,
         "created_at": str(session_row["created_at"]) if session_row.get("created_at") is not None else None,
         "user_id": user_id,
-        "basis_skin_result": basis_skin_result(db, user_id, int(session_row["result_id"])),
+        "basis_skin_result": basis,
         "routine_recommendation_results": routine_result,
-        "llm_explanation": {
-            "prompt_version": "vanity_v1",
-            "generated_at": _now_string(),
-            "skin_match": None,
-            "vanity_routine": _routine_explanation(routine_result),
-        },
+        "llm_explanation": llm_explanation,
     }
 
 
