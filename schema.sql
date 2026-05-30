@@ -1,5 +1,5 @@
 -- MySQL 8.0+
--- Core entities DDL (0521 modified flow)
+-- Core entities DDL (0529 modified flow)
 
 CREATE DATABASE IF NOT EXISTS Rouple_db
     DEFAULT CHARACTER SET utf8mb4

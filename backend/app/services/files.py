@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import boto3
+from botocore.config import Config
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -17,7 +18,11 @@ def _build_s3_client():
     if settings.aws_session_token:
         session_kwargs["aws_session_token"] = settings.aws_session_token
     session = boto3.session.Session(**session_kwargs)
-    return session.client("s3")
+    return session.client(
+        "s3",
+        endpoint_url=f"https://s3.{settings.s3_region}.amazonaws.com",
+        config=Config(signature_version="s3v4", s3={"addressing_style": "virtual"}),
+    )
 
 
 def build_presigned_payload(user_id: int, file_name: str, mime_type: str) -> dict:
