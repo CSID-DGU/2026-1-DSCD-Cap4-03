@@ -3,12 +3,28 @@ from __future__ import annotations
 from datetime import date, datetime
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
+from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
 from app.models import Ingredient, User, UserAllergy, UserImage, UserProfile
 from app.schemas.users import UpdateAllergiesRequest, UpdateProfileRequest
 from app.services.auth import hash_password
+
+
+def invalidate_recommendation_rerank_cache(db: Session, user_id: int) -> None:
+    try:
+        db.execute(
+            text("DELETE FROM recommendation_reranked WHERE user_id = :user_id"),
+            {"user_id": user_id},
+        )
+        db.commit()
+    except DBAPIError as exc:
+        db.rollback()
+        err_code = exc.orig.args[0] if getattr(exc, "orig", None) and getattr(exc.orig, "args", None) else None
+        if err_code == 1146:
+            return
+        raise
 
 
 def create_user(
@@ -102,6 +118,7 @@ def update_user_profile(db: Session, user: User, payload: UpdateProfileRequest) 
     db.commit()
     db.refresh(user)
     db.refresh(profile)
+    invalidate_recommendation_rerank_cache(db, user.user_id)
     return serialize_user_profile(user, profile)
 
 
@@ -159,6 +176,7 @@ def replace_user_allergies(db: Session, user_id: int, payload: UpdateAllergiesRe
         )
 
     db.commit()
+    invalidate_recommendation_rerank_cache(db, user_id)
     saved_categories = [
         item.get("category") or (ingredient_by_id.get(item["ingredient_id"]).allergy_category if ingredient_by_id.get(item["ingredient_id"]) else None)
         for item in deduped_items

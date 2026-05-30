@@ -40,6 +40,260 @@ from model.recommendation.kg_pipeline.neo4j_skincare.services.reco_policy import
 # Load user context from MySQL (profile, skin analysis, allergies, wishlist, etc.)
 
 
+def _db_value(value: Any) -> Any:
+    if pd.isna(value):
+        return None
+    if hasattr(value, "item"):
+        return value.item()
+    return value
+
+
+def _first_present(row: pd.Series, *names: str) -> Any:
+    for name in names:
+        if name in row and pd.notna(row.get(name)):
+            return row.get(name)
+    return None
+
+
+def _prepare_reranked_for_storage(reranked: pd.DataFrame) -> pd.DataFrame:
+    if reranked.empty:
+        return reranked.copy()
+    df = reranked.copy()
+    df["rerank_score_num"] = pd.to_numeric(df["S_rerank"], errors="coerce")
+    df = df[df["rerank_score_num"].notna()].copy()
+    if df.empty:
+        return df
+    df = df.sort_values(["query_category", "rerank_score_num"], ascending=[True, False])
+    df["rerank_rank_in_category"] = df.groupby("query_category").cumcount() + 1
+    global_order = df.sort_values("rerank_score_num", ascending=False).index.tolist()
+    global_rank = {idx: rank for rank, idx in enumerate(global_order, start=1)}
+    df["rerank_rank_global"] = df.index.map(global_rank)
+    return df
+
+
+def _ensure_reranked_table(conn: pymysql.connections.Connection) -> None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS RECOMMENDATION_RERANKED (
+                reranked_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                session_id BIGINT NULL,
+                user_id INT NOT NULL,
+                image_id INT NULL,
+                result_id INT NULL,
+                product_id BIGINT NOT NULL,
+                product_key VARCHAR(255) NULL,
+                category VARCHAR(30) NOT NULL,
+                brand_name VARCHAR(100) NULL,
+                product_name VARCHAR(255) NULL,
+                price INT NULL,
+                embedding_rank INT NULL,
+                embedding_score DECIMAL(12,8) NULL,
+                rerank_rank_global INT NULL,
+                rerank_rank_in_category INT NULL,
+                rerank_score DECIMAL(8,4) NOT NULL,
+                raw_rerank_score DECIMAL(8,4) NULL,
+                vector_score DECIMAL(8,4) NULL,
+                concern_score DECIMAL(8,4) NULL,
+                skin_bonus DECIMAL(8,4) NULL,
+                wishlist_bonus DECIMAL(8,4) NULL,
+                review_score DECIMAL(8,4) NULL,
+                irritation_penalty DECIMAL(8,4) NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                KEY idx_reranked_lookup (user_id, result_id, image_id),
+                KEY idx_reranked_session (session_id),
+                KEY idx_reranked_product (product_id),
+                KEY idx_reranked_category_rank (category, rerank_rank_in_category)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+            """
+        )
+
+
+def _load_cached_reranked(user_id: int, image_id: int | None, result_id: int | None) -> pd.DataFrame:
+    if image_id is None and result_id is None:
+        return pd.DataFrame()
+    where = ["user_id = %s"]
+    params: list[Any] = [user_id]
+    if result_id is not None:
+        where.append("result_id = %s")
+        params.append(result_id)
+    if image_id is not None:
+        where.append("image_id = %s")
+        params.append(image_id)
+
+    conn = _mysql_connect()
+    try:
+        try:
+            _ensure_reranked_table(conn)
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    SELECT
+                        product_id,
+                        product_key,
+                        category AS query_category,
+                        brand_name AS Brand,
+                        product_name,
+                        price,
+                        embedding_rank AS rank_in_category,
+                        embedding_score AS score,
+                        rerank_rank_global,
+                        rerank_rank_in_category,
+                        rerank_score AS S_rerank,
+                        raw_rerank_score AS raw_S_rerank,
+                        vector_score,
+                        concern_score,
+                        skin_bonus,
+                        wishlist_bonus,
+                        review_score,
+                        irritation_penalty
+                FROM RECOMMENDATION_RERANKED
+                    WHERE {" AND ".join(where)}
+                    ORDER BY category ASC, rerank_rank_in_category ASC
+                    """,
+                    params,
+                )
+                rows = cur.fetchall()
+        except pymysql.err.ProgrammingError as exc:
+            if exc.args and exc.args[0] == 1146:
+                print("[cache] RECOMMENDATION_RERANKED table is missing; recomputing rerank")
+                return pd.DataFrame()
+            raise
+    finally:
+        conn.close()
+
+    if not rows:
+        return pd.DataFrame()
+    df = pd.DataFrame(rows)
+    for col in [
+        "product_id",
+        "price",
+        "rank_in_category",
+        "rerank_rank_global",
+        "rerank_rank_in_category",
+    ]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    for col in [
+        "score",
+        "S_rerank",
+        "raw_S_rerank",
+        "vector_score",
+        "concern_score",
+        "skin_bonus",
+        "wishlist_bonus",
+        "review_score",
+        "irritation_penalty",
+    ]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    print(f"[cache] loaded reranked rows from DB: rows={len(df)}")
+    return df
+
+
+def _save_reranked(
+    session_id: int | None,
+    user_id: int,
+    session_meta: dict[str, Any],
+    reranked: pd.DataFrame,
+) -> None:
+    if session_id is None or reranked.empty:
+        return
+
+    required = {"query_category", "S_rerank"}
+    if not required.issubset(set(reranked.columns)):
+        return
+
+    df = _prepare_reranked_for_storage(reranked)
+    if df.empty:
+        return
+
+    image_id = session_meta.get("image_id")
+    result_id = session_meta.get("result_id")
+    conn = _mysql_connect()
+    try:
+        try:
+            _ensure_reranked_table(conn)
+            with conn.cursor() as cur:
+                delete_where = ["user_id = %s"]
+                delete_params: list[Any] = [user_id]
+                if result_id is not None:
+                    delete_where.append("result_id = %s")
+                    delete_params.append(result_id)
+                if image_id is not None:
+                    delete_where.append("image_id = %s")
+                    delete_params.append(image_id)
+                cur.execute(
+                    f"DELETE FROM RECOMMENDATION_RERANKED WHERE {' AND '.join(delete_where)}",
+                    delete_params,
+                )
+
+                rows = []
+                for _, row in df.iterrows():
+                    product_id = _db_value(row.get("product_id"))
+                    if product_id is None:
+                        continue
+                    concern_score = _first_present(row, "concern_score", "concern_match_score")
+                    skin_bonus = _first_present(row, "skin_bonus", "skin_type_bonus")
+                    rows.append(
+                        (
+                            int(session_id),
+                            int(user_id),
+                            int(image_id) if image_id is not None else None,
+                            int(result_id) if result_id is not None else None,
+                            int(product_id),
+                            _db_value(row.get("product_key")),
+                            _db_value(row.get("query_category")),
+                            _db_value(row.get("Brand")),
+                            _db_value(row.get("product_name")),
+                            int(float(row["price"])) if pd.notna(row.get("price")) else None,
+                            int(float(row["rank_in_category"])) if pd.notna(row.get("rank_in_category")) else None,
+                            float(row["score"]) if pd.notna(row.get("score")) else None,
+                            int(row["rerank_rank_global"]),
+                            int(row["rerank_rank_in_category"]),
+                            float(row["rerank_score_num"]),
+                            float(row["raw_S_rerank"]) if pd.notna(row.get("raw_S_rerank")) else None,
+                            float(row["vector_score"]) if pd.notna(row.get("vector_score")) else None,
+                            float(concern_score) if concern_score is not None else None,
+                            float(skin_bonus) if skin_bonus is not None else None,
+                            float(row["wishlist_bonus"]) if pd.notna(row.get("wishlist_bonus")) else None,
+                            float(row["review_score"]) if pd.notna(row.get("review_score")) else None,
+                            float(row["irritation_penalty"]) if pd.notna(row.get("irritation_penalty")) else None,
+                        )
+                    )
+
+                if rows:
+                    cur.executemany(
+                        """
+                        INSERT INTO RECOMMENDATION_RERANKED (
+                            session_id, user_id, image_id, result_id, product_id, product_key,
+                            category, brand_name, product_name,
+                            price, embedding_rank, embedding_score,
+                            rerank_rank_global, rerank_rank_in_category, rerank_score,
+                            raw_rerank_score, vector_score, concern_score, skin_bonus,
+                            wishlist_bonus, review_score, irritation_penalty
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s,
+                            %s, %s, %s,
+                            %s, %s, %s,
+                            %s, %s, %s,
+                            %s, %s, %s, %s,
+                            %s, %s, %s
+                        )
+                        """,
+                        rows,
+                    )
+            conn.commit()
+        except pymysql.err.ProgrammingError as exc:
+            if exc.args and exc.args[0] == 1146:
+                print("[cache] RECOMMENDATION_RERANKED table is missing; skip rerank cache save")
+                return
+            raise
+    finally:
+        conn.close()
+    print(f"[cache] saved reranked rows: rows={len(rows)}, session_id={session_id}")
+
+
 
 
 def _insert_recommendation_results(
@@ -206,6 +460,17 @@ def _build_value_with_expand(
     return []
 
 
+def _score_candidates_for_routine(filtered: pd.DataFrame, session_id: str, user_id: int) -> pd.DataFrame:
+    if filtered.empty:
+        return pd.DataFrame()
+
+    scored_rows = []
+    for _, row in filtered.iterrows():
+        scores = soft_score(row["product_key"], session_id, float(row["score"]), user_id=user_id)
+        scored_rows.append({**row.to_dict(), **scores})
+    return pd.DataFrame(scored_rows).sort_values("S_rerank", ascending=False)
+
+
 def _safe_price(value: Any) -> float | None:
     if value is None or str(value) == "nan":
         return None
@@ -345,6 +610,14 @@ def run_pipeline(
     session_id = f"user::{user_id}::image::{ctx['image_id']}"
     effective_total_budget_max = total_budget_max if total_budget_max is not None else total_budget
     effective_slot_budget_max_map = slot_budget_max_map if slot_budget_max_map is not None else slot_budget_map
+    has_budget_input = any([
+        total_budget is not None,
+        total_budget_min is not None,
+        total_budget_max is not None,
+        bool(slot_budget_map),
+        bool(slot_budget_min_map),
+        bool(slot_budget_max_map),
+    ])
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     with driver.session() as s:
         s.execute_write(
@@ -355,18 +628,26 @@ def run_pipeline(
             ctx["allergies"],
             ctx.get("wishlist_product_keys", []),
             (ctx.get("profile") or {}).get("skin_type"),
+            (ctx.get("profile") or {}).get("skin_concern"),
         )
-    filtered, drop_log = hard_filter(
-        candidates,
-        session_id,
-        gender=ctx["gender"],
-        total_budget=total_budget,
-        slot_budget_map=slot_budget_map,
-        total_budget_min=total_budget_min,
-        total_budget_max=total_budget_max,
-        slot_budget_min_map=slot_budget_min_map,
-        slot_budget_max_map=slot_budget_max_map,
-    )
+    cached_reranked = _load_cached_reranked(user_id, ctx.get("image_id"), ctx.get("result_id"))
+    if cached_reranked.empty:
+        filtered, drop_log = hard_filter(
+            candidates,
+            session_id,
+            gender=ctx["gender"],
+            total_budget=None,
+            slot_budget_map=None,
+            total_budget_min=None,
+            total_budget_max=None,
+            slot_budget_min_map=None,
+            slot_budget_max_map=None,
+        )
+        reranked_cache_hit = False
+    else:
+        filtered = cached_reranked.copy()
+        drop_log = pd.DataFrame()
+        reranked_cache_hit = True
     print("\n=== Rountine Result ===")
     print(f"Hard Filter: {len(candidates)} -> {len(filtered)} (dropped={len(drop_log)})")
     if not drop_log.empty:
@@ -392,16 +673,13 @@ def run_pipeline(
         )
         routines = []
     else:
-        scored_rows = []
-        for _, row in filtered.iterrows():
-            scores = soft_score(row["product_key"], session_id, float(row["score"]), user_id=user_id)
-            scored_rows.append({**row.to_dict(), **scores})
-        reranked = pd.DataFrame(scored_rows).sort_values("S_rerank", ascending=False)
+        reranked = filtered.copy() if reranked_cache_hit else _score_candidates_for_routine(filtered, session_id, user_id)
         # Keep All-In-One in the optional slot pool so it can be rendered as an option item.
         all_in_one_df = reranked[
             reranked["query_category"].astype(str).str.lower().str.replace(" ", "", regex=False).isin(["all-in-one", "allinone"])
         ].copy()
         all_in_one_pick = all_in_one_df.iloc[0].to_dict() if not all_in_one_df.empty else None
+        reranked_for_value = reranked
         reranked_for_routine = reranked.copy()
         beam_top_n = 8 if top_n is None else max(int(top_n), 2)
         best_candidates = build_routines(
@@ -416,17 +694,17 @@ def run_pipeline(
             slot_budget_max_map=effective_slot_budget_max_map,
         )
         value_candidates = _build_value_with_expand(
-            reranked_for_routine,
+            reranked_for_value.copy(),
             ctx["gender"],
             session_id,
             top_n=20,
             start_beam=500,
             step=100,
             max_beam=1500,
-            total_budget_min=total_budget_min,
-            total_budget_max=effective_total_budget_max,
-            slot_budget_min_map=slot_budget_min_map,
-            slot_budget_max_map=effective_slot_budget_max_map,
+            total_budget_min=None,
+            total_budget_max=None,
+            slot_budget_min_map=None,
+            slot_budget_max_map=None,
         )
         routines = []
         if best_candidates:
@@ -456,15 +734,6 @@ def run_pipeline(
 
     # Case 3: budget provided but no routine -> fallback to no-budget pipeline result
     fallback_applied = False
-    has_budget_input = any([
-        total_budget is not None,
-        total_budget_min is not None,
-        total_budget_max is not None,
-        bool(slot_budget_map),
-        bool(slot_budget_min_map),
-        bool(slot_budget_max_map),
-    ])
-
     if has_budget_input and (filtered.empty or len(routines) == 0):
         filtered_fb, _ = hard_filter(
             candidates,
@@ -543,7 +812,8 @@ def run_pipeline(
         routines = [
             r
             for r in routines
-            if _routine_budget_ok(
+            if str(r.get("routine_label") or "").lower().startswith("value")
+            or _routine_budget_ok(
                 r,
                 price_map=price_map,
                 total_budget_min=total_budget_min,
@@ -663,6 +933,10 @@ def run_pipeline(
                 budget_check_passed=budget_check_passed,
             )
             print(f"Saved recommendation session_id={rec_session_id}")
+            if reranked_cache_hit:
+                print("[cache] reused reranked rows; skip cache rewrite")
+            else:
+                _save_reranked(rec_session_id, user_id, ctx, reranked)
             break
         except pymysql.err.OperationalError as e:
             save_error = e

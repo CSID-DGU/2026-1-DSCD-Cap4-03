@@ -8,6 +8,8 @@ from pathlib import Path
 
 SUMMARIES_PATH = Path(__file__).parent / "skin_summaries.json"
 EXPLANATIONS_PATH = Path(__file__).parent / "recommendation_explanations.json"
+VANITY_SKIN_MATCH_EXPLANATIONS_PATH = Path(__file__).parent / "vanity_skin_match_explanations.json"
+VANITY_ROUTINE_EXPLANATIONS_PATH = Path(__file__).parent / "vanity_routine_explanations.json"
 
 
 def load_skin_summaries() -> dict[int, dict]:
@@ -44,6 +46,40 @@ def save_recommendation_explanations(explanations: dict[int, dict]) -> None:
         json.dump({str(key): value for key, value in explanations.items()}, f, ensure_ascii=False, indent=2)
 
 
+def load_vanity_skin_match_explanations() -> dict[int, dict]:
+    if not VANITY_SKIN_MATCH_EXPLANATIONS_PATH.exists():
+        return {}
+    try:
+        with VANITY_SKIN_MATCH_EXPLANATIONS_PATH.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return {int(key): value for key, value in raw.items()}
+
+
+def save_vanity_skin_match_explanations(explanations: dict[int, dict]) -> None:
+    VANITY_SKIN_MATCH_EXPLANATIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with VANITY_SKIN_MATCH_EXPLANATIONS_PATH.open("w", encoding="utf-8") as f:
+        json.dump({str(key): value for key, value in explanations.items()}, f, ensure_ascii=False, indent=2)
+
+
+def load_vanity_routine_explanations() -> dict[int, dict]:
+    if not VANITY_ROUTINE_EXPLANATIONS_PATH.exists():
+        return {}
+    try:
+        with VANITY_ROUTINE_EXPLANATIONS_PATH.open("r", encoding="utf-8") as f:
+            raw = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+    return {int(key): value for key, value in raw.items()}
+
+
+def save_vanity_routine_explanations(explanations: dict[int, dict]) -> None:
+    VANITY_ROUTINE_EXPLANATIONS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with VANITY_ROUTINE_EXPLANATIONS_PATH.open("w", encoding="utf-8") as f:
+        json.dump({str(key): value for key, value in explanations.items()}, f, ensure_ascii=False, indent=2)
+
+
 @dataclass
 class MemoryStore:
     users: dict[int, dict] = field(default_factory=dict)
@@ -54,6 +90,8 @@ class MemoryStore:
     skin_summaries: dict[int, dict] = field(default_factory=load_skin_summaries)
     recommendation_sessions: dict[int, dict] = field(default_factory=dict)
     recommendation_explanations: dict[int, dict] = field(default_factory=load_recommendation_explanations)
+    vanity_skin_match_explanations: dict[int, dict] = field(default_factory=load_vanity_skin_match_explanations)
+    vanity_routine_explanations: dict[int, dict] = field(default_factory=load_vanity_routine_explanations)
     saved_routines: dict[int, dict] = field(default_factory=dict)
     wishlists: dict[int, set[int]] = field(default_factory=dict)
     products: dict[int, dict] = field(default_factory=dict)

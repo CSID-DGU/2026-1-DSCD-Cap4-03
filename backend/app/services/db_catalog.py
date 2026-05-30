@@ -5,6 +5,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import Ingredient, Product, ProductIngredient, UserWishlist
+from app.services.db_user import invalidate_recommendation_rerank_cache
 
 
 def _split_pipe_text(value: str | None) -> list[str]:
@@ -95,12 +96,14 @@ def add_wishlist_product(db: Session, user_id: int, product_id: int) -> dict:
     if exists is None:
         db.add(UserWishlist(user_id=user_id, product_id=product_id))
         db.commit()
+        invalidate_recommendation_rerank_cache(db, user_id)
     return {"product_id": product_id, "saved": True}
 
 
 def delete_wishlist_product(db: Session, user_id: int, product_id: int) -> dict:
     db.execute(delete(UserWishlist).where(UserWishlist.user_id == user_id, UserWishlist.product_id == product_id))
     db.commit()
+    invalidate_recommendation_rerank_cache(db, user_id)
     return {"product_id": product_id, "saved": False}
 
 

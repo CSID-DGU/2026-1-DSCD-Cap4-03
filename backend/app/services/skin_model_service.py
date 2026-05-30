@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlparse
 
 from fastapi import HTTPException, status
 
 from app.core.config import settings
+from app.services.files import _build_s3_client
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -62,9 +65,51 @@ def _display_score(value: Any) -> float:
     return round(max(0.0, min(score, 1.0)), 4)
 
 
-def analyze_skin_image(image_source: str) -> dict[str, Any]:
+def _s3_key_from_url(image_source: str) -> str | None:
+    parsed = urlparse(image_source)
+    if parsed.scheme not in {"http", "https"}:
+        return None
+
+    host = parsed.netloc.split(":", 1)[0]
+    bucket_hosts = {
+        f"{settings.s3_bucket}.s3.amazonaws.com",
+        f"{settings.s3_bucket}.s3.{settings.s3_region}.amazonaws.com",
+    }
+    if host in bucket_hosts:
+        return unquote(parsed.path.lstrip("/"))
+
+    path_parts = parsed.path.lstrip("/").split("/", 1)
+    if host in {f"s3.amazonaws.com", f"s3.{settings.s3_region}.amazonaws.com"} and len(path_parts) == 2:
+        bucket, key = path_parts
+        if bucket == settings.s3_bucket:
+            return unquote(key)
+
+    return None
+
+
+def _download_s3_image_to_temp(image_source: str) -> str | None:
+    key = _s3_key_from_url(image_source)
+    if not key:
+        return None
+
+    suffix = Path(key).suffix or ".jpg"
     try:
-        result = _get_analyzer().predict(image_source)
+        response = _build_s3_client().get_object(Bucket=settings.s3_bucket, Key=key)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            tmp.write(response["Body"].read())
+            return tmp.name
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load S3 image for skin analysis: {exc}",
+        ) from exc
+
+
+def analyze_skin_image(image_source: str) -> dict[str, Any]:
+    local_source = _download_s3_image_to_temp(image_source)
+    predict_source = local_source or image_source
+    try:
+        result = _get_analyzer().predict(predict_source)
     except HTTPException:
         raise
     except Exception as exc:
@@ -72,6 +117,12 @@ def analyze_skin_image(image_source: str) -> dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Skin model inference failed: {exc}",
         ) from exc
+    finally:
+        if local_source:
+            try:
+                Path(local_source).unlink(missing_ok=True)
+            except OSError:
+                pass
 
     metrics = ["acne", "dryness", "sagging", "pore", "pigmentation", "wrinkle"]
     display_scores = {

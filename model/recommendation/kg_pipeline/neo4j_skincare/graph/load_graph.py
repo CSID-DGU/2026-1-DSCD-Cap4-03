@@ -188,7 +188,7 @@ FUNCTION_KEYWORD_TO_CONCERN = {
     "anti-blemish": ("acne", 0.9),
     "blemish": ("acne", 0.9),
     "anti-inflammatory": ("acne", 0.7),
-    "soothing": ("acne", 0.5),
+    "soothing": [("acne", 0.3), ("dryness", 0.3)],
 }
 
 
@@ -206,10 +206,15 @@ def _function_matches_to_concerns(function_text: str) -> list[tuple[str, float]]
 
     matches: list[tuple[str, float]] = []
     seen: set[str] = set()
-    for keyword, (concern, weight) in FUNCTION_KEYWORD_TO_CONCERN.items():
-        if keyword in text and concern not in seen:
-            matches.append((concern, weight))
-            seen.add(concern)
+    for keyword, concern_rules in FUNCTION_KEYWORD_TO_CONCERN.items():
+        if keyword not in text:
+            continue
+        if isinstance(concern_rules, tuple):
+            concern_rules = [concern_rules]
+        for concern, weight in concern_rules:
+            if concern not in seen:
+                matches.append((concern, weight))
+                seen.add(concern)
     return matches
 
 
@@ -336,6 +341,7 @@ def create_user_session(
     allergies: list[str],
     wishlist_product_keys: list[str] | None = None,
     profile_skin_type: str | None = None,
+    profile_concerns: str | list[str] | None = None,
 ):
     tx.run(
         """
@@ -361,13 +367,29 @@ def create_user_session(
         tx.run(
             """
             MATCH (u:UserSession {session_id: $sid})
-            MATCH (c:Concern     {name: $concern})
+            MERGE (c:Concern     {name: $concern})
             MERGE (u)-[r:HAS_CONCERN]->(c)
             SET r.importance = $importance
             """,
             sid=session_id,
             concern=concern,
             importance=importance,
+        )
+
+    for concern in _split_profile_concerns(profile_concerns):
+        tx.run(
+            """
+            MATCH (u:UserSession {session_id: $sid})
+            MERGE (c:Concern     {name: $concern})
+            MERGE (u)-[r:HAS_CONCERN]->(c)
+            SET r.importance = CASE
+                WHEN r.importance IS NULL OR r.importance < $importance THEN $importance
+                ELSE r.importance
+            END
+            """,
+            sid=session_id,
+            concern=concern,
+            importance=0.35,
         )
 
     for allergy in allergies:
@@ -420,6 +442,60 @@ def _normalize_profile_skin_type(profile_skin_type: str | None) -> str:
         "normal": "normal",
     }
     return aliases.get(key, "")
+
+
+PROFILE_CONCERN_ALIASES = {
+    "acne": "acne",
+    "여드름": "acne",
+    "트러블": "acne",
+    "wrinkle": "wrinkle",
+    "주름": "wrinkle",
+    "brightening": "pigmentation",
+    "미백": "pigmentation",
+    "잡티": "pigmentation",
+    "색소침착": "pigmentation",
+    "sebum": "pore",
+    "피지": "pore",
+    "dryness": "dryness",
+    "건조": "dryness",
+    "속건조": "dryness",
+    "redness": "redness",
+    "붉은기": "redness",
+    "flushing": "redness",
+    "홍조": "redness",
+    "dark_circle": "dark_circle",
+    "darkcircle": "dark_circle",
+    "다크서클": "dark_circle",
+    "atopy": "atopy",
+    "아토피": "atopy",
+    "sensitive": "sensitive",
+    "민감성": "sensitive",
+    "민감": "sensitive",
+    "pore": "pore",
+    "모공": "pore",
+    "keratin": "keratin",
+    "각질": "keratin",
+    "none": "",
+    "해당사항 없음": "",
+}
+
+
+def _split_profile_concerns(profile_concerns: str | list[str] | None) -> list[str]:
+    if not profile_concerns:
+        return []
+    if isinstance(profile_concerns, list):
+        raw_parts = profile_concerns
+    else:
+        text = str(profile_concerns).strip().lower()
+        raw_parts = [x.strip() for x in text.replace("/", ",").replace("|", ",").split(",")]
+
+    concerns: list[str] = []
+    for part in raw_parts:
+        key = str(part or "").strip().lower()
+        concern = PROFILE_CONCERN_ALIASES.get(key, key)
+        if concern and concern not in concerns:
+            concerns.append(concern)
+    return concerns
 
 
 def _infer_skin_type(skin_data: dict) -> str:
