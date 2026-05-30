@@ -25,11 +25,16 @@ export interface RecommendationResponse {
   budget_check_passed: boolean;
   budget_fallback_applied: boolean;
   budget_message: string | null;
-  total_budget?: number | null;
-  toner_budget?: number | null;
-  emulsion_budget?: number | null;
-  ampoule_budget?: number | null;
-  cream_budget?: number | null;
+  total_budget_min?: number | null;
+  total_budget_max?: number | null;
+  toner_budget_min?: number | null;
+  toner_budget_max?: number | null;
+  emulsion_budget_min?: number | null;
+  emulsion_budget_max?: number | null;
+  ampoule_budget_min?: number | null;
+  ampoule_budget_max?: number | null;
+  cream_budget_min?: number | null;
+  cream_budget_max?: number | null;
 }
 
 export interface SavedRoutineItem {
@@ -57,11 +62,16 @@ export const routineApi = {
   recommend: (body: {
     result_id: number;
     image_id: number;
-    total_budget: number | null;
-    toner_budget: number | null;
-    emulsion_budget: number | null;
-    ampoule_budget: number | null;
-    cream_budget: number | null;
+    total_budget_min:    number | null;
+    total_budget_max:    number | null;
+    toner_budget_min:    number | null;
+    toner_budget_max:    number | null;
+    emulsion_budget_min: number | null;
+    emulsion_budget_max: number | null;
+    ampoule_budget_min:  number | null;
+    ampoule_budget_max:  number | null;
+    cream_budget_min:    number | null;
+    cream_budget_max:    number | null;
   }) => api.post<RecommendationResponse>('/recommendations', body),
 
   getRecommendation: (sessionId: number) =>

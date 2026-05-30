@@ -32,11 +32,64 @@
 /* ════════════════════════════════════
    HERO
 ════════════════════════════════════ */
-.mp-hero {
-  background: linear-gradient(to right, #312e81 0%, #5b21b6 38%, #7c3aed 62%, #a78bfa 88%, #c4b5fd 100%);
-  overflow: hidden;
-  position: relative;
+.mp-hero { 
+  position: relative; 
+  overflow: hidden; 
+
+  background: 
+    radial-gradient( 
+      circle at 72% 28%,
+      rgba(139, 92, 246, 0.40), 
+      transparent 34%
+    ),
+
+    radial-gradient( 
+      circle at 82% 18%, 
+      rgba(196, 181, 253, 0.18), 
+      transparent 22%
+    ),
+
+    linear-gradient( 
+      135deg, 
+      #2a2546 0%, 
+      #341465 36%, 
+      #341465 68%, 
+      #2a2546 100% 
+    ); 
 }
+
+.mp-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255,255,255,0.10),
+      transparent 42%
+    );
+
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.mp-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(255,255,255,0.08),
+      transparent 40%
+    );
+
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
 .mp-hero-inner {
   max-width: 1160px;
   margin: 0 auto;
@@ -50,20 +103,20 @@
 .mp-hero-text {
   flex: 1;
   padding-bottom: 60px;
-  max-width: 560px;
+  max-width: 500px;
 }
 .mp-hero-h1 {
   font-size: clamp(2.2rem, 3.8vw, 3.6rem);
   font-weight: 800;
   line-height: 1.15;
-  color: #fff;
+  color: #fafafa;
   margin: 0 0 24px;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.07em;
   word-break: keep-all;
 }
 .mp-hero-desc {
   font-size: 1.05rem;
-  color: rgba(255,255,255,0.72);
+  color: rgba(255,255,255,0.74);
   line-height: 1.75;
   margin-bottom: 40px;
   letter-spacing: -0.05em;
@@ -102,18 +155,25 @@
 .mp-hero-photo-wrap {
   position: absolute;
   right: 120px;
-  top: 0.01;
+  top: 30;
   bottom: 0;
   width: 55%;
   max-width: 550px;
   background: transparent;
 }
+
 .mp-hero-photo {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center top;
   display: block;
+
+  filter:
+    brightness(0.92)
+    contrast(1.12)
+    saturate(0.92)
+    drop-shadow(0 80px 140px rgba(167,139,250,0.42));
 }
 
 

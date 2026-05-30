@@ -23,31 +23,31 @@ export default function Navbar() {
       {/* 가운데 */}
       <div className="nav-center">
         <Link
-          to="/diagnosis"
-          className={`nav-link ${pathname === '/diagnosis' ? 'active' : ''}`}
-        >
-          피부 진단 시작하기
-        </Link>
-
-        <Link
           to="/analysis-history"
-          className={`nav-link ${pathname === '/analysis-history' || pathname === '/analysis' ? 'active' : ''}`}
+          className={`nav-link ${pathname === '/analysis-history' || pathname === '/analysis' || pathname === '/diagnosis' || pathname === '/loading' ? 'active' : ''}`}
         >
-          피부 분석 결과
+          스킨 리포트
         </Link>
 
         <Link
           to="/routine-history"
           className={`nav-link ${pathname === '/routine-history' || pathname.startsWith('/routine') ? 'active' : ''}`}
         >
-          내 루틴 보기
+          루틴 리포트
+        </Link>
+
+        <Link
+          to="/vanity"
+          className={`nav-link ${pathname === '/vanity' || pathname.startsWith('/vanity') ? 'active' : ''}`}
+        >
+          화장대 리포트
         </Link>
 
         <Link
           to="/products"
           className={`nav-link ${pathname === '/products' || pathname.startsWith('/products') ? 'active' : ''}`}
         >
-          제품 찾기
+          제품 탐색
         </Link>
       </div>
 

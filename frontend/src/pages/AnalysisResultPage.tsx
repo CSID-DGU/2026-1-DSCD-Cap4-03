@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis,
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import { Sparkles, Bot, Wand2 } from 'lucide-react';
 import { analysisApi, type AnalysisResult, type SkinHistoryItem } from '../api/analysis';
@@ -264,13 +264,19 @@ export default function AnalysisResultPage() {
             ) : (
               <div className="ar-trend-chart">
                 <ResponsiveContainer width="100%" height={240}>
-                  <LineChart
+                  <AreaChart
                     data={history.map((h) => ({
                       date: (() => { const d = new Date(h.analyzed_at); return `${String(d.getFullYear()).slice(2)}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; })(),
                       value: Math.round((1 - (h.display_scores?.[activeMetric] ?? 0)) * 100),
                     }))}
                     margin={{ top: 10, right: 24, left: 0, bottom: 0 }}
                   >
+                    <defs>
+                      <linearGradient id="purpleAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#a78bfa" stopOpacity={0.28} />
+                        <stop offset="100%" stopColor="#a78bfa" stopOpacity={0.03} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0ebff" />
                     <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} width={32} />
@@ -278,13 +284,14 @@ export default function AnalysisResultPage() {
                       contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13 }}
                       formatter={(v: number) => [`${v}점`, TREND_METRICS.find(m => m.key === activeMetric)?.label]}
                     />
-                    <Line
+                    <Area
                       type="monotone" dataKey="value"
                       stroke="#7c3aed" strokeWidth={2.5}
+                      fill="url(#purpleAreaGradient)"
                       dot={{ r: 5, fill: '#7c3aed', strokeWidth: 2, stroke: '#fff' }}
                       activeDot={{ r: 7 }}
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             )}

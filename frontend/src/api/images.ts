@@ -31,11 +31,15 @@ export const imagesApi = {
 
   /** S3 presigned URL로 blob 직접 PUT (백엔드 미경유) */
   uploadToS3: async (uploadUrl: string, blob: Blob): Promise<void> => {
-    await fetch(uploadUrl, {
+    const res = await fetch(uploadUrl, {
       method: 'PUT',
-      body: blob,
       headers: { 'Content-Type': 'image/jpeg' },
+      body: blob,
+      credentials: 'omit',
     });
+    if (!res.ok) {
+      throw new Error(`S3 업로드 실패 (${res.status}): ${await res.text().catch(() => '')}`);
+    }
   },
 
   /** S3 미연결 테스트용 — 파일 직접 업로드 */

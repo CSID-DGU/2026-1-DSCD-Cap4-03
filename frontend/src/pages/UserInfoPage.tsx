@@ -90,9 +90,9 @@ export default function UserInfoPage() {
     <div className="ui-page">
       <div className="ui-banner">
         <div className="ui-banner-inner">
-          <div className="ui-badge">내 피부 설정</div>
-          <h1 className="ui-title">추가 정보를 입력해주세요</h1>
-          <p className="ui-sub">더 정확한 피부 분석과 맞춤 루틴 추천을 위해 필요해요</p>
+          <div className="ui-badge">SKIN PROFILE</div>
+          <h1 className="ui-title">내 피부 타입이 어떻게 되세요?</h1>
+          <p className="ui-sub">피부 타입과 고민을 알면 더 정확한 분석과 딱 맞는 루틴을 드릴 수 있어요</p>
         </div>
       </div>
 

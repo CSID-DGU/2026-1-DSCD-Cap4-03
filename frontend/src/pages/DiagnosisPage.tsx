@@ -1,26 +1,44 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useNavigate } from 'react-router-dom';
 import { imagesApi } from '../api/images';
+import { userApi } from '../api/user';
 import {
   Lightbulb, Eye, Minus, Ban, Glasses,
-  Camera, ZoomIn, ZoomOut, Check, Ruler, Microscope,
+  Camera, ZoomIn, ZoomOut, Check, Ruler, Microscope, UserCircle, Pencil, X,
   type LucideIcon,
 } from 'lucide-react';
 import './DiagnosisPage.css';
 
+const SKIN_TYPES = ['건성', '지성', '중성', '복합성', '수부지', '모름'];
+
+const CONCERNS = [
+  { id: 'acne',        label: '여드름' },
+  { id: 'wrinkle',     label: '주름' },
+  { id: 'brightening', label: '미백' },
+  { id: 'sebum',       label: '피지' },
+  { id: 'dryness',     label: '속건조' },
+  { id: 'redness',     label: '붉은기' },
+  { id: 'dark_circle', label: '다크서클' },
+  { id: 'atopy',       label: '아토피' },
+  { id: 'sensitive',   label: '민감성' },
+  { id: 'pore',        label: '모공' },
+  { id: 'flushing',    label: '홍조' },
+  { id: 'keratin',     label: '각질' },
+  { id: 'none',        label: '해당사항 없음' },
+];
+
 const TARGET_WIDTH = 480;
 const TARGET_HEIGHT = 640;
 
-// S3 미연결 테스트용 — S3 열리면 false로 변경
-const SKIP_S3 = true;
+const SKIP_S3 = false;
 
 const GUIDES: { Icon: LucideIcon; text: string }[] = [
   { Icon: Lightbulb, text: '밝은 조명에서 촬영해주세요' },
   { Icon: Eye,       text: '정면을 바라보고 찍어주세요' },
   { Icon: Minus,     text: '무표정으로 촬영해주세요' },
-  { Icon: Ban,       text: '화장품 없이 생얼로 찍어주세요' },
+  { Icon: Ban,       text: '화장 없이 생얼로 찍어주세요' },
   { Icon: Glasses,   text: '안경 및 악세사리를 제거해주세요' },
 ];
 
@@ -84,20 +102,54 @@ export default function DiagnosisPage() {
   };
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // ── 피부 정보 편집 ──
+  const [skinType, setSkinType]       = useState<string>('');
+  const [concerns, setConcerns]       = useState<string[]>([]);
+  const [skinSaving, setSkinSaving]   = useState(false);
+  const [skinSaved, setSkinSaved]     = useState(false);
+  const [skinEditMode, setSkinEditMode] = useState(false);
+
+  useEffect(() => {
+    userApi.getMe()
+      .then((user) => {
+        setSkinType(user.skin_type ?? '');
+        setConcerns(user.skin_concerns ?? []);
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleConcern = (id: string) => {
+    setConcerns((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+    setSkinSaved(false);
+  };
+
+  const handleSkinSave = async () => {
+    setSkinSaving(true);
+    try {
+      await userApi.updateProfile({ skin_type: skinType, skin_concerns: concerns });
+      setSkinSaved(true);
+      setTimeout(() => setSkinSaved(false), 2000);
+    } catch { /* 무시 */ }
+    finally { setSkinSaving(false); }
+  };
 
   const handleAnalyze = async () => {
     if (!resultImage || !resultBlob) return;
     setIsUploading(true);
-
-    let imageId = 1;          // mock 폴백
-    let imageUrl = resultImage; // base64 폴백
+    setUploadError(null);
 
     try {
+      let imageId: number;
+      let imageUrl: string;
+
       if (SKIP_S3) {
-        // S3 미연결 테스트: 로컬 업로드 API 사용
         const res = await imagesApi.localUpload(resultBlob);
-        imageId = res.image_id;
-        imageUrl = resultImage; // base64 미리보기용
+        imageId  = res.image_id;
+        imageUrl = resultImage;
       } else {
         // 1. presigned URL 발급
         const presign = await imagesApi.presign({
@@ -106,30 +158,36 @@ export default function DiagnosisPage() {
           file_size: resultBlob.size,
         });
 
-        // 2. S3 직접 업로드
+        // 2. S3 직접 PUT 업로드
         await imagesApi.uploadToS3(presign.upload_url, resultBlob);
 
         // 3. 이미지 메타데이터 저장
         const img = await imagesApi.createImage({
-          storage_url: presign.public_url,
-          s3_key: presign.s3_key,
+          storage_url:        presign.public_url,
+          s3_key:             presign.s3_key,
           original_file_name: 'skin.jpg',
-          mime_type: 'image/jpeg',
-          file_size: resultBlob.size,
+          mime_type:          'image/jpeg',
+          file_size:          resultBlob.size,
           crop_data: croppedAreaPixels
             ? { x: croppedAreaPixels.x, y: croppedAreaPixels.y, width: TARGET_WIDTH, height: TARGET_HEIGHT }
             : { x: 0, y: 0, width: TARGET_WIDTH, height: TARGET_HEIGHT },
           upload_status: 'UPLOADED',
         });
-        imageId = img.image_id;
+        imageId  = img.image_id;
         imageUrl = presign.public_url || resultImage;
       }
-    } catch {
-      // API 연결 안 됐거나 실패 시 mock값으로 폴백
-    }
 
-    setIsUploading(false);
-    navigate('/loading', { state: { type: 'analysis', image_id: imageId, imageUrl } });
+      setIsUploading(false);
+      navigate('/loading', { state: { type: 'analysis', image_id: imageId, imageUrl } });
+    } catch (err) {
+      setIsUploading(false);
+      const msg = err instanceof Error ? err.message : '';
+      setUploadError(
+        msg.includes('Failed to fetch')
+          ? 'S3 CORS 오류: S3 버킷에 http://localhost:5173 이 허용되지 않았어요. 백엔드 팀에 S3 CORS 설정을 요청하세요.'
+          : msg || '업로드 중 오류가 발생했어요. 다시 시도해주세요.'
+      );
+    }
   };
 
   const handleReset = () => {
@@ -147,9 +205,9 @@ export default function DiagnosisPage() {
       {/* ── 배너 ── */}
       <div className="dp-banner">
         <div className="dp-banner-inner">
-          <div className="dp-badge">AI 피부 진단</div>
-          <h1 className="dp-title">피부 사진을 올려주세요</h1>
-          <p className="dp-sub">정확한 분석을 위해 아래 가이드를 따라 촬영해주세요</p>
+          <div className="dp-badge">SKIN ANALYSIS</div>
+          <h1 className="dp-title">내 피부, 제대로 알고 계세요?</h1>
+          <p className="dp-sub">얼굴 사진 한 장으로 피부 타입, 수분, 유분, 트러블까지 AI가 분석해드려요</p>
         </div>
       </div>
 
@@ -172,7 +230,7 @@ export default function DiagnosisPage() {
             </div>
           </div>
 
-          {/* ── 우측: 스텝 + 카드 ── */}
+          {/* ── 가운데: 스텝 + 카드 ── */}
           <div className="dp-main-col">
 
             {/* 스텝 인디케이터 */}
@@ -303,7 +361,7 @@ export default function DiagnosisPage() {
                     </div>
 
                     <div className="dp-preview-btns">
-                      <button className="dp-btn-secondary" onClick={() => setStep('crop')}>
+                      <button className="dp-btn-secondary" onClick={() => { setStep('crop'); setUploadError(null); }}>
                         다시 자르기
                       </button>
                       <button
@@ -316,6 +374,11 @@ export default function DiagnosisPage() {
                           : <><Microscope size={15} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6 }} />분석 시작하기</>}
                       </button>
                     </div>
+                    {uploadError && (
+                      <div style={{ marginTop: 12, padding: '10px 14px', background: '#FEF2F2', border: '1.5px solid #FECACA', borderRadius: 8, fontSize: 13, color: '#dc2626', fontWeight: 600, lineHeight: 1.5 }}>
+                        {uploadError}
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -323,6 +386,102 @@ export default function DiagnosisPage() {
             )}
 
           </div>
+
+          {/* ── 우측: 피부 정보 박스 ── */}
+          <div className="dp-skin-col">
+            <div className="dp-skin-box">
+
+              {/* 헤더 */}
+              <div className="dp-skin-box-header">
+                <div className="dp-guide-box-title" style={{ marginBottom: 0 }}>
+                  <UserCircle size={14} />
+                  내 피부 정보
+                </div>
+                {!skinEditMode && (
+                  <button className="dp-skin-edit-btn" onClick={() => setSkinEditMode(true)}>
+                    <Pencil size={13} />
+                  </button>
+                )}
+                {skinEditMode && (
+                  <button className="dp-skin-edit-btn" onClick={() => { setSkinEditMode(false); setSkinSaved(false); }}>
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+
+              {/* ── 보기 모드 ── */}
+              {!skinEditMode && (
+                <div className="dp-skin-view">
+                  <div className="dp-skin-section-label">피부 타입</div>
+                  <div className="dp-skin-view-tags">
+                    {skinType
+                      ? <span className="dp-skin-view-tag type">{skinType}</span>
+                      : <span className="dp-skin-view-empty">미설정</span>}
+                  </div>
+                  <div className="dp-skin-section-label" style={{ marginTop: 14 }}>피부 고민</div>
+                  <div className="dp-skin-view-tags">
+                    {concerns.filter(c => c !== 'none').length > 0
+                      ? concerns.filter(c => c !== 'none').map(id => {
+                          const label = CONCERNS.find(c => c.id === id)?.label ?? id;
+                          return <span key={id} className="dp-skin-view-tag">{label}</span>;
+                        })
+                      : <span className="dp-skin-view-empty">
+                          {concerns.includes('none') ? '해당사항 없음' : '미설정'}
+                        </span>}
+                  </div>
+                  <p className="dp-skin-edit-hint">
+                    <Pencil size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+                    연필 버튼을 눌러 수정할 수 있어요
+                  </p>
+                </div>
+              )}
+
+              {/* ── 편집 모드 ── */}
+              {skinEditMode && (
+                <div className="dp-skin-edit">
+                  <div className="dp-skin-section-label">피부 타입</div>
+                  <div className="dp-skin-type-grid">
+                    {SKIN_TYPES.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`dp-skin-type-btn ${skinType === t ? 'active' : ''}`}
+                        onClick={() => { setSkinType(t); setSkinSaved(false); }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="dp-skin-section-label" style={{ marginTop: 14 }}>
+                    피부 고민 <span className="dp-skin-multi-hint">복수 선택</span>
+                  </div>
+                  <div className="dp-skin-concern-grid">
+                    {CONCERNS.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        className={`dp-skin-concern-btn ${concerns.includes(c.id) ? 'active' : ''}`}
+                        onClick={() => toggleConcern(c.id)}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    className={`dp-skin-save-btn ${skinSaved ? 'saved' : ''}`}
+                    onClick={async () => { await handleSkinSave(); setSkinEditMode(false); }}
+                    disabled={skinSaving}
+                  >
+                    {skinSaved
+                      ? <><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />저장됐어요</>
+                      : skinSaving ? '저장 중...' : '저장하기'}
+                  </button>
+                </div>
+              )}
+
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

@@ -7,7 +7,8 @@
 }
 
 .budget-banner {
-  background: #F9F7FF;
+  background: #fff;
+  border-bottom: 1px solid #F3F4F6;
   padding: 48px 80px 40px;
 }
 .budget-banner-inner {

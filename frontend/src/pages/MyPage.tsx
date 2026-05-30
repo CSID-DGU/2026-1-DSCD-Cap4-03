@@ -6,6 +6,7 @@ import { useAuth } from '../context/useAuth';
 import AllergySelector, { buildAllergyItems, type AllergySelectorValue } from '../components/AllergySelector';
 import { User, Heart, type LucideIcon } from 'lucide-react';
 import './MyPage.css';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 type Tab = 'info' | 'wishlist';
 
@@ -162,7 +163,7 @@ export default function MyPage() {
           <div className="my-section">
             <h2 className="my-section-title">내 정보</h2>
             {loading ? (
-              <p style={{ color: '#7c3aed' }}>불러오는 중...</p>
+              <LoadingSpinner text="정보를 불러오는 중이에요" />
             ) : !isEditing ? (
               /* ── 뷰 모드 ── */
               <>
@@ -254,7 +255,7 @@ export default function MyPage() {
                 <div className="my-field">
                   <label className="my-label">알레르기 성분</label>
                   {allergyLoading
-                    ? <p style={{ color: '#7c3aed', fontSize: '0.875rem' }}>알레르기 정보 불러오는 중...</p>
+                    ? <LoadingSpinner text="알레르기 정보를 불러오는 중이에요" />
                     : <AllergySelector value={allergy} onChange={setAllergy} />
                   }
                 </div>
@@ -274,7 +275,7 @@ export default function MyPage() {
         {activeTab === 'wishlist' && (
           <div className="my-section">
             <h2 className="my-section-title">찜 목록</h2>
-            {loading && <p style={{ color: '#7c3aed' }}>불러오는 중...</p>}
+            {loading && <LoadingSpinner text="찜 목록을 불러오는 중이에요" />}
             {!loading && wishlist.length === 0 && <div className="my-empty">찜한 제품이 없어요.</div>}
             {wishlist.length > 0 && (
               <div className="my-wish-grid">

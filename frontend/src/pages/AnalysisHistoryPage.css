@@ -7,10 +7,11 @@
 }
 
 .ah-banner {
-  background: #F9F7FF;
+  background: #fff;
+  border-bottom: 1px solid #F3F4F6;
   padding: 48px 80px 40px;
 }
-.ah-banner-inner { max-width: 1200px; margin: 0 auto; }
+.ah-banner-inner { max-width: 1400px; margin: 0 auto; }
 .ah-badge {
   display: inline-block;
   background: none;
@@ -26,16 +27,16 @@
   font-family: 'Sora', sans-serif;
   font-size: clamp(26px, 4vw, 40px);
   font-weight: 800;
-  color: #1A1A1A;
+  color: #111827;
   margin-bottom: 8px;
   letter-spacing: -0.05em;
 }
-.ah-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
+.ah-sub { font-size: 14px; color: #4B5563; line-height: 1.7; }
 
 .ah-body {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 32px 80px 80px;
+  padding: 32px 48px 80px;
 }
 
 /* 새 진단 유도 카드 */
@@ -43,21 +44,21 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  background: #7c3aed;
-  border-radius: 10px;
+  background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 100%);
+  border-radius: 12px;
   padding: 24px 28px;
   margin-bottom: 32px;
   cursor: pointer;
   transition: transform 0.18s, box-shadow 0.18s;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 24px rgba(124,58,237,0.25);
 }
-.ah-new-card:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
+.ah-new-card:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(124,58,237,0.35); }
 .ah-new-icon { font-size: 28px; flex-shrink: 0; }
 .ah-new-title {
   font-family: 'Sora', sans-serif;
   font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px;
 }
-.ah-new-sub { font-size: 13px; color: rgba(255,255,255,0.75); }
+.ah-new-sub { font-size: 13px; color: rgba(255,255,255,0.65); }
 .ah-new-arrow {
   margin-left: auto;
   font-size: 20px; color: #fff; font-weight: 700; flex-shrink: 0;
@@ -66,15 +67,16 @@
 /* 섹션 타이틀 */
 .ah-section-title {
   font-family: 'Sora', sans-serif;
-  font-size: 16px; font-weight: 700; color: #1A1A1A;
+  font-size: 16px; font-weight: 700; color: #111827;
   margin-bottom: 16px;
 }
 
 /* 빈 상태 */
 .ah-empty {
-  background: #fff; border-radius: 10px; padding: 60px 24px;
-  text-align: center; color: #9CA3AF; font-size: 14px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  background: #fff; border-radius: 12px; padding: 60px 24px;
+  text-align: center; color: #6B7280; font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  border: 1px solid #F3F4F6;
 }
 .ah-empty p { margin-bottom: 20px; }
 .ah-btn-primary {
@@ -82,35 +84,37 @@
   font-family: 'Noto Sans KR', sans-serif;
   font-size: 14px; font-weight: 700;
   padding: 12px 28px; border-radius: 10px; border: none; cursor: pointer;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08); transition: all 0.18s;
+  transition: all 0.18s;
 }
-.ah-btn-primary:hover { transform: translateY(-2px); }
+.ah-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,58,237,0.25); }
 
 /* 기록 리스트 */
 .ah-list { display: flex; flex-direction: column; gap: 12px; }
 
 .ah-card {
   background: #fff;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 20px 24px;
   display: flex;
   align-items: center;
   gap: 20px;
   cursor: pointer;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
-  border: 1.5px solid transparent;
-  transition: all 0.18s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1.5px solid #F3F4F6;
+  transition: all 0.2s;
 }
 .ah-card:hover {
-  border-color: #A78BFA;
-  transform: translateX(4px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+  border-color: #ede9fe;
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 50px rgba(124, 58, 237, 0.10),
+    0 8px 20px rgba(0,0,0,0.06);
 }
 .ah-card-left { position: relative; flex-shrink: 0; }
 .ah-thumb {
   width: 72px; height: 72px;
   border-radius: 14px; object-fit: cover;
-  border: 2px solid #F5F3FF;
+  border: 2px solid #F3F4F6;
 }
 .ah-latest-badge {
   position: absolute; top: -6px; right: -6px;
@@ -129,12 +133,12 @@
 }
 .ah-card-date {
   font-family: 'Sora', sans-serif;
-  font-size: 17px; font-weight: 700; color: #1A1A1A;
+  font-size: 17px; font-weight: 700; color: #111827;
   letter-spacing: -0.03em;
 }
 .ah-card-skin-tag {
   display: inline-block;
-  background: #7c3aed; color: #fff;
+  background: #111827; color: #fff;
   font-size: 11px; font-weight: 700;
   padding: 3px 10px; border-radius: 20px;
 }
@@ -147,13 +151,121 @@
   gap: 2px;
 }
 .ah-score-chip {
-  font-size: 12px; color: #9CA3AF; white-space: nowrap;
+  font-size: 12px; color: #6B7280; white-space: nowrap;
 }
 .ah-score-chip b { color: #7c3aed; font-weight: 700; margin-left: 2px; }
-.ah-score-dot { margin: 0 4px; color: #D1D5DB; }
-.ah-card-arrow { font-size: 22px; color: #A78BFA; flex-shrink: 0; }
+.ah-score-dot { margin: 0 4px; color: #9CA3AF; }
+.ah-card-arrow { font-size: 22px; color: #9CA3AF; flex-shrink: 0; }
 
-@media (max-width: 900px) {
+/* ── 2컬럼 레이아웃 ── */
+.ah-content { display: flex; gap: 28px; align-items: flex-start; }
+.ah-list-col { flex: 0 0 44%; }
+.ah-chart-outer { flex: 1; position: sticky; top: 24px; }
+.ah-chart-outer .ah-section-title { margin-bottom: 12px; }
+.ah-chart-col {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #F3F4F6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  padding: 20px 20px 20px;
+}
+
+/* ── 콤팩트 점수 요약 ── */
+.ah-trend-stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.ah-trend-stat-label { font-size: 12px; color: #6B7280; font-weight: 600; }
+.ah-trend-stat-score {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px; font-weight: 800; color: #7c3aed; line-height: 1;
+}
+.ah-trend-stat-change {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+}
+.ah-trend-stat-change.positive { background: #DCFCE7; color: #16a34a; }
+.ah-trend-stat-change.negative { background: #FEE2E2; color: #dc2626; }
+
+/* ── 변화 추이 차트 ── */
+.ah-trend-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.ah-trend-tab {
+  padding: 7px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #E5E7EB;
+  background: #ffffff;
+  color: #6B7280;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.15s;
+}
+.ah-trend-summary {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 28px;
+}
+
+.ah-trend-summary-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.ah-trend-label {
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.ah-trend-score {
+  font-family: 'Sora', sans-serif;
+  font-size: 30px;
+  font-weight: 800;
+  color: #7c3aed;
+  line-height: 1;
+}
+
+.ah-trend-change {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ah-trend-change.positive { color: #10b981; }
+.ah-trend-change.negative { color: #ef4444; }
+.ah-trend-tab:hover { background: #F5F3FF; color: #7c3aed; }
+.ah-trend-tab.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+
+.ah-trend-chart {
+  background: transparent;
+  border-radius: 0;
+  padding: 12px 0 0;
+  border: none;
+}
+.ah-trend-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6B7280;
+  font-size: 13px;
+  line-height: 1.7;
+  background: #F9FAFB;
+  border-radius: 10px;
+  border: 1.5px solid #E5E7EB;
+}
+.ah-trend-empty strong { color: #7c3aed; }
+
+@media (max-width: 1024px) {
   .ah-banner { padding: 40px 24px 32px; }
   .ah-body { padding: 24px 24px 64px; }
+  .ah-content { flex-direction: column; }
+  .ah-list-col { flex: unset; width: 100%; }
+  .ah-chart-outer { flex: unset; width: 100%; position: static; }
 }

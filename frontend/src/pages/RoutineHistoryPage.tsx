@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { routineApi, type SavedRoutineItem } from '../api/routine';
 import { analysisApi, type SkinHistoryItem } from '../api/analysis';
-import { Sparkles, ChevronRight } from 'lucide-react';
+import { vanityApi } from '../api/vanity';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import './RoutineHistoryPage.css';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -15,33 +17,38 @@ function formatDate(iso: string) {
 }
 
 type BudgetInfo = {
-  total_budget: number | null;
-  toner_budget: number | null;
-  emulsion_budget: number | null;
-  ampoule_budget: number | null;
-  cream_budget: number | null;
+  total_budget_min:    number | null;
+  total_budget_max:    number | null;
+  toner_budget_min:    number | null;
+  toner_budget_max:    number | null;
+  emulsion_budget_min: number | null;
+  emulsion_budget_max: number | null;
+  ampoule_budget_min:  number | null;
+  ampoule_budget_max:  number | null;
+  cream_budget_min:    number | null;
+  cream_budget_max:    number | null;
 };
 
 type SessionGroup = { session_id: number; routines: SavedRoutineItem[] };
 
+function formatRange(min: number | null | undefined, max: number | null | undefined, label: string): string | null {
+  if ((min == null) && (max == null)) return null;
+  if (max == null) return `${label} ${(min ?? 0).toLocaleString()}원+`;
+  if (min == null || min === 0)      return `${label} ~${max.toLocaleString()}원`;
+  return `${label} ${min.toLocaleString()}~${max.toLocaleString()}원`;
+}
+
 function getBudgetLabel(b: BudgetInfo): string {
-  const parts: string[] = [];
-  if (b.total_budget)    parts.push(`전체 ${b.total_budget.toLocaleString()}원`);
-  if (b.toner_budget)    parts.push(`토너 ${b.toner_budget.toLocaleString()}원`);
-  if (b.emulsion_budget) parts.push(`에멀젼 ${b.emulsion_budget.toLocaleString()}원`);
-  if (b.ampoule_budget)  parts.push(`앰플 ${b.ampoule_budget.toLocaleString()}원`);
-  if (b.cream_budget)    parts.push(`크림 ${b.cream_budget.toLocaleString()}원`);
+  const parts = [
+    formatRange(b.total_budget_min,    b.total_budget_max,    '전체'),
+    formatRange(b.toner_budget_min,    b.toner_budget_max,    '토너'),
+    formatRange(b.emulsion_budget_min, b.emulsion_budget_max, '에멀젼'),
+    formatRange(b.ampoule_budget_min,  b.ampoule_budget_max,  '앰플'),
+    formatRange(b.cream_budget_min,    b.cream_budget_max,    '크림'),
+  ].filter(Boolean) as string[];
   return parts.length > 0 ? parts.join(' · ') : '예산 미설정';
 }
 
-function getRoutineTypeLabel(routines: SavedRoutineItem[]): string {
-  const types = routines.map((r) => r.routine_type);
-  const hasBest  = types.includes('best');
-  const hasValue = types.some((t) => t === 'value' || t === 'budget');
-  if (hasBest && hasValue) return 'AI 추천 + 가성비 루틴';
-  if (hasBest)  return 'AI 추천 루틴';
-  return '가성비 루틴';
-}
 
 export default function RoutineHistoryPage() {
   const navigate = useNavigate();
@@ -52,8 +59,16 @@ export default function RoutineHistoryPage() {
   const [sessionsByResult, setSessionsByResult] = useState<Record<number, SessionGroup[]>>({});
   const [budgetBySession, setBudgetBySession]   = useState<Record<number, BudgetInfo>>({});
   const [loadingBudgets, setLoadingBudgets]     = useState<Set<number>>(new Set());
+  const [vanitySessionIds, setVanitySessionIds]         = useState<Set<number>>(new Set());
+  const [vanityFixedBySession, setVanityFixedBySession] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
+    vanityApi.getRoutineHistory()
+      .then(res => {
+        setVanitySessionIds(new Set(res.routines.map(r => r.recommendation_session_id)));
+      })
+      .catch(() => {});
+
     Promise.all([
       routineApi.getHistory(),
       analysisApi.getHistory(),
@@ -74,11 +89,16 @@ export default function RoutineHistoryPage() {
             setBudgetBySession((prev) => ({
               ...prev,
               [sid]: {
-                total_budget:    rec.total_budget    ?? null,
-                toner_budget:    rec.toner_budget    ?? null,
-                emulsion_budget: rec.emulsion_budget ?? null,
-                ampoule_budget:  rec.ampoule_budget  ?? null,
-                cream_budget:    rec.cream_budget    ?? null,
+                total_budget_min:    rec.total_budget_min    ?? null,
+                total_budget_max:    rec.total_budget_max    ?? null,
+                toner_budget_min:    rec.toner_budget_min    ?? null,
+                toner_budget_max:    rec.toner_budget_max    ?? null,
+                emulsion_budget_min: rec.emulsion_budget_min ?? null,
+                emulsion_budget_max: rec.emulsion_budget_max ?? null,
+                ampoule_budget_min:  rec.ampoule_budget_min  ?? null,
+                ampoule_budget_max:  rec.ampoule_budget_max  ?? null,
+                cream_budget_min:    rec.cream_budget_min    ?? null,
+                cream_budget_max:    rec.cream_budget_max    ?? null,
               },
             }));
           } catch { /* 무시 */ }
@@ -106,23 +126,44 @@ export default function RoutineHistoryPage() {
     setExpandedResultId(resultId);
     if (toFetch.length === 0) return;
 
+    /* 바니티 세션이면 고정 제품 목록도 로드 */
+    toFetch.forEach(session => {
+      if (vanitySessionIds.has(session.session_id) && !vanityFixedBySession[session.session_id]) {
+        vanityApi.getRoutineDetail(session.session_id)
+          .then(detail => {
+            const names = (detail.routine_recommendation_results?.fixed_products ?? [])
+              .map(p => p.product_name);
+            setVanityFixedBySession(prev => ({ ...prev, [session.session_id]: names }));
+          })
+          .catch(() => {});
+      }
+    });
+
     setLoadingBudgets((prev) => new Set([...prev, ...toFetch.map((s) => s.session_id)]));
     await Promise.all(
       toFetch.map(async (session) => {
         const fallback: BudgetInfo = {
-          total_budget: null, toner_budget: null,
-          emulsion_budget: null, ampoule_budget: null, cream_budget: null,
+          total_budget_min: null,    total_budget_max: null,
+          toner_budget_min: null,    toner_budget_max: null,
+          emulsion_budget_min: null, emulsion_budget_max: null,
+          ampoule_budget_min: null,  ampoule_budget_max: null,
+          cream_budget_min: null,    cream_budget_max: null,
         };
         try {
           const rec = await routineApi.getRecommendation(session.session_id);
           setBudgetBySession((prev) => ({
             ...prev,
             [session.session_id]: {
-              total_budget:    rec.total_budget    ?? null,
-              toner_budget:    rec.toner_budget    ?? null,
-              emulsion_budget: rec.emulsion_budget ?? null,
-              ampoule_budget:  rec.ampoule_budget  ?? null,
-              cream_budget:    rec.cream_budget    ?? null,
+              total_budget_min:    rec.total_budget_min    ?? null,
+              total_budget_max:    rec.total_budget_max    ?? null,
+              toner_budget_min:    rec.toner_budget_min    ?? null,
+              toner_budget_max:    rec.toner_budget_max    ?? null,
+              emulsion_budget_min: rec.emulsion_budget_min ?? null,
+              emulsion_budget_max: rec.emulsion_budget_max ?? null,
+              ampoule_budget_min:  rec.ampoule_budget_min  ?? null,
+              ampoule_budget_max:  rec.ampoule_budget_max  ?? null,
+              cream_budget_min:    rec.cream_budget_min    ?? null,
+              cream_budget_max:    rec.cream_budget_max    ?? null,
             },
           }));
         } catch {
@@ -144,9 +185,9 @@ export default function RoutineHistoryPage() {
 
       <div className="rh-banner">
         <div className="rh-banner-inner">
-          <div className="rh-badge">내 루틴</div>
-          <h1 className="rh-title">루틴 기록</h1>
-          <p className="rh-sub">분석 결과별 추천 루틴을 확인하거나 새로운 루틴을 추천받아보세요</p>
+          <div className="rh-badge">ROUTINE REPORT</div>
+          <h1 className="rh-title">오늘 내 피부엔 어떤 루틴이 맞을까요?</h1>
+          <p className="rh-sub">내 피부 분석 결과를 바탕으로 설계된 맞춤 루틴을 확인해보세요</p>
         </div>
       </div>
 
@@ -160,7 +201,7 @@ export default function RoutineHistoryPage() {
               : navigate('/diagnosis')
           }
         >
-          <div className="rh-new-icon"><Sparkles size={26} color="#fff" /></div>
+          <div className="rh-new-icon"><Sparkles size={28} color="#7c3aed" /></div>
           <div>
             <div className="rh-new-title">
               {latest ? '최근 분석 결과로 루틴 추천받기' : '먼저 피부 진단을 받아보세요'}
@@ -174,7 +215,7 @@ export default function RoutineHistoryPage() {
 
         <div className="rh-section-title">분석 결과별 루틴</div>
 
-        {loading && <p style={{ textAlign: 'center', color: '#7c3aed', padding: '2rem' }}>불러오는 중...</p>}
+        {loading && <LoadingSpinner text="루틴 기록을 불러오는 중이에요" />}
 
         {!loading && analysisHistory.length === 0 && (
           <div className="rh-empty">
@@ -252,21 +293,42 @@ export default function RoutineHistoryPage() {
                           <div
                             key={session.session_id}
                             className="rh-session-box"
-                            onClick={() => navigate('/routine/result', { state: { session_id: session.session_id } })}
+                            onClick={async () => {
+                              if (vanitySessionIds.has(session.session_id)) {
+                                try {
+                                  const result = await vanityApi.getRoutineDetail(session.session_id);
+                                  navigate('/vanity/routine', { state: { result } });
+                                } catch {
+                                  navigate('/routine/result', { state: { session_id: session.session_id } });
+                                }
+                              } else {
+                                navigate('/routine/result', { state: { session_id: session.session_id } });
+                              }
+                            }}
                           >
                             <div className="rh-session-date">
                               추천일 {formatDate(session.routines[0]?.saved_at)}
+                              {vanitySessionIds.has(session.session_id) && (
+                                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, background: '#EDE9FE', color: '#7c3aed', padding: '2px 8px', borderRadius: 999, verticalAlign: 'middle' }}>
+                                  내 화장대 루틴
+                                </span>
+                              )}
                             </div>
                             <div className="rh-session-body">
                               <div className="rh-session-left">
+                                {vanitySessionIds.has(session.session_id) && (
+                                  <div className="rh-session-budget" style={{ marginBottom: 6 }}>
+                                    <span className="rh-session-budget-label">고정 제품</span>
+                                    <span className="rh-session-budget-value" style={{ color: '#7c3aed' }}>
+                                      {vanityFixedBySession[session.session_id]?.join(', ') || '—'}
+                                    </span>
+                                  </div>
+                                )}
                                 <div className="rh-session-budget">
                                   <span className="rh-session-budget-label">예산 조건</span>
                                   <span className="rh-session-budget-value">
                                     {isLoadingB ? '불러오는 중...' : budget ? getBudgetLabel(budget) : '—'}
                                   </span>
-                                </div>
-                                <div className="rh-session-type">
-                                  {getRoutineTypeLabel(session.routines)}
                                 </div>
                               </div>
                               <ChevronRight size={20} color="#7c3aed" />

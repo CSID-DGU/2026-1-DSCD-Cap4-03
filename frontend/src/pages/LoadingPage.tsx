@@ -2,10 +2,11 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { analysisApi } from '../api/analysis';
 import { routineApi } from '../api/routine';
+import { vanityApi } from '../api/vanity';
 import { Microscope, Sparkles, CheckCircle } from 'lucide-react';
 import './LoadingPage.css';
 
-type LoadingType = 'analysis' | 'routine';
+type LoadingType = 'analysis' | 'routine' | 'vanity_routine';
 
 interface StepConfig {
   message: string;
@@ -24,11 +25,17 @@ const STEPS: Record<LoadingType, StepConfig[]> = {
     { message: '최적 루틴 구성 중',     detail: '예산과 피부 타입을 고려해 루틴을 조합하고 있어요' },
     { message: 'AI 추천 이유 작성 중',  detail: '루틴 설명과 사용법을 작성하고 있어요' },
   ],
+  vanity_routine: [
+    { message: '화장대 제품 확인 중',    detail: '내 화장대 제품을 불러오고 있어요' },
+    { message: '맞춤 루틴 구성 중',      detail: '내 피부에 맞는 최적 루틴을 조합하고 있어요' },
+    { message: 'AI 루틴 코멘트 생성 중', detail: '맞춤형 루틴 설명을 작성하고 있어요' },
+  ],
 };
 
 const META: Record<LoadingType, { IconEl: ReactNode; title: string; doneTitle: string }> = {
-  analysis: { IconEl: <Microscope size={32} color="#7c3aed" />, title: 'AI 피부 분석',    doneTitle: '분석 완료!' },
-  routine:  { IconEl: <Sparkles   size={32} color="#7c3aed" />, title: '맞춤 루틴 생성',  doneTitle: '루틴 완성!' },
+  analysis:       { IconEl: <Microscope size={32} color="#7c3aed" />, title: 'AI 피부 분석',       doneTitle: '분석 완료!' },
+  routine:        { IconEl: <Sparkles   size={32} color="#7c3aed" />, title: '맞춤 루틴 생성',     doneTitle: '루틴 완성!' },
+  vanity_routine: { IconEl: <Sparkles   size={32} color="#7c3aed" />, title: '화장대 루틴 생성',   doneTitle: '루틴 완성!' },
 };
 
 export default function LoadingPage() {
@@ -45,6 +52,7 @@ export default function LoadingPage() {
   const resultId: number   = location.state?.resultId  ?? 1;
   const routineImageId: number = location.state?.imageId ?? 1;
   const budget = location.state?.budget ?? {};
+  const vanityRoutineBody = location.state?.vanity_routine_body ?? null;
 
   const [currentStep, setCurrentStep] = useState(0);
   const [doneSteps, setDoneSteps] = useState<number[]>([]);
@@ -94,11 +102,16 @@ export default function LoadingPage() {
       const rec = await routineApi.recommend({
         result_id:       resultId,
         image_id:        routineImageId,
-        total_budget:    budget.total    ?? null,
-        toner_budget:    budget.toner    ?? null,
-        emulsion_budget: budget.emulsion ?? null,
-        ampoule_budget:  budget.ampoule  ?? null,
-        cream_budget:    budget.cream    ?? null,
+        total_budget_min:    budget.total_min    ?? null,
+        total_budget_max:    budget.total_max    ?? null,
+        toner_budget_min:    budget.toner_min    ?? null,
+        toner_budget_max:    budget.toner_max    ?? null,
+        emulsion_budget_min: budget.emulsion_min ?? null,
+        emulsion_budget_max: budget.emulsion_max ?? null,
+        ampoule_budget_min:  budget.ampoule_min  ?? null,
+        ampoule_budget_max:  budget.ampoule_max  ?? null,
+        cream_budget_min:    budget.cream_min    ?? null,
+        cream_budget_max:    budget.cream_max    ?? null,
       });
       const { session_id } = rec;
       if (cancelled) return;
@@ -129,9 +142,31 @@ export default function LoadingPage() {
       });
     };
 
+    const runVanityRoutine = async () => {
+      advance(0);
+      await delay(400);
+      if (cancelled) return;
+      complete(0);
+
+      advance(1);
+      const result = await vanityApi.runRoutine(vanityRoutineBody);
+      if (cancelled) return;
+      complete(1);
+
+      advance(2);
+      await delay(600);
+      if (cancelled) return;
+      complete(2);
+
+      setIsDone(true);
+      await delay(800);
+      if (!cancelled) navigate('/vanity/routine', { state: { result } });
+    };
+
     const run = async () => {
       try {
         if (type === 'analysis') await runAnalysis();
+        else if (type === 'vanity_routine') await runVanityRoutine();
         else await runRoutine();
       } catch (err) {
         if (!cancelled) setError((err as Error).message || '처리 중 오류가 발생했어요.');
