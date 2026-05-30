@@ -4,3 +4,4 @@ __pycache__/
 .env
 rouple_dev.db
 AWS S3 key.txt
+API_Vanity.md
