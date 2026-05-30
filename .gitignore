@@ -44,6 +44,8 @@ model/vanity/experiments/
 backend/llm_outputs/
 backend/app/db/skin_summaries.json
 backend/app/db/recommendation_explanations.json
+
+model/recommendation/evaluation_metrics.ipynb
 backend/uploads/
 model/llm/outputs/
 /DB/
