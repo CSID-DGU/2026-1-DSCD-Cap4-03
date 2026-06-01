@@ -31,6 +31,9 @@ DISPLAY_LABELS = {
     "poor_match": "주의가 필요해요",
 }
 
+VANITY_LLM_REASON_TAGS = {"concern_match", "skin_type_match", "review_match"}
+VANITY_LLM_CAUTION_TAGS = {"irritation_check", "weak_concern_match"}
+
 
 def _now_string() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -307,6 +310,122 @@ def _routine_results_from_pipeline(value: dict[str, Any] | None) -> dict[str, An
     return value
 
 
+def _as_llm_fit_score(value: Any) -> int:
+    try:
+        score = float(value or 0.0)
+    except (TypeError, ValueError):
+        return 0
+    if score <= 1.0:
+        score *= 100
+    return max(0, min(100, int(score + 0.5)))
+
+
+def _filter_llm_tags(tags: Any, allowed: set[str]) -> list[str]:
+    if not isinstance(tags, list):
+        return []
+    result = []
+    for tag in tags:
+        tag_value = str(tag or "").strip()
+        if tag_value in allowed and tag_value not in result:
+            result.append(tag_value)
+    return result
+
+
+def _prepare_llm_product_matches(product_match_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    prepared = []
+    for item in product_match_results:
+        prepared.append(
+            {
+                "product_id": int(item["product_id"]),
+                "category": item.get("category") or "",
+                "brand_name": item.get("brand_name") or "",
+                "product_name": item.get("product_name") or "",
+                "fit_score": _as_llm_fit_score(item.get("fit_score", item.get("vanity_fit_score"))),
+                "fit_label": str(item.get("fit_label") or "so_so"),
+                "reason_tags": _filter_llm_tags(item.get("reason_tags"), VANITY_LLM_REASON_TAGS),
+                "caution_tags": _filter_llm_tags(item.get("caution_tags"), VANITY_LLM_CAUTION_TAGS),
+            }
+        )
+    return prepared
+
+
+def _prepare_llm_routine_result(routine_result: dict[str, Any]) -> dict[str, Any]:
+    final_routine = []
+    for item in routine_result.get("final_routine") or []:
+        source = str(item.get("source") or "recommendation").strip()
+        if source not in {"vanity", "recommendation"}:
+            source = "vanity" if source in {"owned", "fixed"} else "recommendation"
+        final_routine.append(
+            {
+                "slot_order": int(item["slot_order"]),
+                "product_id": int(item["product_id"]),
+                "category": item.get("category") or "",
+                "brand_name": item.get("brand_name") or "",
+                "product_name": item.get("product_name") or "",
+                "source": source,
+                "price": int(item.get("price") or 0),
+            }
+        )
+    return {
+        "final_routine": final_routine,
+        "warnings": routine_result.get("warnings") or [],
+        "total_price": routine_result.get("total_price"),
+    }
+
+
+def _enrich_skin_match_comments(
+    llm_explanation: dict[str, Any],
+    product_match_results: list[dict[str, Any]],
+) -> dict[str, Any]:
+    skin_match = llm_explanation.get("skin_match")
+    if not isinstance(skin_match, dict):
+        return llm_explanation
+
+    comments = skin_match.get("product_comments")
+    if not isinstance(comments, list):
+        return llm_explanation
+
+    products_by_id = {}
+    for item in product_match_results:
+        try:
+            products_by_id[int(item["product_id"])] = item
+        except (KeyError, TypeError, ValueError):
+            continue
+
+    enriched = []
+    for comment in comments:
+        if not isinstance(comment, dict):
+            continue
+        try:
+            product_id = int(comment.get("product_id"))
+        except (TypeError, ValueError):
+            continue
+        product = products_by_id.get(product_id, {})
+        display_label = product.get("display_label") or DISPLAY_LABELS.get(str(product.get("fit_label")), "")
+        fallback = _skin_match_explanation([product])["product_comments"][0] if product else {}
+        enriched.append(
+            {
+                "product_id": product_id,
+                "summary": comment.get("summary") or fallback.get("summary") or "",
+                "fit_reason": comment.get("fit_reason") or fallback.get("fit_reason") or "",
+                "caution_comment": comment.get("caution_comment") or fallback.get("caution_comment") or "",
+                "action_comment": comment.get("action_comment") or fallback.get("action_comment") or "",
+                "display_label": display_label,
+            }
+        )
+
+    overall_summary = skin_match.get("overall_summary")
+    if not overall_summary:
+        overall_summary = _skin_match_explanation(product_match_results).get("overall_summary", "")
+
+    llm_explanation["skin_match"] = {
+        **skin_match,
+        "overall_summary": overall_summary,
+        "product_comments": enriched,
+    }
+    return llm_explanation
+
+
 def _skin_match_explanation(product_match_results: list[dict[str, Any]]) -> dict[str, Any]:
     total = len(product_match_results)
     excellent = sum(1 for item in product_match_results if item.get("fit_label") == "excellent_match")
@@ -446,12 +565,8 @@ def _build_vanity_llm_input(
         "result_id": result_id,
         "user_profile": _load_user_profile_for_llm(db, user_id),
         "skin_analysis_result": _load_skin_analysis_for_llm(db, user_id, result_id),
-        "product_match_results": product_match_results,
-        "routine_recommendation_results": {
-            "final_routine": routine_result.get("final_routine") or [],
-            "warnings": routine_result.get("warnings") or [],
-            "total_price": routine_result.get("total_price"),
-        },
+        "product_match_results": _prepare_llm_product_matches(product_match_results),
+        "routine_recommendation_results": _prepare_llm_routine_result(routine_result),
     }
 
 
@@ -498,10 +613,11 @@ def generate_vanity_llm_explanation(
             product_match_results=product_match_results,
             routine_result=routine_result,
         )
-        return generate_vanity_llm_result(
+        llm_explanation = generate_vanity_llm_result(
             llm_input=llm_input,
             output_dir=str(BACKEND_ROOT / "llm_outputs" / "vanity"),
         )
+        return _enrich_skin_match_comments(llm_explanation, product_match_results)
     except Exception as exc:
         print(f"[vanity-llm] failed: {type(exc).__name__}: {exc}")
         return build_vanity_llm_explanation(product_match_results, routine_result)
