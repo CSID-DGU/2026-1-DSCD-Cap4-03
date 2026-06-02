@@ -8,14 +8,21 @@ import { Sparkles, Bot, Wand2 } from 'lucide-react';
 import { analysisApi, type AnalysisResult, type SkinHistoryItem } from '../api/analysis';
 import { userApi } from '../api/user';
 import { useAuth } from '../context/useAuth';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 import './AnalysisResultPage.css';
+
+const CONCERN_KO: Record<string, string> = {
+  acne: '여드름', wrinkle: '주름', brightening: '미백', sebum: '피지',
+  dryness: '속건조', redness: '붉은기', dark_circle: '다크서클', atopy: '아토피',
+  sensitive: '민감성', pore: '모공', flushing: '홍조', keratin: '각질',
+};
 
 // ── 등급 변환 (1-score 기준, 높을수록 좋음)
 function toGrade(score: number): Grade {
-  return score >= 70 ? '좋음' : score >= 40 ? '보통' : '개선필요';
+  return score >= 70 ? '좋음' : score >= 50 ? '보통' : score >= 30 ? '개선필요' : '집중케어';
 }
 
-type Grade = '좋음' | '보통' | '개선필요';
+type Grade = '좋음' | '보통' | '개선필요' | '집중케어';
 
 const TREND_METRICS = [
   { key: 'acne',         label: '진정' },
@@ -28,10 +35,10 @@ const TREND_METRICS = [
 type MetricKey = typeof TREND_METRICS[number]['key'];
 
 const GRADE_COLOR: Record<Grade, string> = {
-  좋음: '#22c55e', 보통: '#f59e0b', 개선필요: '#ef4444',
+  좋음: '#16a34a', 보통: '#eab308', 개선필요: '#d97706', 집중케어: '#dc2626',
 };
 const GRADE_BG: Record<Grade, string> = {
-  좋음: '#f0fdf4', 보통: '#fffbeb', 개선필요: '#fef2f2',
+  좋음: '#f0fdf4', 보통: '#fefce8', 개선필요: '#fffbeb', 집중케어: '#fef2f2',
 };
 
 function buildMetrics(result: AnalysisResult) {
@@ -97,14 +104,18 @@ export default function AnalysisResultPage() {
       .catch(() => {});
 
     userApi.getMe()
-      .then((user) => setSkinConcerns(user.skin_concerns?.filter((c) => c !== 'none') ?? []))
+      .then((user) => {
+        const raw = user.skin_concerns?.filter((c) => c !== 'none') ?? [];
+        const unique = [...new Set(raw)];
+        setSkinConcerns(unique.map((c) => CONCERN_KO[c] ?? c));
+      })
       .catch(() => {});
   }, [resultId]);
 
   if (loading) {
     return (
-      <div className="ar-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <p style={{ color: '#7c3aed', fontSize: '1.1rem' }}>분석 결과를 불러오는 중...</p>
+      <div className="ar-page">
+        <LoadingSpinner text="분석 결과를 불러오는 중이에요" />
       </div>
     );
   }
@@ -124,7 +135,7 @@ export default function AnalysisResultPage() {
   const displayName = nickname || '내';
   const skinType = result.skin_type;
 
-  const gradeCounts: Record<Grade, number> = { 좋음: 0, 보통: 0, 개선필요: 0 };
+  const gradeCounts: Record<Grade, number> = { 좋음: 0, 보통: 0, 개선필요: 0, 집중케어: 0 };
   metrics.forEach((m) => { gradeCounts[m.grade]++; });
 
   return (
@@ -137,7 +148,7 @@ export default function AnalysisResultPage() {
             <div className="ar-hero-badge">AI 피부 분석 완료</div>
             <h1 className="ar-hero-title">
               <span className="ar-hero-name">{displayName}</span>님,<br />
-              <em>피부 리포트</em>가<br />
+              <span className="ar-hero-highlight">스킨 리포트</span>가<br />
               도착했어요
             </h1>
             <p className="ar-hero-date">분석일 : {formatDate(result.analyzed_at || result.generated_at)}</p>
@@ -172,21 +183,13 @@ export default function AnalysisResultPage() {
           <p className="ar-sec-sub">
             높은 점수일수록 피부 상태가 좋아요 &nbsp;
             <span className="ar-grade-legend">
-              <span style={{ color: '#22c55e' }}>● 좋음</span>
-              <span style={{ color: '#f59e0b' }}>● 보통</span>
-              <span style={{ color: '#ef4444' }}>● 개선필요</span>
+              <span style={{ color: GRADE_COLOR['좋음'] }}>● 좋음</span>
+              <span style={{ color: GRADE_COLOR['보통'] }}>● 보통</span>
+              <span style={{ color: GRADE_COLOR['개선필요'] }}>● 개선필요</span>
+              <span style={{ color: GRADE_COLOR['집중케어'] }}>● 집중케어</span>
             </span>
           </p>
 
-          {/* 등급 요약 */}
-          <div className="ar-grade-summary">
-            {(['좋음', '보통', '개선필요'] as Grade[]).map((g) => (
-              <div className="ar-grade-summary-item" key={g} style={{ borderColor: GRADE_COLOR[g], background: GRADE_BG[g] }}>
-                <span className="ar-grade-count" style={{ color: GRADE_COLOR[g] }}>{gradeCounts[g]}</span>
-                <span className="ar-grade-label" style={{ color: GRADE_COLOR[g] }}>{g}</span>
-              </div>
-            ))}
-          </div>
 
           {/* 레이더 + 지표 카드 */}
           <div className="ar-report-body">
@@ -195,7 +198,7 @@ export default function AnalysisResultPage() {
                 <ResponsiveContainer width="100%" height={460}>
                   <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="78%">
                     <PolarGrid stroke="#ddd6fe" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#4b5563', fontSize: 13, fontWeight: 600 }} />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: '#4b5563', fontSize: 15, fontWeight: 600 }} />
                     <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
                     <Radar dataKey="value" stroke="#7c3aed" fill="#a855f7" fillOpacity={0.28} strokeWidth={2} />
                   </RadarChart>
@@ -256,6 +259,30 @@ export default function AnalysisResultPage() {
               ))}
             </div>
 
+            {/* 점수 요약 */}
+            {history.length >= 1 && (() => {
+              const idx  = history.findIndex(h => h.result_id === result.result_id);
+              const cur  = idx >= 0
+                ? Math.round((1 - (history[idx].display_scores?.[activeMetric] ?? 0)) * 100)
+                : Math.round((1 - (result.display_scores?.[activeMetric] ?? 0)) * 100);
+              const prev = idx > 0
+                ? Math.round((1 - (history[idx - 1].display_scores?.[activeMetric] ?? 0)) * 100)
+                : null;
+              const diff  = prev !== null ? cur - prev : null;
+              const label = TREND_METRICS.find(m => m.key === activeMetric)?.label ?? '';
+              return (
+                <div className="ar-trend-stat">
+                  <span className="ar-trend-stat-label">현재 {label}</span>
+                  <span className="ar-trend-stat-score">{cur}점</span>
+                  {diff !== null && (
+                    <span className={`ar-trend-stat-change ${diff >= 0 ? 'positive' : 'negative'}`}>
+                      {diff >= 0 ? '▲' : '▼'} {Math.abs(diff)}점 {diff >= 0 ? '개선' : '감소'}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* 그래프 */}
             {history.length < 2 ? (
               <div className="ar-trend-empty">
@@ -282,7 +309,7 @@ export default function AnalysisResultPage() {
                     <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: '#9CA3AF' }} axisLine={false} tickLine={false} width={32} />
                     <Tooltip
                       contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13 }}
-                      formatter={(v: number) => [`${v}점`, TREND_METRICS.find(m => m.key === activeMetric)?.label]}
+                      formatter={(v: unknown) => [`${v}점`, TREND_METRICS.find(m => m.key === activeMetric)?.label]}
                     />
                     <Area
                       type="monotone" dataKey="value"

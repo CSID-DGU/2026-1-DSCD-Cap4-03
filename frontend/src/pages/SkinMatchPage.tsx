@@ -8,7 +8,7 @@ import {
   REASON_TAG_KO,
 } from '../api/vanity';
 import { productApi } from '../api/product';
-import { FlaskConical, ChevronLeft, Package } from 'lucide-react';
+import { FlaskConical, ChevronLeft, Package, Check, AlertTriangle } from 'lucide-react';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import './SkinMatchPage.css';
 
@@ -176,13 +176,16 @@ export default function SkinMatchPage() {
                                 <p className="sm-llm-line sm-llm-summary">{comment.summary}</p>
                               )}
                               {comment.fit_reason && (
-                                <p className="sm-llm-line sm-llm-reason">✔ {comment.fit_reason}</p>
+                                <div className="sm-llm-line sm-llm-reason" style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                                  <Check size={13} color="#16a34a" style={{ flexShrink: 0, marginTop: 3 }} />
+                                  <span>{comment.fit_reason}</span>
+                                </div>
                               )}
                               {comment.caution_comment && (
-                                <p className="sm-llm-line sm-llm-caution">△ {comment.caution_comment}</p>
-                              )}
-                              {comment.action_comment && (
-                                <p className="sm-llm-line sm-llm-action">{comment.action_comment}</p>
+                                <div className="sm-llm-line sm-llm-caution" style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                                  <AlertTriangle size={13} color="#d97706" style={{ flexShrink: 0, marginTop: 3 }} />
+                                  <span>{comment.caution_comment}</span>
+                                </div>
                               )}
                             </div>
                           )}

@@ -11,10 +11,7 @@
   border-bottom: 1px solid #F3F4F6;
   padding: 48px 80px 40px;
 }
-.budget-banner-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-}
+.budget-banner-inner { max-width: 1200px; margin: 0 auto; }
 .budget-banner-badge {
   display: inline-block;
   background: none;
@@ -36,6 +33,7 @@
 }
 .budget-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
 
+/* ── 바디 ── */
 .budget-body {
   max-width: 1200px;
   margin: 0 auto;
@@ -45,39 +43,126 @@
   gap: 16px;
   align-items: start;
 }
-@media (max-width: 640px) { .budget-body { grid-template-columns: 1fr; } }
 
+/* ── 카드 ── */
 .budget-section {
   background: #fff;
-  border-radius: 10px;
-  padding: 22px 20px;
+  border-radius: 12px;
+  padding: 24px 28px 36px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.08);
 }
-.budget-cat-label {
-  font-size: 15px;
-  font-weight: 700;
-  color: #1A1A1A;
-  margin-bottom: 16px;
-}
-.budget-options { display: flex; flex-wrap: wrap; gap: 8px; }
-.budget-radio {
+.budget-section--full { grid-column: 1 / -1; }
+
+/* ── 카드 헤더 ── */
+.bgt-head {
   display: flex;
   align-items: center;
-  cursor: pointer;
-  padding: 8px 18px;
-  border-radius: 10px;
-  border: 1.5px solid #A78BFA;
-  font-size: 13px;
-  font-weight: 500;
-  color: #5F5F5F;
-  background: #ffffff;
-  transition: all 0.18s;
-  user-select: none;
+  justify-content: space-between;
+  margin-bottom: 28px;
 }
-.budget-radio input[type='radio'] { display: none; }
-.budget-radio:hover { border-color: #7c3aed; color: #7c3aed; }
-.budget-radio.selected { background: #7c3aed; border-color: #7c3aed; color: #fff; font-weight: 700; }
+.bgt-cat-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.bgt-val-chip {
+  font-family: 'Sora', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9CA3AF;
+  background: #F9FAFB;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #E5E7EB;
+  transition: all 0.2s;
+}
+.bgt-val-chip.set {
+  color: #7c3aed;
+  background: #F5F3FF;
+  border-color: #DDD6FE;
+}
 
+/* ── 슬라이더 ── */
+.bgt-slider { padding-bottom: 4px; }
+
+.bgt-track-area {
+  position: relative;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  margin: 0 10px;
+}
+.bgt-track {
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 2px;
+}
+.bgt-fill {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 4px;
+  background: #7c3aed;
+  border-radius: 2px;
+  transition: left 0.08s ease, width 0.08s ease;
+  pointer-events: none;
+}
+
+.bgt-dot {
+  position: absolute;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid #D1D5DB;
+  background: #fff;
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: all 0.18s;
+  padding: 0;
+  z-index: 2;
+}
+.bgt-dot:hover { border-color: #7c3aed; transform: translateX(-50%) scale(1.2); }
+.bgt-dot.in-range { background: #7c3aed; border-color: #7c3aed; }
+.bgt-dot.handle {
+  width: 20px; height: 20px;
+  background: #fff;
+  border: 2.5px solid #7c3aed;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.25);
+  cursor: grab;
+}
+.bgt-dot.handle:hover {
+  transform: translateX(-50%) scale(1.15);
+  box-shadow: 0 0 0 5px rgba(124,58,237,0.15), 0 2px 8px rgba(124,58,237,0.25);
+}
+.bgt-dot.handle:active { cursor: grabbing; }
+
+/* ── 라벨 ── */
+.bgt-labels-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding: 0 2px;
+}
+.bgt-tick-label {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA3AF;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s;
+  white-space: nowrap;
+}
+.bgt-tick-label:hover { color: #6B7280; }
+.bgt-tick-label.active { color: #7c3aed; font-weight: 700; }
+
+/* ── 제출 ── */
 .budget-submit-wrap {
   grid-column: 1 / -1;
   text-align: center;
@@ -100,5 +185,5 @@
 
 @media (max-width: 900px) {
   .budget-banner { padding: 40px 24px 32px; }
-  .budget-body { padding: 24px 24px 64px; }
+  .budget-body { padding: 24px 24px 64px; grid-template-columns: 1fr; }
 }

@@ -8,7 +8,7 @@
 
 /* ── HERO ── */
 .rp-hero {
-  background: #fff;
+  background: linear-gradient(180deg, #EDE9FE 0%, #ffffff 70%);
   border-bottom: 1px solid #F3F4F6;
   padding: 48px 80px 48px;
 }
@@ -25,14 +25,15 @@
 }
 .rp-hero-title {
   font-family: 'Sora', sans-serif;
-  font-size: clamp(26px, 4vw, 42px);
+  font-size: clamp(26px, 4vw, 60px);
   font-weight: 800; color: #111827;
   margin-bottom: 10px; line-height: 1.3;
   letter-spacing: -0.05em;
 }
-.rp-hero-name { color: #7c3aed; }
+.rp-hero-name { color: #111827; }
+.rp-hero-highlight { color: #7c3aed; }
 .rp-hero-sub { font-size: 15px; color: #4B5563; margin-bottom: 8px; line-height: 1.7; }
-.rp-hero-date { font-size: 12px; color: #6B7280; margin-bottom: 14px; }
+.rp-hero-date { font-size: 15px; color: #6B7280; margin-bottom: 14px; }
 .rp-skin-tags {
   display: flex; flex-wrap: wrap; gap: 8px;
   margin-top: 14px;
@@ -60,7 +61,7 @@
   margin-top: 12px;
 }
 .rp-budget-row-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #6B7280;
   letter-spacing: 0.02em;
@@ -172,7 +173,7 @@
   line-height: 1.6;
 }
 .rp-ai-desc-text {
-  font-size: 14px; color: #4B5563; line-height: 1.8; margin: 0;
+  font-size: 15px; color: #4B5563; line-height: 1.8; margin: 0;
 }
 .rp-guide-info {
   display: flex; gap: 10px; align-items: flex-start;
@@ -185,7 +186,7 @@
   font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 4px;
 }
 .rp-guide-warning .rp-guide-info-label { color: #d97706; }
-.rp-guide-info-text { font-size: 13px; color: #4B5563; line-height: 1.7; margin: 0; }
+.rp-guide-info-text { font-size: 14px; color: #4B5563; line-height: 1.7; margin: 0; }
 
 /* ── 루틴 블록 ── */
 .rp-routine-block {
@@ -301,9 +302,9 @@
   transition: transform 0.18s;
 }
 .rp-product-img:hover { transform: scale(1.03); }
-.rp-product-brand { font-size: 10px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+.rp-product-brand { font-size: 12px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
 .rp-product-name {
-  font-size: 12px; font-weight: 700; color: #111827; line-height: 1.4; margin-bottom: 6px;
+  font-size: 14px; font-weight: 700; color: #111827; line-height: 1.4; margin-bottom: 6px;
   display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   flex: 1;
 }
@@ -340,11 +341,11 @@
 }
 .rp-guide-header {
   display: flex; align-items: center; gap: 5px;
-  font-size: 11px; font-weight: 700; color: #374151; margin-bottom: 6px;
+  font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 6px;
 }
 .rp-guide-panel.optional .rp-guide-header { color: #6B7280; }
 .rp-guide-text {
-  font-size: 11px; color: #4B5563; line-height: 1.7; margin: 0;
+  font-size: 13px; color: #4B5563; line-height: 1.7; margin: 0;
 }
 
 /* ── 예산 폴백 알림 ── */

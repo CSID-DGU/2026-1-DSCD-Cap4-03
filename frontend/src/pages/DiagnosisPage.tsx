@@ -1,33 +1,15 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import Cropper from 'react-easy-crop';
 import type { Area } from 'react-easy-crop';
 import { useNavigate } from 'react-router-dom';
 import { imagesApi } from '../api/images';
-import { userApi } from '../api/user';
 import {
   Lightbulb, Eye, Minus, Ban, Glasses,
-  Camera, ZoomIn, ZoomOut, Check, Ruler, Microscope, UserCircle, Pencil, X,
+  Camera, ZoomIn, ZoomOut, Check, Ruler, Microscope,
   type LucideIcon,
 } from 'lucide-react';
 import './DiagnosisPage.css';
 
-const SKIN_TYPES = ['건성', '지성', '중성', '복합성', '수부지', '모름'];
-
-const CONCERNS = [
-  { id: 'acne',        label: '여드름' },
-  { id: 'wrinkle',     label: '주름' },
-  { id: 'brightening', label: '미백' },
-  { id: 'sebum',       label: '피지' },
-  { id: 'dryness',     label: '속건조' },
-  { id: 'redness',     label: '붉은기' },
-  { id: 'dark_circle', label: '다크서클' },
-  { id: 'atopy',       label: '아토피' },
-  { id: 'sensitive',   label: '민감성' },
-  { id: 'pore',        label: '모공' },
-  { id: 'flushing',    label: '홍조' },
-  { id: 'keratin',     label: '각질' },
-  { id: 'none',        label: '해당사항 없음' },
-];
 
 const TARGET_WIDTH = 480;
 const TARGET_HEIGHT = 640;
@@ -103,39 +85,6 @@ export default function DiagnosisPage() {
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-
-  // ── 피부 정보 편집 ──
-  const [skinType, setSkinType]       = useState<string>('');
-  const [concerns, setConcerns]       = useState<string[]>([]);
-  const [skinSaving, setSkinSaving]   = useState(false);
-  const [skinSaved, setSkinSaved]     = useState(false);
-  const [skinEditMode, setSkinEditMode] = useState(false);
-
-  useEffect(() => {
-    userApi.getMe()
-      .then((user) => {
-        setSkinType(user.skin_type ?? '');
-        setConcerns(user.skin_concerns ?? []);
-      })
-      .catch(() => {});
-  }, []);
-
-  const toggleConcern = (id: string) => {
-    setConcerns((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
-    setSkinSaved(false);
-  };
-
-  const handleSkinSave = async () => {
-    setSkinSaving(true);
-    try {
-      await userApi.updateProfile({ skin_type: skinType, skin_concerns: concerns });
-      setSkinSaved(true);
-      setTimeout(() => setSkinSaved(false), 2000);
-    } catch { /* 무시 */ }
-    finally { setSkinSaving(false); }
-  };
 
   const handleAnalyze = async () => {
     if (!resultImage || !resultBlob) return;
@@ -385,101 +334,6 @@ export default function DiagnosisPage() {
               </div>
             )}
 
-          </div>
-
-          {/* ── 우측: 피부 정보 박스 ── */}
-          <div className="dp-skin-col">
-            <div className="dp-skin-box">
-
-              {/* 헤더 */}
-              <div className="dp-skin-box-header">
-                <div className="dp-guide-box-title" style={{ marginBottom: 0 }}>
-                  <UserCircle size={14} />
-                  내 피부 정보
-                </div>
-                {!skinEditMode && (
-                  <button className="dp-skin-edit-btn" onClick={() => setSkinEditMode(true)}>
-                    <Pencil size={13} />
-                  </button>
-                )}
-                {skinEditMode && (
-                  <button className="dp-skin-edit-btn" onClick={() => { setSkinEditMode(false); setSkinSaved(false); }}>
-                    <X size={13} />
-                  </button>
-                )}
-              </div>
-
-              {/* ── 보기 모드 ── */}
-              {!skinEditMode && (
-                <div className="dp-skin-view">
-                  <div className="dp-skin-section-label">피부 타입</div>
-                  <div className="dp-skin-view-tags">
-                    {skinType
-                      ? <span className="dp-skin-view-tag type">{skinType}</span>
-                      : <span className="dp-skin-view-empty">미설정</span>}
-                  </div>
-                  <div className="dp-skin-section-label" style={{ marginTop: 14 }}>피부 고민</div>
-                  <div className="dp-skin-view-tags">
-                    {concerns.filter(c => c !== 'none').length > 0
-                      ? concerns.filter(c => c !== 'none').map(id => {
-                          const label = CONCERNS.find(c => c.id === id)?.label ?? id;
-                          return <span key={id} className="dp-skin-view-tag">{label}</span>;
-                        })
-                      : <span className="dp-skin-view-empty">
-                          {concerns.includes('none') ? '해당사항 없음' : '미설정'}
-                        </span>}
-                  </div>
-                  <p className="dp-skin-edit-hint">
-                    <Pencil size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
-                    연필 버튼을 눌러 수정할 수 있어요
-                  </p>
-                </div>
-              )}
-
-              {/* ── 편집 모드 ── */}
-              {skinEditMode && (
-                <div className="dp-skin-edit">
-                  <div className="dp-skin-section-label">피부 타입</div>
-                  <div className="dp-skin-type-grid">
-                    {SKIN_TYPES.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        className={`dp-skin-type-btn ${skinType === t ? 'active' : ''}`}
-                        onClick={() => { setSkinType(t); setSkinSaved(false); }}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="dp-skin-section-label" style={{ marginTop: 14 }}>
-                    피부 고민 <span className="dp-skin-multi-hint">복수 선택</span>
-                  </div>
-                  <div className="dp-skin-concern-grid">
-                    {CONCERNS.map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        className={`dp-skin-concern-btn ${concerns.includes(c.id) ? 'active' : ''}`}
-                        onClick={() => toggleConcern(c.id)}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    className={`dp-skin-save-btn ${skinSaved ? 'saved' : ''}`}
-                    onClick={async () => { await handleSkinSave(); setSkinEditMode(false); }}
-                    disabled={skinSaving}
-                  >
-                    {skinSaved
-                      ? <><Check size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />저장됐어요</>
-                      : skinSaving ? '저장 중...' : '저장하기'}
-                  </button>
-                </div>
-              )}
-
-            </div>
           </div>
 
         </div>
