@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { userApi, type UserProfile } from '../api/user';
 import { productApi, type ProductSummary } from '../api/product';
 import { useAuth } from '../context/useAuth';
+
 import AllergySelector, { buildAllergyItems, type AllergySelectorValue } from '../components/AllergySelector';
 import { User, Heart, type LucideIcon } from 'lucide-react';
 import './MyPage.css';
@@ -36,7 +37,7 @@ const CONCERNS = [
 
 export default function MyPage() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, updateNickname } = useAuth();
 
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [isEditing, setIsEditing] = useState(false);
@@ -83,7 +84,7 @@ export default function MyPage() {
     setIsEditing(true);
     try {
       const res = await userApi.getAllergies();
-      setAllergy({ categories: res.allergy_categories, ingredientIds: res.allergy_ingredient_ids });
+      setAllergy({ categories: res.allergy_categories as import('../components/AllergySelector').AllergyCategory[], ingredientIds: res.allergy_ingredient_ids });
     } catch {
       setAllergy({ categories: [], ingredientIds: [] });
     } finally {
@@ -121,6 +122,7 @@ export default function MyPage() {
         userApi.updateAllergies({ allergy_items: allergyItems }),
       ]);
       setProfile(updated);
+      updateNickname(formName);
       setSaveMsg('저장되었어요!');
       setIsEditing(false);
     } catch {

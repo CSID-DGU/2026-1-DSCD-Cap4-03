@@ -13,7 +13,7 @@
   display: inline-block;
   background: none;
   color: #7c3aed;
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
   padding: 0;
   margin-bottom: 12px;
@@ -24,14 +24,14 @@
 
 .ar-sec-title {
   font-family: 'Sora', sans-serif;
-  font-size: clamp(22px, 3vw, 30px);
+  font-size: clamp(22px, 3vw, 40px);
   font-weight: 700;
   color: #111827;
   margin-bottom: 6px;
   letter-spacing: -0.05em;
 }
 .ar-sec-sub {
-  font-size: 13px;
+  font-size: 15px;
   color: #6B7280;
   margin-bottom: 24px;
   line-height: 1.7;
@@ -47,12 +47,18 @@
   font-weight: 600;
 }
 
+/* 피부 지표 섹션 헤더 가운데 정렬 */
+.ar-report-section .ar-sec-badge { display: block; text-align: center; }
+.ar-report-section .ar-sec-title { text-align: center; }
+.ar-report-section .ar-sec-sub   { justify-content: center; text-align: center; margin-bottom: 40px; }
+
 /* 등급 요약 */
 .ar-grade-summary {
   display: flex;
   gap: 12px;
   margin-bottom: 32px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 .ar-grade-summary-item {
   display: flex;
@@ -74,7 +80,7 @@
 
 /* ── HERO ── */
 .ar-hero {
-  background: #fff;
+  background: linear-gradient(180deg, #EDE9FE 0%, #ffffff 70%);
   border-bottom: 1px solid #F3F4F6;
   padding: 56px 80px 64px;
 }
@@ -92,7 +98,7 @@
   display: inline-block;
   background: none;
   color: #7c3aed;
-  font-size: 11px; font-weight: 700;
+  font-size: 15px; font-weight: 700;
   padding: 0;
   margin-bottom: 20px;
   letter-spacing: -0.05em;
@@ -100,14 +106,15 @@
 }
 .ar-hero-title {
   font-family: 'Sora', sans-serif;
-  font-size: clamp(28px, 4vw, 48px);
+  font-size: clamp(28px, 4vw, 60px);
   font-weight: 800; line-height: 1.25;
   color: #111827; margin-bottom: 14px;
   letter-spacing: -0.05em;
 }
 .ar-hero-name { color: #111827; }
 .ar-hero-title em { color: #7c3aed; font-style: normal; }
-.ar-hero-date { font-size: 13px; color: #4B5563; margin-bottom: 18px; }
+.ar-hero-highlight { color: #7c3aed; }
+.ar-hero-date { font-size: 16px; color: #4B5563; margin-bottom: 18px; }
 .ar-skin-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
 .ar-skin-tag {
   background: #F9FAFB;
@@ -256,7 +263,7 @@
   border-radius: 99px; overflow: hidden; margin-bottom: 8px;
 }
 .ar-metric-bar-fill { height: 100%; border-radius: 99px; transition: width 1s ease; }
-.ar-metric-desc { font-size: 11px; color: #4B5563; line-height: 1.6; margin: 0; }
+.ar-metric-desc { font-size: 13px; color: #4B5563; line-height: 1.6; margin: 0; }
 
 /* ── AI 한마디 ── */
 .ar-ai-box {
@@ -275,22 +282,40 @@
   background: #fff;
   border-radius: 12px;
   padding: 28px 32px;
-  margin-top: 20px;
+  margin-top: 48px;
   border: 1px solid #F3F4F6;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.ar-trend-header { margin-bottom: 20px; }
+.ar-trend-header { margin-bottom: 20px; text-align: center; }
 .ar-trend-title {
   font-family: 'Sora', sans-serif;
-  font-size: 18px; font-weight: 700; color: #111827;
+  font-size: 20px; font-weight: 700; color: #111827;
   margin: 0 0 4px; letter-spacing: -0.05em;
 }
-.ar-trend-sub { font-size: 12px; color: #6B7280; margin: 0; }
+.ar-trend-sub { font-size: 13px; color: #6B7280; margin: 0; }
 
 .ar-trend-tabs {
   display: flex; flex-wrap: wrap; gap: 8px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  justify-content: center;
 }
+
+/* 점수 요약 */
+.ar-trend-stat {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px; justify-content: flex-end; flex-wrap: wrap;
+}
+.ar-trend-stat-label { font-size: 12px; color: #6B7280; font-weight: 600; }
+.ar-trend-stat-score {
+  font-family: 'Sora', sans-serif;
+  font-size: 20px; font-weight: 800; color: #7c3aed; line-height: 1;
+}
+.ar-trend-stat-change {
+  font-size: 11px; font-weight: 700;
+  padding: 3px 9px; border-radius: 999px;
+}
+.ar-trend-stat-change.positive { background: #DCFCE7; color: #16a34a; }
+.ar-trend-stat-change.negative { background: #FEE2E2; color: #dc2626; }
 .ar-trend-tab {
   padding: 7px 16px;
   border-radius: 10px;

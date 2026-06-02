@@ -9,6 +9,7 @@ import {
   Sun, Moon, Trophy, Wallet, Bot, ClipboardList,
   AlertTriangle, FileText, Package, Timer, Banknote, Clock, Info,
 } from 'lucide-react';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 import './RoutinePage.css';
 
 type RoutineTime = 'am' | 'pm' | 'both';
@@ -171,8 +172,8 @@ export default function RoutinePage() {
 
   if (loading) {
     return (
-      <div className="rp-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <p style={{ color: '#7c3aed', fontSize: '1.1rem' }}>루틴을 불러오는 중...</p>
+      <div className="rp-page">
+        <LoadingSpinner text="루틴을 불러오는 중이에요" />
       </div>
     );
   }
@@ -222,11 +223,11 @@ export default function RoutinePage() {
       {/* ── HERO ── */}
       <section className="rp-hero">
         <div className="rp-hero-inner">
-          <div className="rp-hero-badge">맞춤 루틴</div>
+          <div className="rp-hero-badge">AI 맞춤 루틴</div>
           <h1 className="rp-hero-title">
-            <span className="rp-hero-name">{displayName}</span>님을 위한 루틴
+            <span className="rp-hero-name">{displayName}</span>님,<br />
+            <span className="rp-hero-highlight">맞춤 루틴 리포트</span>가 도착했어요
           </h1>
-          <p className="rp-hero-sub">AI가 분석한 피부 상태에 맞는 제품을 추천해드려요</p>
           {skinResult && (
             <p className="rp-hero-date">분석일 : {formatDate(skinResult.analyzed_at || skinResult.generated_at)}</p>
           )}

@@ -52,7 +52,8 @@ export default function LoadingPage() {
   const resultId: number   = location.state?.resultId  ?? 1;
   const routineImageId: number = location.state?.imageId ?? 1;
   const budget = location.state?.budget ?? {};
-  const vanityRoutineBody = location.state?.vanity_routine_body ?? null;
+  const fixedProductIds: number[] = location.state?.fixed_product_ids ?? [];
+  const vanityBudget = location.state?.vanity_budget ?? {};
 
   const [currentStep, setCurrentStep] = useState(0);
   const [doneSteps, setDoneSteps] = useState<number[]>([]);
@@ -149,7 +150,23 @@ export default function LoadingPage() {
       complete(0);
 
       advance(1);
-      const result = await vanityApi.runRoutine(vanityRoutineBody);
+      const vb = vanityBudget;
+      console.log('[VanityRoutine] vanityBudget:', vb);
+      const vanityBody: Parameters<typeof vanityApi.runRoutine>[0] = {
+        fixed_product_ids: fixedProductIds,
+        ...(vb.budget_min   != null && { budget_min:   vb.budget_min   }),
+        ...(vb.budget_max   != null && { budget_max:   vb.budget_max   }),
+        ...(vb.toner_min    != null && { toner_min:    vb.toner_min    }),
+        ...(vb.toner_max    != null && { toner_max:    vb.toner_max    }),
+        ...(vb.emulsion_min != null && { emulsion_min: vb.emulsion_min }),
+        ...(vb.emulsion_max != null && { emulsion_max: vb.emulsion_max }),
+        ...(vb.ampoule_min  != null && { ampoule_min:  vb.ampoule_min  }),
+        ...(vb.ampoule_max  != null && { ampoule_max:  vb.ampoule_max  }),
+        ...(vb.cream_min    != null && { cream_min:    vb.cream_min    }),
+        ...(vb.cream_max    != null && { cream_max:    vb.cream_max    }),
+      };
+      console.log('[VanityRoutine] sending body:', JSON.stringify(vanityBody));
+      const result = await vanityApi.runRoutine(vanityBody);
       if (cancelled) return;
       complete(1);
 
@@ -160,7 +177,11 @@ export default function LoadingPage() {
 
       setIsDone(true);
       await delay(800);
-      if (!cancelled) navigate('/vanity/routine', { state: { result } });
+      if (!cancelled) {
+        const sid = result.recommendation_session_id;
+        if (sid) localStorage.setItem(`vanity_budget_${sid}`, JSON.stringify(vb));
+        navigate('/vanity/routine', { state: { result, budgetBody: vb } });
+      }
     };
 
     const run = async () => {

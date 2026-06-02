@@ -232,8 +232,9 @@
 
 .rh-session-budget {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 .rh-session-budget-label {
   color: #6B7280;

@@ -31,22 +31,38 @@ type BudgetInfo = {
 
 type SessionGroup = { session_id: number; routines: SavedRoutineItem[] };
 
-function formatRange(min: number | null | undefined, max: number | null | undefined, label: string): string | null {
-  if ((min == null) && (max == null)) return null;
-  if (max == null) return `${label} ${(min ?? 0).toLocaleString()}원+`;
-  if (min == null || min === 0)      return `${label} ~${max.toLocaleString()}원`;
-  return `${label} ${min.toLocaleString()}~${max.toLocaleString()}원`;
+function fmtChip(min: number | null | undefined, max: number | null | undefined, label: string): string | null {
+  const hasMin = min != null && min > 0;
+  const hasMax = max != null;
+  if (!hasMin && !hasMax) return null;
+  if (hasMin && hasMax) return `${label} ${min!/10000}~${max!/10000}만원`;
+  if (hasMax) return `${label} ${max!/10000}만원 이하`;
+  return `${label} ${min!/10000}만원 이상`;
 }
 
-function getBudgetLabel(b: BudgetInfo): string {
-  const parts = [
-    formatRange(b.total_budget_min,    b.total_budget_max,    '전체'),
-    formatRange(b.toner_budget_min,    b.toner_budget_max,    '토너'),
-    formatRange(b.emulsion_budget_min, b.emulsion_budget_max, '에멀젼'),
-    formatRange(b.ampoule_budget_min,  b.ampoule_budget_max,  '앰플'),
-    formatRange(b.cream_budget_min,    b.cream_budget_max,    '크림'),
+function getVanityBudgetChips(sessionId: number): string[] {
+  try {
+    const raw = localStorage.getItem(`vanity_budget_${sessionId}`);
+    if (!raw) return [];
+    const b: Record<string, number | null> = JSON.parse(raw);
+    return [
+      fmtChip(b.budget_min,   b.budget_max,   '전체'),
+      fmtChip(b.toner_min,    b.toner_max,    '토너'),
+      fmtChip(b.emulsion_min, b.emulsion_max, '에멀젼'),
+      fmtChip(b.ampoule_min,  b.ampoule_max,  '앰플'),
+      fmtChip(b.cream_min,    b.cream_max,    '크림'),
+    ].filter(Boolean) as string[];
+  } catch { return []; }
+}
+
+function getBudgetChips(b: BudgetInfo): string[] {
+  return [
+    fmtChip(b.total_budget_min,    b.total_budget_max,    '전체'),
+    fmtChip(b.toner_budget_min,    b.toner_budget_max,    '토너'),
+    fmtChip(b.emulsion_budget_min, b.emulsion_budget_max, '에멀젼'),
+    fmtChip(b.ampoule_budget_min,  b.ampoule_budget_max,  '앰플'),
+    fmtChip(b.cream_budget_min,    b.cream_budget_max,    '크림'),
   ].filter(Boolean) as string[];
-  return parts.length > 0 ? parts.join(' · ') : '예산 미설정';
 }
 
 
@@ -319,16 +335,26 @@ export default function RoutineHistoryPage() {
                                 {vanitySessionIds.has(session.session_id) && (
                                   <div className="rh-session-budget" style={{ marginBottom: 6 }}>
                                     <span className="rh-session-budget-label">고정 제품</span>
-                                    <span className="rh-session-budget-value" style={{ color: '#7c3aed' }}>
+                                    <span className="rh-session-budget-value" style={{ color: '#000000' }}>
                                       {vanityFixedBySession[session.session_id]?.join(', ') || '—'}
                                     </span>
                                   </div>
                                 )}
                                 <div className="rh-session-budget">
                                   <span className="rh-session-budget-label">예산 조건</span>
-                                  <span className="rh-session-budget-value">
-                                    {isLoadingB ? '불러오는 중...' : budget ? getBudgetLabel(budget) : '—'}
-                                  </span>
+                                  {isLoadingB && !vanitySessionIds.has(session.session_id)
+                                    ? <span className="rh-session-budget-value">불러오는 중...</span>
+                                    : (() => {
+                                        const chips = vanitySessionIds.has(session.session_id)
+                                          ? getVanityBudgetChips(session.session_id)
+                                          : budget ? getBudgetChips(budget) : [];
+                                        return chips.length > 0
+                                          ? chips.map(chip => (
+                                              <span key={chip} style={{ fontSize: 11, color: '#4B5563', background: '#F3F4F6', padding: '2px 8px', borderRadius: 999, fontWeight: 600, whiteSpace: 'nowrap' }}>{chip}</span>
+                                            ))
+                                          : <span className="rh-session-budget-value" style={{ color: '#9CA3AF', fontFamily: 'inherit', fontSize: 12 }}>미설정</span>;
+                                      })()
+                                  }
                                 </div>
                               </div>
                               <ChevronRight size={20} color="#7c3aed" />

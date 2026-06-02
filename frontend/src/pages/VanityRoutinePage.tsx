@@ -7,6 +7,7 @@ import {
   FlaskConical, Clock, FileText,
 } from 'lucide-react';
 import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useAuth } from '../context/useAuth';
 import './RoutinePage.css';
 
 const CATEGORY_KO: Record<string, string> = {
@@ -102,8 +103,38 @@ const BACK_BTN: React.CSSProperties = {
 export default function VanityRoutinePage() {
   const location = useLocation();
   const navigate  = useNavigate();
+  const { nickname } = useAuth();
+  const displayName = nickname || '내';
 
   const passedResult: VanityRoutineResult | null = location.state?.result ?? null;
+  const stateBudget: Record<string, number> | null = location.state?.budgetBody ?? null;
+
+  const getBudgetBody = (sessionId?: number): Record<string, number> | null => {
+    if (stateBudget) return stateBudget;
+    if (!sessionId) return null;
+    try {
+      const raw = localStorage.getItem(`vanity_budget_${sessionId}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  };
+
+  const fmtBudgetChips = (b: Record<string, number> | null): string[] => {
+    if (!b) return [];
+    const fmt = (min: number | undefined, max: number | undefined, label: string) => {
+      if (min == null && max == null) return null;
+      if (min != null && max != null) return `${label} ${min/10000}~${max/10000}만원`;
+      if (max != null) return `${label} ${max/10000}만원 이하`;
+      if (min != null && min > 0) return `${label} ${min/10000}만원 이상`;
+      return null;
+    };
+    return [
+      fmt(b.budget_min,   b.budget_max,   '전체'),
+      fmt(b.toner_min,    b.toner_max,    '토너'),
+      fmt(b.emulsion_min, b.emulsion_max, '에멀젼'),
+      fmt(b.ampoule_min,  b.ampoule_max,  '앰플'),
+      fmt(b.cream_min,    b.cream_max,    '크림'),
+    ].filter((c): c is string => c !== null);
+  };
 
   const [result, setResult]   = useState<VanityRoutineResult | null>(passedResult);
   const [imageMap, setImageMap] = useState<Record<number, string>>({});
@@ -143,6 +174,8 @@ export default function VanityRoutinePage() {
     </div>
   );
 
+  const budgetChips = fmtBudgetChips(getBudgetBody(result.recommendation_session_id));
+
   const items      = [...(result.routine_recommendation_results?.final_routine ?? [])].sort((a, b) => a.slot_order - b.slot_order);
   const required   = items.filter(p => !OPTIONAL_CATEGORIES.has(p.category));
   const optional   = items.filter(p => OPTIONAL_CATEGORIES.has(p.category));
@@ -162,14 +195,24 @@ export default function VanityRoutinePage() {
             <ChevronLeft size={15} />내 화장대로
           </button>
           <div className="rp-hero-badge">SKIN FIT · ROUTINE</div>
-          <h1 className="rp-hero-title">내 화장대로 완성한 루틴</h1>
-          <p className="rp-hero-sub">쓰던 제품을 유지하면서 AI가 최적으로 구성했어요</p>
+          <h1 className="rp-hero-title">
+            <span className="rp-hero-name">{displayName}</span>님,<br />
+            <span className="rp-hero-highlight">화장대 루틴 리포트</span>가 도착했어요
+          </h1>
           {basis?.analyzed_at && (
             <p className="rp-hero-date">피부 분석 기준: {formatDate(basis.analyzed_at)}</p>
           )}
           {result.created_at && (
             <p className="rp-hero-date">추천일: {formatDate(result.created_at)}</p>
           )}
+          <div className="rp-budget-row">
+            <Banknote size={13} color="#9CA3AF" style={{ flexShrink: 0, marginTop: 1 }} />
+            <span className="rp-budget-row-label">예산 조건</span>
+            {budgetChips.length > 0
+              ? budgetChips.map((chip) => <span key={chip} className="rp-budget-chip">{chip}</span>)
+              : <span className="rp-budget-row-label" style={{ color: '#9CA3AF' }}>미설정</span>
+            }
+          </div>
           <div style={{ display:'flex', gap:10, marginTop:16, flexWrap:'wrap' }}>
             <button onClick={() => navigate('/vanity/routine/history')}
               style={{ background:'none', border:'1.5px solid rgba(167,139,250,0.5)', color:'#835aff', fontSize:13, fontWeight:700, padding:'8px 18px', borderRadius:8, cursor:'pointer', fontFamily:'Noto Sans KR, sans-serif', display:'flex', alignItems:'center', gap:6 }}>

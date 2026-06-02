@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AuthContext } from './AuthContext';
+import { userApi } from '../api/user';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(
@@ -31,8 +32,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setNickname(null);
   };
 
+  const updateNickname = (nick: string) => {
+    localStorage.setItem('nickname', nick);
+    setNickname(nick);
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    userApi.getMe().then((profile) => {
+      const fresh = profile.nickname || profile.user_name;
+      if (fresh) updateNickname(fresh);
+    }).catch(() => {});
+  }, [isLoggedIn]);
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, userId, nickname, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, userId, nickname, login, logout, updateNickname }}>
       {children}
     </AuthContext.Provider>
   );
