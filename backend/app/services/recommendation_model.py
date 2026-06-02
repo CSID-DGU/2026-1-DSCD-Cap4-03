@@ -29,6 +29,9 @@ def _prepare_model_imports() -> None:
     os.environ["ROUPLE_MYSQL_USER"] = settings.mysql_user
     os.environ["ROUPLE_MYSQL_PASSWORD"] = settings.mysql_password
     os.environ["ROUPLE_MYSQL_DB"] = settings.mysql_db
+    os.environ.setdefault("EMBED_LOCAL_FILES_ONLY", "1")
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 
 def _candidate_count(db: Session, image_id: int) -> int:

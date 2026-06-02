@@ -13,6 +13,7 @@ from app.schemas.skin_analysis import (
 )
 from app.services.deps import get_current_user
 from app.services.db_user import ensure_profile, get_user_image
+from app.services.files import resolve_image_display_url
 from app.services.llm_service import generate_skin_summary_llm
 from app.services.skin_model_service import analyze_skin_image
 
@@ -181,7 +182,7 @@ def get_skin_analysis(
         generated_at=summary["generated_at"],
         summary_comment=summary["summary_comment"],
         indicator_comments=summary["indicator_comments"],
-        image_url=image.storage_url if image else "",
+        image_url=resolve_image_display_url(image.storage_url, image.s3_key) if image else "",
         skin_type=profile.skin_type if profile else None,
         raw_metrics=result["raw_metrics"],
         display_scores=result["display_scores"],

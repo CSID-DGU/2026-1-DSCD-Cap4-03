@@ -39,6 +39,9 @@ def save_vanity_routine_result(
     result_id: int,
     routine: VanityRoutineResult,
     budget: int | None = None,
+    total_budget_min: int | None = None,
+    slot_budget_min_map: dict[str, int] | None = None,
+    slot_budget_max_map: dict[str, int] | None = None,
 ) -> int:
     skin_result = load_skin_result(user_id=user_id, result_id=result_id)
     image_id = skin_result.get("image_id")
@@ -51,10 +54,10 @@ def save_vanity_routine_result(
         "image_id": image_id,
         "result_id": result_id,
         "strict_budget": 0,
-        "total_budget_min": None,
+        "total_budget_min": int(total_budget_min) if total_budget_min is not None else None,
         "total_budget_max": int(budget) if budget is not None else None,
-        "slot_budget_min_json": None,
-        "slot_budget_max_json": None,
+        "slot_budget_min_json": json.dumps(slot_budget_min_map, ensure_ascii=False) if slot_budget_min_map else None,
+        "slot_budget_max_json": json.dumps(slot_budget_max_map, ensure_ascii=False) if slot_budget_max_map else None,
         "budget_check_passed": 1,
         "session_status": "SUCCESS",
         "failure_reason": None,

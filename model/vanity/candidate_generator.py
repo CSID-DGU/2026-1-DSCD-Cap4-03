@@ -179,6 +179,10 @@ def prepare_vanity_candidates(
     user_id: int,
     result_id: int | None = None,
     budget: int | None = None,
+    total_budget_min: int | None = None,
+    total_budget_max: int | None = None,
+    slot_budget_min_map: dict[str, int] | None = None,
+    slot_budget_max_map: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
     profile = load_user_profile(user_id)
     skin_result = load_skin_result(user_id=user_id, result_id=result_id)
@@ -211,7 +215,10 @@ def prepare_vanity_candidates(
         candidates,
         session_id=session_id,
         gender=gender,
-        total_budget_max=budget,
+        total_budget_min=total_budget_min,
+        total_budget_max=total_budget_max if total_budget_max is not None else budget,
+        slot_budget_min_map=slot_budget_min_map,
+        slot_budget_max_map=slot_budget_max_map,
     )
     if filtered.empty:
         return []

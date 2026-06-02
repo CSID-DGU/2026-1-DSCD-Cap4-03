@@ -11,6 +11,10 @@ class VanityPipelineInput:
     vanity_product_ids: list[int] | None = None
     fixed_product_ids: list[int] | None = None
     budget: int | None = None
+    total_budget_min: int | None = None
+    total_budget_max: int | None = None
+    slot_budget_min_map: dict[str, int] | None = None
+    slot_budget_max_map: dict[str, int] | None = None
 
 
 @dataclass(frozen=True)
