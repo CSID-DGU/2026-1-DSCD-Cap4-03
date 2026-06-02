@@ -1,7 +1,14 @@
 # retriever.py
 from __future__ import annotations
 
+import os
 from pathlib import Path
+
+# Demo/runtime default: use the already downloaded HuggingFace cache.
+# Set EMBED_LOCAL_FILES_ONLY=0 only when intentionally downloading the model.
+if os.getenv("EMBED_LOCAL_FILES_ONLY", "1") == "1":
+    os.environ.setdefault("HF_HUB_OFFLINE", "1")
+    os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 import numpy as np
 import pandas as pd
@@ -17,6 +24,36 @@ from .config import (
     SEMANTIC_WEIGHT,
 )
 from .corpus_builder import build_product_doc_by_style, build_query_profile, build_query_text
+
+
+_MODEL_CACHE: dict[tuple[str, str, bool], SentenceTransformer] = {}
+
+
+def _load_sentence_transformer(model_name: str, device: str) -> SentenceTransformer:
+    local_only = os.getenv("EMBED_LOCAL_FILES_ONLY", "1") == "1"
+    cache_key = (model_name, device, local_only)
+    if cache_key in _MODEL_CACHE:
+        return _MODEL_CACHE[cache_key]
+
+    if local_only:
+        print(f"[retriever] load model from local cache only: {model_name}")
+        try:
+            model = SentenceTransformer(model_name, device=device, local_files_only=True)
+        except TypeError:
+            os.environ.setdefault("HF_HUB_OFFLINE", "1")
+            os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+            model = SentenceTransformer(model_name, device=device)
+        except Exception as exc:
+            raise RuntimeError(
+                "Embedding model local cache load failed. "
+                "Run once with EMBED_LOCAL_FILES_ONLY=0 to download BAAI/bge-m3, "
+                "or pre-download the model before the demo."
+            ) from exc
+    else:
+        model = SentenceTransformer(model_name, device=device)
+
+    _MODEL_CACHE[cache_key] = model
+    return model
 
 
 def load_or_create_embeddings(
@@ -77,7 +114,7 @@ def run_retrieval(
 ) -> pd.DataFrame:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"[retriever] device={device}")
-    model = SentenceTransformer(model_name, device=device)
+    model = _load_sentence_transformer(model_name, device)
 
     corpus_df = corpus_df.copy()
 

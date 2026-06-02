@@ -22,6 +22,7 @@ from app.services.db_catalog import get_product_or_404, serialize_product_list_i
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
+LLM_ROOT = PROJECT_ROOT / "model" / "llm"
 
 DISPLAY_LABELS = {
     "excellent_match": "아주 잘 맞아요",
@@ -49,6 +50,8 @@ def _http_error(status_code: int, error_code: str, message: str) -> HTTPExceptio
 def _prepare_model_imports() -> None:
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
+    if str(LLM_ROOT) not in sys.path:
+        sys.path.insert(0, str(LLM_ROOT))
 
     os.environ["ROUPLE_MYSQL_HOST"] = settings.mysql_host
     os.environ["ROUPLE_MYSQL_PORT"] = str(settings.mysql_port)
@@ -261,10 +264,18 @@ def delete_vanity_product(db: Session, user_id: int, product_id: int) -> dict[st
         {"user_id": user_id, "product_id": product_id},
     )
     db.commit()
+    skin_match_session_id = None
+    if _owned_product_ids(db, user_id):
+        try:
+            skin_match = run_skin_match(db, user_id, product_ids=None)
+            skin_match_session_id = skin_match.get("match_session_id")
+        except HTTPException:
+            skin_match_session_id = _latest_match_session_id(db, user_id)
+
     return {
         "product_id": product_id,
         "saved": False,
-        "match_session_id": _latest_match_session_id(db, user_id),
+        "match_session_id": skin_match_session_id,
         "message": "내 화장대에서 제품이 삭제되었습니다.",
     }
 
@@ -340,8 +351,9 @@ def _prepare_llm_product_matches(product_match_results: list[dict[str, Any]]) ->
                 "category": item.get("category") or "",
                 "brand_name": item.get("brand_name") or "",
                 "product_name": item.get("product_name") or "",
-                "fit_score": _as_llm_fit_score(item.get("fit_score", item.get("vanity_fit_score"))),
+                "vanity_fit_score": float(item.get("vanity_fit_score") or item.get("fit_score") or 0.0),
                 "fit_label": str(item.get("fit_label") or "so_so"),
+                "recommend_action": str(item.get("recommend_action") or "neutral"),
                 "reason_tags": _filter_llm_tags(item.get("reason_tags"), VANITY_LLM_REASON_TAGS),
                 "caution_tags": _filter_llm_tags(item.get("caution_tags"), VANITY_LLM_CAUTION_TAGS),
             }
@@ -363,6 +375,7 @@ def _prepare_llm_routine_result(routine_result: dict[str, Any]) -> dict[str, Any
                 "brand_name": item.get("brand_name") or "",
                 "product_name": item.get("product_name") or "",
                 "source": source,
+                "product_score": item.get("product_score"),
                 "price": int(item.get("price") or 0),
             }
         )
@@ -400,53 +413,111 @@ def _enrich_skin_match_comments(
             product_id = int(comment.get("product_id"))
         except (TypeError, ValueError):
             continue
-        product = products_by_id.get(product_id, {})
-        display_label = product.get("display_label") or DISPLAY_LABELS.get(str(product.get("fit_label")), "")
-        fallback = _skin_match_explanation([product])["product_comments"][0] if product else {}
         enriched.append(
             {
                 "product_id": product_id,
-                "summary": comment.get("summary") or fallback.get("summary") or "",
-                "fit_reason": comment.get("fit_reason") or fallback.get("fit_reason") or "",
-                "caution_comment": comment.get("caution_comment") or fallback.get("caution_comment") or "",
-                "action_comment": comment.get("action_comment") or fallback.get("action_comment") or "",
-                "display_label": display_label,
+                "summary": comment.get("summary") or "",
+                "fit_reason": comment.get("fit_reason") or "",
+                "caution_comment": comment.get("caution_comment") or "",
+                "action_comment": comment.get("action_comment") or "",
             }
         )
 
-    overall_summary = skin_match.get("overall_summary")
-    if not overall_summary:
-        overall_summary = _skin_match_explanation(product_match_results).get("overall_summary", "")
-
     llm_explanation["skin_match"] = {
-        **skin_match,
-        "overall_summary": overall_summary,
+        "overall_summary": skin_match.get("overall_summary") or "",
         "product_comments": enriched,
     }
     return llm_explanation
 
 
-def _skin_match_explanation(product_match_results: list[dict[str, Any]]) -> dict[str, Any]:
-    total = len(product_match_results)
-    excellent = sum(1 for item in product_match_results if item.get("fit_label") == "excellent_match")
-    good = sum(1 for item in product_match_results if item.get("fit_label") == "good_match")
-    overall = f"총 {total}개 제품을 분석했어요. 아주 적합 {excellent}개, 적합 {good}개로 확인되었습니다."
+def _needs_vanity_skin_match_llm(
+    llm_explanation: dict[str, Any] | None,
+    product_match_results: list[dict[str, Any]],
+) -> bool:
+    if not product_match_results:
+        return False
+    if not isinstance(llm_explanation, dict):
+        return True
+    if llm_explanation.get("prompt_version") != "vanity_v1":
+        return True
+    skin_match = llm_explanation.get("skin_match")
+    if not isinstance(skin_match, dict):
+        return True
+    comments = skin_match.get("product_comments")
+    if not isinstance(comments, list) or len(comments) != len(product_match_results):
+        return True
+    expected_ids = [int(item["product_id"]) for item in product_match_results]
+    actual_ids = []
+    for comment in comments:
+        if not isinstance(comment, dict):
+            return True
+        required_fields = ("summary", "fit_reason", "caution_comment", "action_comment")
+        if any(comment.get(field) in (None, "") for field in required_fields):
+            return True
+        try:
+            actual_ids.append(int(comment.get("product_id")))
+        except (TypeError, ValueError):
+            return True
+    return actual_ids != expected_ids
 
+
+def _skin_match_explanation_legacy(product_match_results: list[dict[str, Any]]) -> dict[str, Any]:
     comments = []
     for item in product_match_results:
         display_label = item.get("display_label") or DISPLAY_LABELS.get(str(item.get("fit_label")), "")
         reason_tags = item.get("reason_tags") or []
         caution_tags = item.get("caution_tags") or []
+        fit_score = _as_llm_fit_score(item.get("fit_score", item.get("vanity_fit_score")))
+        detail = "피부 고민, 피부 타입, 리뷰 정보를 함께 반영해 계산했습니다." if reason_tags else "강한 긍정 태그는 적지만 기본 적합도 기준으로 판단했습니다."
+        if caution_tags:
+            detail += " 처음 사용할 때 피부 반응을 가볍게 확인해 주세요."
         comments.append(
             {
                 "product_id": int(item["product_id"]),
-                "summary": f"{item.get('brand_name', '')} {item.get('product_name', '')}은(는) {display_label} 제품이에요.",
-                "fit_reason": "피부 고민, 피부 타입, 리뷰 정보를 함께 반영해 계산했습니다." if reason_tags else "강한 긍정 태그는 적지만 기본 적합도 기준으로 판단했습니다.",
-                "caution_comment": "처음 사용할 때 피부 반응을 가볍게 확인해 주세요." if caution_tags else "",
-                "action_comment": "현재 루틴에서 유지해도 괜찮아요." if item.get("recommend_action") in {"strong_keep", "keep"} else "부족한 부분은 루틴 추천에서 보완해 주세요.",
+                "fit_reason": f"피부 적합도 {fit_score}점으로 {display_label} 제품이에요. {detail}",
             }
         )
-    return {"overall_summary": overall, "product_comments": comments}
+    return {"product_comments": comments}
+
+
+def _skin_match_explanation(product_match_results: list[dict[str, Any]]) -> dict[str, Any]:
+    comments = []
+    total_count = len(product_match_results)
+    excellent_count = sum(1 for item in product_match_results if item.get("fit_label") == "excellent_match")
+    good_count = sum(1 for item in product_match_results if item.get("fit_label") == "good_match")
+
+    for item in product_match_results:
+        display_label = item.get("display_label") or DISPLAY_LABELS.get(str(item.get("fit_label")), "")
+        reason_tags = item.get("reason_tags") or []
+        caution_tags = item.get("caution_tags") or []
+        fit_score = _as_llm_fit_score(item.get("fit_score", item.get("vanity_fit_score")))
+        product_name = item.get("product_name") or "이 제품"
+        summary = f"{product_name}은(는) {display_label} 제품이에요."
+        fit_reason = (
+            f"피부 적합도 {fit_score}점으로, 피부 고민과 피부 타입 정보를 함께 반영해 계산했습니다."
+            if reason_tags
+            else f"피부 적합도 {fit_score}점으로, 기본 적합도 기준에서 무난하게 판단했습니다."
+        )
+        caution_comment = "처음 사용할 때 피부 반응을 가볍게 확인해 주세요." if caution_tags else ""
+        action_comment = (
+            "현재 루틴에서 유지해도 괜찮아요."
+            if str(item.get("recommend_action") or "") in {"strong_keep", "keep"}
+            else "부족한 부분은 루틴 추천에서 보완해 주세요."
+        )
+        comments.append(
+            {
+                "product_id": int(item["product_id"]),
+                "summary": summary,
+                "fit_reason": fit_reason,
+                "caution_comment": caution_comment,
+                "action_comment": action_comment,
+            }
+        )
+
+    return {
+        "overall_summary": f"총 {total_count}개 보유 제품을 분석했고, 아주 적합 {excellent_count}개, 적합 {good_count}개로 확인되었습니다.",
+        "product_comments": comments,
+    }
 
 
 def _routine_explanation(routine_result: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -599,9 +670,10 @@ def generate_vanity_llm_explanation(
     product_match_results: list[dict[str, Any]],
     routine_result: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    _prepare_model_imports()
     _prepare_llm_env()
     try:
-        from model.llm.vanity_llm import generate_vanity_llm_result
+        from model.llm.vanity_llm_v1 import generate_vanity_llm_result
 
         if not routine_result or not routine_result.get("final_routine"):
             routine_result = _skin_match_only_routine(product_match_results)
@@ -734,6 +806,8 @@ def run_vanity_routine(db: Session, user_id: int, fixed_product_ids: list[int], 
     basis = basis_skin_result(db, user_id)
     _ensure_owned_products(db, user_id, fixed_product_ids)
     total_budget_max = getattr(budget_payload, "total_budget_max", None) if budget_payload is not None else None
+    total_budget_min = getattr(budget_payload, "total_budget_min", None) if budget_payload is not None else None
+    slot_budget_min, slot_budget_max = _slot_budget_maps(budget_payload)
 
     _sync_model_db_config()
     try:
@@ -747,6 +821,10 @@ def run_vanity_routine(db: Session, user_id: int, fixed_product_ids: list[int], 
                 vanity_product_ids=None,
                 fixed_product_ids=fixed_product_ids,
                 budget=total_budget_max,
+                total_budget_min=total_budget_min,
+                total_budget_max=total_budget_max,
+                slot_budget_min_map=slot_budget_min,
+                slot_budget_max_map=slot_budget_max,
             ),
             save_skin_match=True,
             save_routine=True,
@@ -927,10 +1005,17 @@ def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
 
     basis = basis_skin_result(db, user_id, int(session_row["result_id"]))
     llm_explanation = store.vanity_skin_match_explanations.get(int(match_session_id))
-    if llm_explanation is None:
-        llm_explanation = build_vanity_llm_explanation(results, None)
+    if _needs_vanity_skin_match_llm(llm_explanation, results):
+        llm_explanation = generate_vanity_llm_explanation(
+            db=db,
+            user_id=user_id,
+            result_id=basis["result_id"],
+            product_match_results=results,
+        )
         store.vanity_skin_match_explanations[int(match_session_id)] = llm_explanation
         save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
+    elif llm_explanation is None:
+        llm_explanation = build_vanity_llm_explanation(results, None)
 
     return {
         "match_session_id": match_session_id,

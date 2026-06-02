@@ -67,14 +67,14 @@ class ProductMatchResult(BaseModel):
 
 class SkinMatchProductComment(BaseModel):
     product_id: int
-    summary: str
+    summary: str = ""
     fit_reason: str
-    caution_comment: str
-    action_comment: str
+    caution_comment: str = ""
+    action_comment: str = ""
 
 
 class SkinMatchExplanation(BaseModel):
-    overall_summary: str
+    overall_summary: str = ""
     product_comments: list[SkinMatchProductComment] = Field(default_factory=list)
 
 
@@ -107,6 +107,16 @@ class VanitySkinMatchResponse(BaseModel):
 
 class VanityRoutineRequest(BaseModel):
     fixed_product_ids: list[int] = Field(default_factory=list)
+    budget_min: int | None = Field(default=None, ge=0)
+    budget_max: int | None = Field(default=None, ge=0)
+    toner_min: int | None = Field(default=None, ge=0)
+    toner_max: int | None = Field(default=None, ge=0)
+    emulsion_min: int | None = Field(default=None, ge=0)
+    emulsion_max: int | None = Field(default=None, ge=0)
+    ampoule_min: int | None = Field(default=None, ge=0)
+    ampoule_max: int | None = Field(default=None, ge=0)
+    cream_min: int | None = Field(default=None, ge=0)
+    cream_max: int | None = Field(default=None, ge=0)
     total_budget_min: int | None = Field(default=None, ge=0)
     total_budget_max: int | None = Field(default=None, ge=0)
     toner_budget_min: int | None = Field(default=None, ge=0)
@@ -120,6 +130,27 @@ class VanityRoutineRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_fixed_products(self) -> "VanityRoutineRequest":
+        if self.total_budget_min is None:
+            self.total_budget_min = self.budget_min
+        if self.total_budget_max is None:
+            self.total_budget_max = self.budget_max
+        if self.toner_budget_min is None:
+            self.toner_budget_min = self.toner_min
+        if self.toner_budget_max is None:
+            self.toner_budget_max = self.toner_max
+        if self.emulsion_budget_min is None:
+            self.emulsion_budget_min = self.emulsion_min
+        if self.emulsion_budget_max is None:
+            self.emulsion_budget_max = self.emulsion_max
+        if self.ampoule_budget_min is None:
+            self.ampoule_budget_min = self.ampoule_min
+        if self.ampoule_budget_max is None:
+            self.ampoule_budget_max = self.ampoule_max
+        if self.cream_budget_min is None:
+            self.cream_budget_min = self.cream_min
+        if self.cream_budget_max is None:
+            self.cream_budget_max = self.cream_max
+
         if not self.fixed_product_ids:
             raise ValueError("fixed_product_ids must not be empty")
         if len(set(self.fixed_product_ids)) != len(self.fixed_product_ids):

@@ -16,6 +16,7 @@ from app.services.db_user import (
     update_user_profile,
 )
 from app.services.deps import get_current_user
+from app.services.files import resolve_image_display_url
 from app.services.recommendation_model import get_recommendation_session_or_404, serialize_recommendation_session
 
 
@@ -153,7 +154,8 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 sar.pore_score,
                 sar.pigmentation_score,
                 sar.wrinkle_score,
-                ui.storage_url AS image_url
+                ui.storage_url AS image_url,
+                ui.s3_key AS s3_key
             FROM skin_analysis_result sar
             LEFT JOIN user_image ui
               ON ui.image_id = sar.image_id
@@ -174,7 +176,7 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 "image_id": int(row["image_id"]),
                 "analyzed_at": analyzed_at,
                 "skin_type": profile.skin_type if profile else None,
-                "image_url": row["image_url"],
+                "image_url": resolve_image_display_url(row["image_url"], row["s3_key"]),
                 "display_scores": {
                     "acne": float(row["acne_score"] or 0),
                     "dryness": float(row["dryness_score"] or 0),
@@ -200,7 +202,7 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 "image_id": row["image_id"],
                 "analyzed_at": row["analyzed_at"],
                 "skin_type": profile.skin_type if profile else None,
-                "image_url": image.storage_url if image else None,
+                "image_url": resolve_image_display_url(image.storage_url, image.s3_key) if image else None,
                 "display_scores": row.get("display_scores", {}),
                 "ai_comment": summary.get("summary_comment", "아직 분석 요약이 준비되지 않았습니다."),
             }
