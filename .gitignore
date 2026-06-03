@@ -68,3 +68,6 @@ frontend/*
 freeze
 requirements_min.txt
 test_img/
+
+# AWS credentials
+rouple-Cap4.pem

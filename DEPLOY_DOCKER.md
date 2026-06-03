@@ -4,6 +4,7 @@ This deployment uses lightweight Docker images.
 
 - Backend and frontend are built as Docker images.
 - MySQL is expected to run on AWS RDS.
+- Neo4j runs as a Docker Compose service on the EC2 host.
 - S3 and the DGU LLM API are external services.
 - Large model artifacts are not copied into the backend image. They are mounted from the EC2 host.
 
@@ -48,9 +49,9 @@ MYSQL_USER=your-user
 MYSQL_PASSWORD=your-password
 MYSQL_DB=Rouple_db
 
-NEO4J_URI=bolt://your-neo4j-host:7687
+NEO4J_URI=bolt://neo4j:7687
 NEO4J_USER=neo4j
-NEO4J_PASSWORD=your-password
+NEO4J_PASSWORD=cap4cap4
 
 S3_BUCKET=your-bucket
 S3_REGION=ap-northeast-2
@@ -87,13 +88,37 @@ Check logs:
 ```bash
 docker compose logs -f backend
 docker compose logs -f frontend
+docker compose logs -f neo4j
 ```
 
-## 5. Test
+## 5. Load Neo4j Knowledge Graph
+
+Run this once after MySQL cosmetic data is loaded and the Neo4j container is healthy:
+
+```bash
+docker compose exec backend python -u -B -m model.recommendation.kg_pipeline.neo4j_skincare.graph.load_graph --mode static
+```
+
+You can check Neo4j from the EC2 host:
+
+```bash
+docker compose exec backend python -u -B -m model.recommendation.kg_pipeline.neo4j_skincare.tools.test_connection
+```
+
+Neo4j browser is available only if port `7474` is opened in the EC2 security group:
+
+```text
+http://EC2_PUBLIC_IP:7474
+```
+
+For normal service use, only the backend needs internal access to `bolt://neo4j:7687`.
+
+## 6. Test
 
 ```text
 Frontend: http://EC2_PUBLIC_IP
 Backend docs: http://EC2_PUBLIC_IP:8000/docs
+Neo4j browser: http://EC2_PUBLIC_IP:7474
 ```
 
 Recommended test order:
