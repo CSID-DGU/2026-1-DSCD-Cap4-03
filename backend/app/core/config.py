@@ -26,6 +26,9 @@ class Settings:
     mysql_user: str = os.getenv("MYSQL_USER", "root")
     mysql_password: str = os.getenv("MYSQL_PASSWORD", "")
     mysql_db: str = os.getenv("MYSQL_DB", "Rouple_db")
+    neo4j_uri: str = os.getenv("NEO4J_URI", "bolt://localhost:7687")
+    neo4j_user: str = os.getenv("NEO4J_USER", "neo4j")
+    neo4j_password: str = os.getenv("NEO4J_PASSWORD", "cap4cap4")
     database_url: str | None = os.getenv("DATABASE_URL")
     db_auto_create_tables: bool = os.getenv("DB_AUTO_CREATE_TABLES", "true").lower() == "true"
     openai_api_key: str | None = os.getenv("OPENAI_API_KEY")

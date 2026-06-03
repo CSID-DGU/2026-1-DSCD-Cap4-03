@@ -1,0 +1,37 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: rouple-backend:latest
+    env_file:
+      - ./backend/.env
+    environment:
+      USE_LOCAL_SQLITE: "false"
+      BACKEND_HOST: "0.0.0.0"
+      BACKEND_PORT: "8000"
+      SKIN_MODEL_CHECKPOINT: /app/model/skin_analysis/best_260507_21.pt
+      EMBED_LOCAL_FILES_ONLY: "1"
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    volumes:
+      - /opt/rouple/model_artifacts/skin_analysis/best_260507_21.pt:/app/model/skin_analysis/best_260507_21.pt:ro
+      - /opt/rouple/model_artifacts/embedding_results:/app/model/recommendation/embedding_pipeline/embedding_results:ro
+      - /opt/rouple/huggingface_cache:/root/.cache/huggingface:ro
+      - ./backend/llm_outputs:/app/backend/llm_outputs
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    image: rouple-frontend:latest
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    restart: unless-stopped

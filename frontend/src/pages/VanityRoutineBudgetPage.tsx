@@ -234,8 +234,6 @@ export default function VanityRoutineBudgetPage() {
     </div>
   );
 
-  const BUDGET_CATS: Category[] = ['전체', '토너', '에멀젼', '앰플', '크림'];
-
   return (
     <div className="vr-page">
       <div className="vr-banner">

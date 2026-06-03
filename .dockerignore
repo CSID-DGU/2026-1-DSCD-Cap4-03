@@ -1,0 +1,40 @@
+.git
+.gitignore
+.venv
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+
+# Local/runtime secrets and generated data
+backend/.env
+backend/uploads
+backend/llm_outputs
+backend/app/db/*.json
+backend/rouple_dev.db
+
+# Frontend generated dependencies/build outputs
+frontend/node_modules
+frontend/dist
+
+# Non-runtime project materials
+cosmetic_crawling
+DB
+DSCD_수업내용
+test_img
+scripts
+*.ipynb
+
+# Training/test/experiment artifacts
+model/skin_analysis/image_sample
+model/skin_analysis_resnet
+model/recommendation/embedding_old
+model/recommendation/embedding_test
+model/recommendation/evaluation_outputs
+model/recommendation/evaluation_metrics.ipynb
+model/vanity/experiments
+model/llm/*.zip
+
+# Model artifacts are mounted from EC2 volume in deployment.
+model/skin_analysis/*.pt
+model/recommendation/embedding_pipeline/embedding_results

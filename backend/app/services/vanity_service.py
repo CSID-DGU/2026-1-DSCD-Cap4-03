@@ -70,6 +70,9 @@ def _sync_model_db_config() -> None:
         kg_config.MYSQL_USER = settings.mysql_user
         kg_config.MYSQL_PASSWORD = settings.mysql_password
         kg_config.MYSQL_DB = settings.mysql_db
+        kg_config.NEO4J_URI = settings.neo4j_uri
+        kg_config.NEO4J_USER = settings.neo4j_user
+        kg_config.NEO4J_PASS = settings.neo4j_password
     except ModuleNotFoundError:
         pass
 

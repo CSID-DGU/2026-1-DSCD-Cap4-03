@@ -59,6 +59,10 @@ backend/API_SPEC.md
 model/skin_analysis/
 model/llm/
 frontend/
+!frontend/
+frontend/*
+!frontend/Dockerfile
+!frontend/nginx.conf
 
 # Local dumps / temporary outputs
 freeze

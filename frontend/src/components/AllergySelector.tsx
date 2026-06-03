@@ -179,7 +179,7 @@ export default function AllergySelector({ value, onChange }: Props) {
     }
   };
 
-  const handleIngredient = (cat: AllergyCategory, ingId: number) => {
+  const handleIngredient = (_cat: AllergyCategory, ingId: number) => {
     const has = value.ingredientIds.includes(ingId);
     onChange({
       ...value,

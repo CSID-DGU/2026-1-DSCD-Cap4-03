@@ -4,7 +4,7 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, ResponsiveContainer, PolarRadiusAxis,
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
-import { Sparkles, Bot, Wand2 } from 'lucide-react';
+import { Bot, Wand2 } from 'lucide-react';
 import { analysisApi, type AnalysisResult, type SkinHistoryItem } from '../api/analysis';
 import { userApi } from '../api/user';
 import { useAuth } from '../context/useAuth';
