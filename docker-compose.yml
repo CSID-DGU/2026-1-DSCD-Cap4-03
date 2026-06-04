@@ -40,7 +40,7 @@ services:
     volumes:
       - /opt/rouple/model_artifacts/skin_analysis/best_260507_21.pt:/app/model/skin_analysis/best_260507_21.pt:ro
       - /opt/rouple/model_artifacts/embedding_results:/app/model/recommendation/embedding_pipeline/embedding_results:ro
-      - /opt/rouple/huggingface_cache:/root/.cache/huggingface:ro
+      - /opt/rouple/huggingface_cache:/root/.cache/huggingface
       - ./backend/llm_outputs:/app/backend/llm_outputs
     ports:
       - "8000:8000"
