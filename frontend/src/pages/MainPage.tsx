@@ -135,8 +135,13 @@ function AnalysisVisual() {
       <rect x="22" y="67" width="243" height="197" rx="8" fill="#f9f7ff" />
 
       {/* 인물 사진 */}
-      <image href="/how-step02-face.png" x="22" y="67" width="243" height="197"
-        preserveAspectRatio="xMidYMid slice" clipPath="url(#faceClip)" />
+      <foreignObject x="22" y="67" width="243" height="197" clipPath="url(#faceClip)">
+        <img
+          src="/how-step02-face.png"
+          alt="피부 분석"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }}
+        />
+      </foreignObject>
 
       {/* 격자 오버레이 */}
       {[90, 115, 140, 165, 190, 215, 240].map(y => (
