@@ -318,6 +318,21 @@ def _routine_time(routine: RecommendationRoutine) -> str:
     return "both"
 
 
+CORE_ROUTINE_CATEGORIES = {
+    "toner",
+    "toner pads",
+    "emulsions",
+    "essences/ampoules/serums",
+    "cream/gel",
+    "face moisturizers",
+}
+
+
+def _is_core_routine_category(category: object) -> bool:
+    normalized = " ".join(str(category or "").strip().lower().split())
+    return normalized in CORE_ROUTINE_CATEGORIES
+
+
 def _routine_description(routine: RecommendationRoutine, total_cost: int, product_count: int) -> str:
     label = _routine_label(routine)
     routine_time = _routine_time(routine).upper()
@@ -335,7 +350,8 @@ def serialize_recommendation_session(db: Session, session: RecommendationSession
             if not item.product:
                 continue
             product_data = serialize_product_list_item(db, item.product)
-            total_cost += product_data["price"]
+            if _is_core_routine_category(item.category or item.product.category):
+                total_cost += product_data["price"]
             products.append(
                 {
                     "product_id": item.product.product_id,

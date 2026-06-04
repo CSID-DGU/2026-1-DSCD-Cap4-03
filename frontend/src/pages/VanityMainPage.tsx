@@ -314,7 +314,7 @@ export default function VanityMainPage() {
                     const imgUrl    = imageMap[item.product_id] || item.image_url;
                     const isOptional = OPTIONAL_CATEGORIES.has(item.category);
                     return (
-                      <div key={item.slot_order} className="vm-product-card"
+                      <div key={item.slot_order} className={`vm-product-card${item.source === 'vanity' ? ' vm-product-card--owned' : ''}`}
                         onClick={() => navigate('/vanity/routine')}>
                         <div className="vm-card-header">
                           <div className={`vm-card-step${isOptional ? ' optional' : ''}`}>
@@ -332,7 +332,7 @@ export default function VanityMainPage() {
                         <div style={{ display:'flex', alignItems:'flex-start', gap:4, flexWrap:'wrap' }}>
                           <div className="vm-product-name" style={{ flex:1 }}>{item.product_name}</div>
                           {item.source === 'vanity' && (
-                            <span style={{ fontSize:9, fontWeight:700, background:'#EDE9FE', color:'#7c3aed', padding:'2px 6px', borderRadius:999, flexShrink:0, marginTop:2 }}>
+                            <span className="vm-routine-source-badge vanity">
                               내 화장품
                             </span>
                           )}

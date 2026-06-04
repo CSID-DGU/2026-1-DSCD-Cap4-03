@@ -14,7 +14,7 @@ const CATEGORY_KO: Record<string, string> = {
   'Balms/Multi-balms': '멀티밤', 'Facial Oils': '페이셜 오일', 'Face Mists': '미스트',
 };
 
-type Category = '전체' | '토너' | '에멀젼' | '앰플' | '크림';
+type Category = '토너' | '에멀젼' | '앰플' | '크림';
 
 const PRODUCT_CAT_TO_BUDGET: Record<string, Category> = {
   'Toner': '토너', 'Toner Pads': '토너',
@@ -34,16 +34,8 @@ const INDIVIDUAL_STEPS: Step[] = [
   { label: 'MAX',   value: null  },
 ];
 
-const TOTAL_STEPS: Step[] = [
-  { label: '0원',    value: 0      },
-  { label: '10만원',  value: 100000  },
-  { label: '15만원', value: 150000 },
-  { label: '20만원', value: 200000 },
-  { label: 'MAX',    value: null   },
-];
-
 const STEPS: Record<Category, Step[]> = {
-  전체: TOTAL_STEPS, 토너: INDIVIDUAL_STEPS, 에멀젼: INDIVIDUAL_STEPS,
+  토너: INDIVIDUAL_STEPS, 에멀젼: INDIVIDUAL_STEPS,
   앰플: INDIVIDUAL_STEPS, 크림: INDIVIDUAL_STEPS,
 };
 
@@ -139,7 +131,7 @@ export default function VanityRoutineBudgetPage() {
 
   const initRange = (cat: Category): RangeIdx => ({ lo: 0, hi: STEPS[cat].length - 1 });
   const [rangeIdx, setRangeIdx] = useState<Record<Category, RangeIdx>>({
-    전체: initRange('전체'), 토너: initRange('토너'), 에멀젼: initRange('에멀젼'),
+    토너: initRange('토너'), 에멀젼: initRange('에멀젼'),
     앰플: initRange('앰플'), 크림: initRange('크림'),
   });
   const setRange = (cat: Category, lo: number, hi: number) =>
@@ -211,14 +203,13 @@ export default function VanityRoutineBudgetPage() {
 
   const handleRun = () => {
     if (selected.size === 0 || hasConflict) return;
-    const 전체 = getMinMax('전체'), 토너 = getMinMax('토너');
+    const 토너 = getMinMax('토너');
     const 에멀젼 = getMinMax('에멀젼'), 앰플 = getMinMax('앰플'), 크림 = getMinMax('크림');
     navigate('/loading', {
       state: {
         type: 'vanity_routine',
         fixed_product_ids: [...selected],
         vanity_budget: {
-          budget_min:   전체.min,   budget_max:   전체.max,
           toner_min:    토너.min,   toner_max:    토너.max,
           emulsion_min: 에멀젼.min, emulsion_max: 에멀젼.max,
           ampoule_min:  앰플.min,  ampoule_max:  앰플.max,
@@ -330,16 +321,6 @@ export default function VanityRoutineBudgetPage() {
           <div className="vr-section">
             <div className="vr-section-title">STEP 2 · 보완 제품 예산 설정</div>
             <div className="vr-section-sub">빈 루틴 단계를 채울 새 제품의 예산 범위를 설정하세요. 건너뛰어도 괜찮아요.</div>
-
-            {/* 전체 예산 — 풀 width */}
-            <div className="vrb-budget-card vrb-budget-card--full">
-              <div className="bgt-head">
-                <span className="vrb-cat-label">전체 예산</span>
-                <span className={`bgt-val-chip${getChipLabel('전체') !== '설정 안함' ? ' set' : ''}`}>{getChipLabel('전체')}</span>
-              </div>
-              <StepSlider steps={STEPS['전체']} lo={rangeIdx['전체'].lo} hi={rangeIdx['전체'].hi}
-                onChange={(lo, hi) => setRange('전체', lo, hi)} />
-            </div>
 
             {/* 카테고리별 2열 */}
             <div className="vrb-budget-grid">

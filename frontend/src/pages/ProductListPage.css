@@ -43,13 +43,22 @@
   padding: 28px 48px 80px;
 }
 
-/* ── 탭 ── */
+/* ── 필터/검색 ── */
+.pl-filter-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
 .pl-tabs {
   display: flex;
   gap: 0;
-  margin-bottom: 28px;
-  border-bottom: 1px solid #f0f0f0;
   overflow-x: auto;
+  flex: 1;
+  min-width: 0;
 }
 .pl-tabs::-webkit-scrollbar { display: none; }
 .pl-tab {
@@ -75,34 +84,35 @@
   position: relative;
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  flex: 0 0 280px;
+  padding-bottom: 1px;
 }
 .pl-search-icon {
   position: absolute;
-  left: 14px;
+  left: 0;
   color: #9CA3AF;
   pointer-events: none;
   flex-shrink: 0;
 }
 .pl-search-input {
   width: 100%;
-  max-width: 400px;
-  padding: 10px 40px 10px 40px;
-  border: 1.5px solid #E5E7EB;
-  border-radius: 10px;
+  padding: 10px 34px 10px 26px;
+  border: none;
+  border-bottom: 2px solid #E5E7EB;
+  border-radius: 0;
   font-size: 13px;
   font-family: 'Noto Sans KR', sans-serif;
   color: #111827;
-  background: #F9FAFB;
+  background: transparent;
   outline: none;
   transition: border-color 0.18s;
   box-sizing: border-box;
 }
-.pl-search-input:focus { border-color: #7c3aed; background: #fff; }
+.pl-search-input:focus { border-color: #7c3aed; background: transparent; }
 .pl-search-input::placeholder { color: #9CA3AF; }
 .pl-search-clear {
   position: absolute;
-  left: calc(400px - 32px);
+  right: 0;
   background: none;
   border: none;
   cursor: pointer;
@@ -113,9 +123,9 @@
   transition: color 0.15s;
 }
 .pl-search-clear:hover { color: #374151; }
-@media (max-width: 480px) {
-  .pl-search-input { max-width: 100%; }
-  .pl-search-clear { left: unset; right: 10px; }
+@media (max-width: 900px) {
+  .pl-filter-row { align-items: stretch; flex-direction: column; gap: 12px; }
+  .pl-search-wrap { flex: 0 0 auto; width: 100%; max-width: 420px; }
 }
 
 /* ── 그리드 ── */

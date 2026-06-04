@@ -154,7 +154,7 @@ def _item_price_allowed(
 
 def _routine_total_price(products: list[dict]) -> float | None:
     total = 0.0
-    for p in products:
+    for p in _core_products(products):
         price = _safe_price(p.get("price"))
         if price >= 1e12:
             return None

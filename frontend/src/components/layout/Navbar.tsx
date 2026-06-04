@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/useAuth';
 import './Navbar.css';
 
@@ -14,19 +15,16 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-
-      {/* 로고 */}
       <div className="nav-left">
         <Link to="/" className="logo">ROUPLE</Link>
       </div>
 
-      {/* 가운데 */}
       <div className="nav-center">
         <Link
           to="/analysis-history"
           className={`nav-link ${pathname === '/analysis-history' || pathname === '/analysis' || pathname === '/diagnosis' || pathname === '/loading' ? 'active' : ''}`}
         >
-          스킨 리포트
+          피부 리포트
         </Link>
 
         <Link
@@ -47,21 +45,23 @@ export default function Navbar() {
           to="/products"
           className={`nav-link ${pathname === '/products' || pathname.startsWith('/products') ? 'active' : ''}`}
         >
-          제품 탐색
+          제품 찾기
         </Link>
+
+        {isLoggedIn && (
+          <Link to="/mypage" className="nav-link nav-icon-link" aria-label="마이페이지" title="마이페이지">
+            <UserCircle size={18} strokeWidth={2.3} />
+          </Link>
+        )}
       </div>
 
-      {/* 오른쪽 */}
       <div className="nav-right">
-        <Link to="/mypage" className="nav-link">마이페이지</Link>
-
         {isLoggedIn ? (
           <span className="nav-login" onClick={handleLogout}>로그아웃</span>
         ) : (
           <Link to="/login" className="nav-login">로그인</Link>
         )}
       </div>
-
     </nav>
   );
 }

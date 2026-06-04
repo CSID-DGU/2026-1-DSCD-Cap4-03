@@ -44,7 +44,7 @@ def run_vanity_pipeline(
                 result_id=skin_match_result["result_id"],
                 budget=pipeline_input.budget,
                 total_budget_min=pipeline_input.total_budget_min,
-                total_budget_max=_remaining_budget_max(pipeline_input),
+                total_budget_max=None,
                 slot_budget_min_map=pipeline_input.slot_budget_min_map,
                 slot_budget_max_map=pipeline_input.slot_budget_max_map,
             )

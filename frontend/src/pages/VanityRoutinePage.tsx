@@ -50,7 +50,7 @@ function renderCard(item: RoutineCardItem, imageMap: Record<number, string>, llm
   const stepComment = llmRoutine?.step_comments?.find(c => c.slot_order === item.slot_order);
   const isVanity    = item.source === 'vanity';
   return (
-    <div key={item.slot_order} className={`rp-product-card${isOptional ? ' rp-optional-card' : ''}`}
+    <div key={item.slot_order} className={`rp-product-card${isOptional ? ' rp-optional-card' : ''}${isVanity ? ' rp-product-card--owned' : ''}`}
       onClick={() => onNavigate?.(item.product_id)} style={{ cursor: onNavigate ? 'pointer' : 'default' }}>
       <div className="rp-card-header">
         {isOptional ? (
@@ -128,7 +128,6 @@ export default function VanityRoutinePage() {
       return null;
     };
     return [
-      fmt(b.budget_min,   b.budget_max,   '전체'),
       fmt(b.toner_min,    b.toner_max,    '토너'),
       fmt(b.emulsion_min, b.emulsion_max, '에멀젼'),
       fmt(b.ampoule_min,  b.ampoule_max,  '앰플'),
@@ -180,7 +179,6 @@ export default function VanityRoutinePage() {
   const required   = items.filter(p => !OPTIONAL_CATEGORIES.has(p.category));
   const optional   = items.filter(p => OPTIONAL_CATEGORIES.has(p.category));
   const warnings   = result.routine_recommendation_results?.warnings ?? [];
-  const total      = result.routine_recommendation_results?.total_price ?? 0;
   const fixedCount = result.routine_recommendation_results?.fixed_products?.length ?? 0;
   const llmRoutine = result.llm_explanation?.vanity_routine;
   const basis      = result.basis_skin_result;
@@ -230,11 +228,6 @@ export default function VanityRoutinePage() {
 
         {/* ── 요약 바 ── */}
         <div className="rp-summary-bar">
-          <div className="rp-summary-item">
-            <Banknote size={14} color="#9CA3AF" />
-            <span>총 <strong>{total.toLocaleString()}원</strong></span>
-          </div>
-          <div className="rp-summary-divider" />
           <div className="rp-summary-item">
             <Package size={14} color="#9CA3AF" />
             <span>제품 <strong>{items.length}개</strong></span>

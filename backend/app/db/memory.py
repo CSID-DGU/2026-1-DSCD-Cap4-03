@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from itertools import count
 from pathlib import Path
 
 
-SUMMARIES_PATH = Path(__file__).parent / "skin_summaries.json"
-EXPLANATIONS_PATH = Path(__file__).parent / "recommendation_explanations.json"
-VANITY_SKIN_MATCH_EXPLANATIONS_PATH = Path(__file__).parent / "vanity_skin_match_explanations.json"
-VANITY_ROUTINE_EXPLANATIONS_PATH = Path(__file__).parent / "vanity_routine_explanations.json"
+CACHE_DIR = Path(os.getenv("ROUPLE_CACHE_DIR", Path(__file__).parent)).resolve()
+
+SUMMARIES_PATH = CACHE_DIR / "skin_summaries.json"
+EXPLANATIONS_PATH = CACHE_DIR / "recommendation_explanations.json"
+VANITY_SKIN_MATCH_EXPLANATIONS_PATH = CACHE_DIR / "vanity_skin_match_explanations.json"
+VANITY_ROUTINE_EXPLANATIONS_PATH = CACHE_DIR / "vanity_routine_explanations.json"
 
 
 def load_skin_summaries() -> dict[int, dict]:

@@ -155,7 +155,7 @@
 .mp-hero-photo-wrap {
   position: absolute;
   right: 120px;
-  top: 30;
+  top: 30px;
   bottom: 0;
   width: 55%;
   max-width: 550px;
@@ -490,4 +490,33 @@
   .mp-cta { padding: 56px 0; }
   .mp-cta-h2 { font-size: 1.5rem; }
   .mp-btn-purple { padding: 14px 28px; font-size: 0.9rem; }
+}
+
+@media (max-width: 560px) {
+  .mp-hero {
+    min-height: auto;
+  }
+
+  .mp-hero-inner {
+    padding: 42px 20px 0;
+    gap: 22px;
+  }
+
+  .mp-hero-text {
+    max-width: 100%;
+  }
+
+  .mp-hero-photo-wrap {
+    width: min(70vw, 270px);
+    max-width: 270px;
+    height: auto;
+    margin: 4px auto 0;
+  }
+
+  .mp-hero-photo {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center bottom;
+  }
 }

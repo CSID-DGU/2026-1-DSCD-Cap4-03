@@ -47,6 +47,14 @@ SKIN_SCORE_KEYS = {
     "pigmentation_score",
     "wrinkle_score",
 }
+ROUTINE_CORE_CATEGORIES = {
+    "toner",
+    "toner pads",
+    "emulsions",
+    "essences/ampoules/serums",
+    "cream/gel",
+    "face moisturizers",
+}
 
 
 def _ensure_llm_ready() -> None:
@@ -224,6 +232,14 @@ def _routine_type(routine: RecommendationRoutine) -> str:
     return "best"
 
 
+def _normalize_category(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _is_core_routine_category(value: Any) -> bool:
+    return _normalize_category(value) in ROUTINE_CORE_CATEGORIES
+
+
 def build_routine_llm_input(session: RecommendationSession) -> dict[str, Any]:
     db = object_session(session)
     skin_result = store.skin_results.get(int(session.result_id or 0), {})
@@ -244,11 +260,13 @@ def build_routine_llm_input(session: RecommendationSession) -> dict[str, Any]:
             price = int(product.price or 0)
             brand = product.brand_name_kor or product.brand_name or ""
             product_name = product.product_name_kor or product.product_name or ""
-            total_price += price
+            category = item.category or product.category or ""
+            if _is_core_routine_category(category):
+                total_price += price
             items.append(
                 {
                     "slot_order": item.slot_order,
-                    "category": item.category or product.category or "",
+                    "category": category,
                     "brand": brand,
                     "product_name": product_name,
                     "product_score": float(item.product_score or 0),

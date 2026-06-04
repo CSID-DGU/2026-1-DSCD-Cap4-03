@@ -430,3 +430,81 @@
   .ar-trend-title { font-size: 16px; }
   .ar-cta-section { padding: 36px 16px; }
 }
+
+@media (max-width: 560px) {
+  .ar-hero {
+    padding: 26px 16px 30px;
+  }
+
+  .ar-hero-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 104px;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+  }
+
+  .ar-hero-left {
+    min-width: 0;
+  }
+
+  .ar-hero-right {
+    justify-self: end;
+    align-self: center;
+    transform: none;
+  }
+
+  .ar-photo-ring {
+    width: 104px;
+    height: 104px;
+  }
+
+  .ar-photo {
+    width: 94px;
+    height: 94px;
+    border-width: 3px;
+  }
+
+  .ar-hero-badge {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .ar-hero-title {
+    font-size: clamp(25px, 7.2vw, 32px);
+    line-height: 1.18;
+    margin-bottom: 10px;
+  }
+
+  .ar-hero-date {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .ar-skin-tags {
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .ar-skin-tag {
+    padding: 5px 11px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 390px) {
+  .ar-hero-inner {
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 10px;
+  }
+
+  .ar-photo-ring {
+    width: 88px;
+    height: 88px;
+  }
+
+  .ar-photo {
+    width: 80px;
+    height: 80px;
+  }
+}

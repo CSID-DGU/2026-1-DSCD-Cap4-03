@@ -111,32 +111,34 @@ export default function ProductListPage() {
       </div>
 
       <div className="pl-body">
-        <div className="pl-tabs">
-          {CATEGORY_CONFIG.map(({ key }) => (
-            <button
-              key={key}
-              className={`pl-tab ${activeCategory === key ? 'active' : ''}`}
-              onClick={() => setActiveCategory(key)}
-            >
-              {key}
-            </button>
-          ))}
-        </div>
+        <div className="pl-filter-row">
+          <div className="pl-tabs">
+            {CATEGORY_CONFIG.map(({ key }) => (
+              <button
+                key={key}
+                className={`pl-tab ${activeCategory === key ? 'active' : ''}`}
+                onClick={() => setActiveCategory(key)}
+              >
+                {key}
+              </button>
+            ))}
+          </div>
 
-        <div className="pl-search-wrap">
-          <Search size={16} className="pl-search-icon" />
-          <input
-            className="pl-search-input"
-            type="text"
-            placeholder="제품명 또는 브랜드 검색"
-            value={searchQuery}
-            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-          />
-          {searchQuery && (
-            <button className="pl-search-clear" onClick={() => { setSearchQuery(''); setPage(1); }}>
-              <X size={14} />
-            </button>
-          )}
+          <div className="pl-search-wrap">
+            <Search size={16} className="pl-search-icon" />
+            <input
+              className="pl-search-input"
+              type="text"
+              placeholder="제품명 또는 브랜드 검색"
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+            />
+            {searchQuery && (
+              <button className="pl-search-clear" onClick={() => { setSearchQuery(''); setPage(1); }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (

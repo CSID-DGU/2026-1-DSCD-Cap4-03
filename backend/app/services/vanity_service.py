@@ -32,6 +32,15 @@ DISPLAY_LABELS = {
     "poor_match": "주의가 필요해요",
 }
 
+VANITY_CORE_CATEGORIES = {
+    "toner",
+    "toner pads",
+    "emulsions",
+    "essences/ampoules/serums",
+    "cream/gel",
+    "face moisturizers",
+}
+
 VANITY_LLM_REASON_TAGS = {"concern_match", "skin_type_match", "review_match"}
 VANITY_LLM_CAUTION_TAGS = {"irritation_check", "weak_concern_match"}
 
@@ -382,10 +391,11 @@ def _prepare_llm_routine_result(routine_result: dict[str, Any]) -> dict[str, Any
                 "price": int(item.get("price") or 0),
             }
         )
+    core_total_price = _vanity_core_total_price(final_routine)
     return {
         "final_routine": final_routine,
         "warnings": routine_result.get("warnings") or [],
-        "total_price": routine_result.get("total_price"),
+        "total_price": core_total_price,
     }
 
 
@@ -1043,6 +1053,22 @@ def _routine_item_from_row(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _normalize_vanity_category(category: Any) -> str:
+    return " ".join(str(category or "").strip().lower().split())
+
+
+def _is_vanity_core_category(category: Any) -> bool:
+    return _normalize_vanity_category(category) in VANITY_CORE_CATEGORIES
+
+
+def _vanity_core_total_price(items: list[dict[str, Any]]) -> int:
+    return sum(
+        int(item.get("price") or 0)
+        for item in items
+        if _is_vanity_core_category(item.get("category"))
+    )
+
+
 def get_vanity_routine_detail(db: Session, user_id: int, session_id: int) -> dict[str, Any]:
     session_row = db.execute(
         text(
@@ -1100,7 +1126,7 @@ def get_vanity_routine_detail(db: Session, user_id: int, session_id: int) -> dic
         "recommended_products": recommended_products,
         "final_routine": final_routine,
         "warnings": warnings,
-        "total_price": sum(int(item.get("price") or 0) for item in final_routine),
+        "total_price": _vanity_core_total_price(final_routine),
     }
     basis = basis_skin_result(db, user_id, int(session_row["result_id"]))
     llm_explanation = store.vanity_routine_explanations.get(int(session_id))
@@ -1153,7 +1179,20 @@ def _latest_vanity_routine_summary(db: Session, user_id: int) -> dict[str, Any] 
                 rs.session_id AS recommendation_session_id,
                 rs.created_at,
                 SUM(CASE WHEN COALESCE(ri.source, 'recommendation') = 'vanity' THEN 1 ELSE 0 END) AS fixed_product_count,
-                SUM(COALESCE(p.price, 0)) AS total_price
+                SUM(
+                    CASE
+                        WHEN LOWER(TRIM(COALESCE(ri.category, p.category, ''))) IN (
+                            'toner',
+                            'toner pads',
+                            'emulsions',
+                            'essences/ampoules/serums',
+                            'cream/gel',
+                            'face moisturizers'
+                        )
+                        THEN COALESCE(p.price, 0)
+                        ELSE 0
+                    END
+                ) AS total_price
             FROM recommendation_session rs
             JOIN recommendation_routine rr ON rr.session_id = rs.session_id
             JOIN recommendation_item ri ON ri.routine_id = rr.routine_id
@@ -1188,7 +1227,20 @@ def list_vanity_routines(db: Session, user_id: int) -> list[dict[str, Any]]:
                 rs.result_id AS basis_result_id,
                 rs.created_at,
                 SUM(CASE WHEN COALESCE(ri.source, 'recommendation') = 'vanity' THEN 1 ELSE 0 END) AS fixed_product_count,
-                SUM(COALESCE(p.price, 0)) AS total_price
+                SUM(
+                    CASE
+                        WHEN LOWER(TRIM(COALESCE(ri.category, p.category, ''))) IN (
+                            'toner',
+                            'toner pads',
+                            'emulsions',
+                            'essences/ampoules/serums',
+                            'cream/gel',
+                            'face moisturizers'
+                        )
+                        THEN COALESCE(p.price, 0)
+                        ELSE 0
+                    END
+                ) AS total_price
             FROM recommendation_session rs
             JOIN recommendation_routine rr ON rr.session_id = rs.session_id
             JOIN recommendation_item ri ON ri.routine_id = rr.routine_id

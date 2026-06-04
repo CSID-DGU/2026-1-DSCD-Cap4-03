@@ -536,13 +536,27 @@ def _routine_budget_ok(
             return False
         if slot_max is not None and price > slot_max:
             return False
-        total_price += price
+        if _is_core_budget_category(p.get("category")):
+            total_price += price
 
     if total_budget_min is not None and total_price < float(total_budget_min):
         return False
     if total_budget_max is not None and total_price > float(total_budget_max):
         return False
     return True
+
+
+def _is_core_budget_category(category: Any) -> bool:
+    normalized = str(category or "").strip().lower()
+    normalized = " ".join(normalized.split())
+    return normalized in {
+        "toner",
+        "toner pads",
+        "emulsions",
+        "essences/ampoules/serums",
+        "cream/gel",
+        "face moisturizers",
+    }
 
 
 def _format_price_text(price: Any) -> str:

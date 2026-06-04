@@ -515,3 +515,126 @@
   .dp-btn-primary, .dp-btn-secondary { padding: 11px 18px; font-size: 13px; }
   .dp-preview-img-wrap { max-width: 180px; }
 }
+
+@media (max-width: 560px) {
+  .dp-page {
+    overflow-x: hidden;
+  }
+
+  .dp-banner {
+    padding: 20px 14px 18px;
+  }
+
+  .dp-banner-inner {
+    padding: 0;
+  }
+
+  .dp-body {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px 12px 72px;
+  }
+
+  .dp-layout {
+    gap: 18px;
+  }
+
+  .dp-main-col {
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .dp-steps {
+    padding: 14px 12px;
+    gap: 6px;
+  }
+
+  .dp-step-item {
+    gap: 7px;
+    min-width: 0;
+  }
+
+  .dp-step-circle {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .dp-step-label {
+    font-size: 12px;
+    line-height: 1.3;
+    word-break: keep-all;
+  }
+
+  .dp-step-line {
+    display: none;
+  }
+
+  .dp-crop-card {
+    padding: 16px 12px;
+  }
+
+  .dp-crop-layout {
+    gap: 18px;
+  }
+
+  .dp-crop-label {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .dp-crop-wrapper {
+    width: min(100%, 340px);
+    height: auto;
+    max-height: 58vh;
+    aspect-ratio: 3 / 4;
+    border-radius: 9px;
+  }
+
+  .dp-face-guide {
+    width: 84%;
+    height: 76%;
+    border-width: 2px;
+  }
+
+  .dp-face-eye,
+  .dp-face-mouth {
+    border-width: 1.5px;
+  }
+
+  .dp-zoom-row {
+    width: min(100%, 340px);
+    margin-top: 14px;
+  }
+
+  .dp-crop-guide-col {
+    padding-top: 4px;
+  }
+
+  .dp-crop-guide-title {
+    font-size: 16px;
+  }
+
+  .dp-crop-guide-list {
+    gap: 8px;
+  }
+
+  .dp-crop-guide-list li {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+
+  .dp-crop-size-info {
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+
+  .dp-crop-btns {
+    flex-direction: column;
+  }
+
+  .dp-btn-primary,
+  .dp-btn-secondary {
+    width: 100%;
+  }
+}
