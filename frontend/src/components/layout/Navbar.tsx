@@ -48,14 +48,14 @@ export default function Navbar() {
           제품 찾기
         </Link>
 
+      </div>
+
+      <div className="nav-right">
         {isLoggedIn && (
           <Link to="/mypage" className="nav-link nav-icon-link" aria-label="마이페이지" title="마이페이지">
             <UserCircle size={18} strokeWidth={2.3} />
           </Link>
         )}
-      </div>
-
-      <div className="nav-right">
         {isLoggedIn ? (
           <span className="nav-login" onClick={handleLogout}>로그아웃</span>
         ) : (

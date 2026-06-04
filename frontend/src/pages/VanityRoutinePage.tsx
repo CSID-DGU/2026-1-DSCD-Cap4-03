@@ -73,14 +73,16 @@ function renderCard(item: RoutineCardItem, imageMap: Record<number, string>, llm
             <Package size={32} color="#A78BFA" />
           </div>
       }
-      <div className="rp-product-brand">{item.brand_name}</div>
-      <div className="rp-product-name">{item.product_name}</div>
-      <div className="rp-product-tags">
-        <span className={`rp-product-tag${isVanity ? '' : ' optional'}`}>
-          {isVanity ? '내 화장품' : '추천'}
-        </span>
+      <div className="rp-product-info">
+        <div className="rp-product-brand">{item.brand_name}</div>
+        <div className="rp-product-name">{item.product_name}</div>
+        <div className="rp-product-tags">
+          <span className={`rp-product-tag${isVanity ? '' : ' optional'}`}>
+            {isVanity ? '내 화장품' : '추천'}
+          </span>
+        </div>
+        <div className="rp-product-price">{item.price.toLocaleString()}원</div>
       </div>
-      <div className="rp-product-price">{item.price.toLocaleString()}원</div>
       {stepComment?.comment && (
         <div className="rp-guide-panel">
           <div className="rp-guide-header">

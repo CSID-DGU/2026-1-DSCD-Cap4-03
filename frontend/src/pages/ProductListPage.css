@@ -79,6 +79,14 @@
 .pl-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
 .pl-tab:hover:not(.active) { color: #555; }
 
+/* ── 탭 + 검색 행 ── */
+.pl-tabs-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 28px;
+}
+
 /* ── 검색 ── */
 .pl-search-wrap {
   position: relative;
@@ -92,7 +100,6 @@
   left: 0;
   color: #9CA3AF;
   pointer-events: none;
-  flex-shrink: 0;
 }
 .pl-search-input {
   width: 100%;
@@ -106,7 +113,6 @@
   background: transparent;
   outline: none;
   transition: border-color 0.18s;
-  box-sizing: border-box;
 }
 .pl-search-input:focus { border-color: #7c3aed; background: transparent; }
 .pl-search-input::placeholder { color: #9CA3AF; }
@@ -117,7 +123,7 @@
   border: none;
   cursor: pointer;
   color: #9CA3AF;
-  padding: 4px;
+  padding: 2px;
   display: flex;
   align-items: center;
   transition: color 0.15s;
@@ -210,6 +216,7 @@
   margin-bottom: 6px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

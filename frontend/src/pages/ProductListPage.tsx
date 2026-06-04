@@ -79,7 +79,6 @@ export default function ProductListPage() {
   const toggleWish = async (productId: number, e: React.MouseEvent) => {
     e.stopPropagation();
     const wished = wishlist.has(productId);
-    // 낙관적 업데이트
     setWishlist((prev) => {
       const next = new Set(prev);
       wished ? next.delete(productId) : next.add(productId);
@@ -90,7 +89,6 @@ export default function ProductListPage() {
         ? await productApi.removeWishlist(productId)
         : await productApi.addWishlist(productId);
     } catch {
-      // 실패 시 롤백
       setWishlist((prev) => {
         const next = new Set(prev);
         wished ? next.add(productId) : next.delete(productId);

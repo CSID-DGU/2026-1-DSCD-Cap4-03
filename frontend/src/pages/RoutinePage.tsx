@@ -368,21 +368,23 @@ export default function RoutinePage() {
                   <div className="rp-product-category">{CATEGORY_KO[product.category] ?? product.category}</div>
                 </div>
                 <img src={product.image_url} alt={product.product_name} className="rp-product-img" />
-                <div className="rp-product-brand">{product.brand_name}</div>
-                <div className="rp-product-name">{product.product_name}</div>
-                <div className="rp-product-tags">
-                  {product.timeTag && (
-                    <span className={`rp-product-time-tag ${product.timeTag}`}>
-                      {product.timeTag === 'am' ? 'AM전용' : 'PM전용'}
-                    </span>
-                  )}
-                  {product.tags.filter((t) => t !== product.category).slice(0, 2).map((t) => <span key={t} className="rp-product-tag">#{t}</span>)}
+                <div className="rp-product-info">
+                  <div className="rp-product-brand">{product.brand_name}</div>
+                  <div className="rp-product-name">{product.product_name}</div>
+                  <div className="rp-product-tags">
+                    {product.timeTag && (
+                      <span className={`rp-product-time-tag ${product.timeTag}`}>
+                        {product.timeTag === 'am' ? 'AM전용' : 'PM전용'}
+                      </span>
+                    )}
+                    {product.tags.filter((t) => t !== product.category).slice(0, 2).map((t) => <span key={t} className="rp-product-tag">#{t}</span>)}
+                  </div>
+                  <div className="rp-product-duration">
+                    <Clock size={11} color="#9CA3AF" />
+                    <span>{CATEGORY_DURATION[product.category]?.display ?? '약 1분'}</span>
+                  </div>
+                  <div className="rp-product-price">{product.price.toLocaleString()}원</div>
                 </div>
-                <div className="rp-product-duration">
-                  <Clock size={11} color="#9CA3AF" />
-                  <span>{CATEGORY_DURATION[product.category]?.display ?? '약 1분'}</span>
-                </div>
-                <div className="rp-product-price">{product.price.toLocaleString()}원</div>
                 <div className="rp-guide-panel" onClick={(e) => e.stopPropagation()}>
                   <div className="rp-guide-header">
                     <FileText size={12} color="#7c3aed" />
@@ -417,21 +419,23 @@ export default function RoutinePage() {
                     )}
                   </div>
                   <img src={product.image_url} alt={product.product_name} className="rp-product-img" />
-                  <div className="rp-product-brand">{product.brand_name}</div>
-                  <div className="rp-product-name">{product.product_name}</div>
-                  <div className="rp-product-tags">
-                    {product.timeTag && (
-                      <span className={`rp-product-time-tag ${product.timeTag}`}>
-                        {product.timeTag === 'am' ? 'AM전용' : 'PM전용'}
-                      </span>
-                    )}
-                    {product.tags.filter((t) => t !== product.category).slice(0, 2).map((t) => <span key={t} className="rp-product-tag optional">#{t}</span>)}
+                  <div className="rp-product-info">
+                    <div className="rp-product-brand">{product.brand_name}</div>
+                    <div className="rp-product-name">{product.product_name}</div>
+                    <div className="rp-product-tags">
+                      {product.timeTag && (
+                        <span className={`rp-product-time-tag ${product.timeTag}`}>
+                          {product.timeTag === 'am' ? 'AM전용' : 'PM전용'}
+                        </span>
+                      )}
+                      {product.tags.filter((t) => t !== product.category).slice(0, 2).map((t) => <span key={t} className="rp-product-tag optional">#{t}</span>)}
+                    </div>
+                    <div className="rp-product-duration">
+                      <Clock size={11} color="#9CA3AF" />
+                      <span>{CATEGORY_DURATION[product.category]?.display ?? '약 1분'}</span>
+                    </div>
+                    <div className="rp-product-price">{product.price.toLocaleString()}원</div>
                   </div>
-                  <div className="rp-product-duration">
-                    <Clock size={11} color="#9CA3AF" />
-                    <span>{CATEGORY_DURATION[product.category]?.display ?? '약 1분'}</span>
-                  </div>
-                  <div className="rp-product-price">{product.price.toLocaleString()}원</div>
                   <div className="rp-guide-panel" onClick={(e) => e.stopPropagation()}>
                     <div className="rp-guide-header">
                       <FileText size={12} color="#7c3aed" />
