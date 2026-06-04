@@ -114,7 +114,7 @@
   padding: 4px 12px;
   border-radius: 10px;
   font-weight: 600;
-  border: 1.5px solid #A78BFA;
+  border: none;
 }
 
 /* 바디 */
@@ -142,13 +142,13 @@
 /* 성분 */
 .pd-ingredients { display: flex; flex-wrap: wrap; gap: 8px; }
 .pd-ingredient {
-  background: #F5F3FF;
-  color: #7c3aed;
+  background: #F3F4F6;
+  color: #4B5563;
   font-size: 12px;
   font-weight: 600;
   padding: 6px 14px;
   border-radius: 10px;
-  border: 1.5px solid #A78BFA;
+  border: none;
 }
 
 /* Pro / Con */
@@ -210,13 +210,4 @@
   .pd-img { width: 100%; height: 240px; }
   .pd-info { padding: 24px; }
   .pd-body { padding: 24px 24px 64px; }
-}
-@media (max-width: 480px) {
-  .pd-back { padding: 14px 16px; font-size: 12px; }
-  .pd-main { padding: 0 16px; }
-  .pd-img-wrap { padding: 16px; }
-  .pd-img { height: 200px; }
-  .pd-info { padding: 16px; }
-  .pd-body { padding: 16px 16px 64px; }
-  .pd-similar-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 }
