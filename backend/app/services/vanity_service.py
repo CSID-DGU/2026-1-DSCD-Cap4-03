@@ -251,7 +251,7 @@ def add_vanity_product(db: Session, user_id: int, product_id: int) -> dict[str, 
     )
     skin_match_session_id = None
     try:
-        skin_match = run_skin_match(db, user_id, product_ids=None)
+        skin_match = run_skin_match(db, user_id, product_ids=[product_id])
         skin_match_session_id = skin_match.get("match_session_id")
     except HTTPException:
         pass
@@ -266,6 +266,7 @@ def add_vanity_product(db: Session, user_id: int, product_id: int) -> dict[str, 
 
 
 def delete_vanity_product(db: Session, user_id: int, product_id: int) -> dict[str, Any]:
+    cache_session_ids = _skin_match_session_ids_for_product(db, user_id, product_id)
     db.execute(
         text(
             """
@@ -276,18 +277,12 @@ def delete_vanity_product(db: Session, user_id: int, product_id: int) -> dict[st
         {"user_id": user_id, "product_id": product_id},
     )
     db.commit()
-    skin_match_session_id = None
-    if _owned_product_ids(db, user_id):
-        try:
-            skin_match = run_skin_match(db, user_id, product_ids=None)
-            skin_match_session_id = skin_match.get("match_session_id")
-        except HTTPException:
-            skin_match_session_id = _latest_match_session_id(db, user_id)
+    _remove_product_from_vanity_skin_match_cache(product_id, cache_session_ids)
 
     return {
         "product_id": product_id,
         "saved": False,
-        "match_session_id": skin_match_session_id,
+        "match_session_id": _latest_match_session_id(db, user_id),
         "message": "내 화장대에서 제품이 삭제되었습니다.",
     }
 
@@ -918,14 +913,26 @@ def _latest_skin_match_summary(db: Session, user_id: int) -> dict[str, Any] | No
     rows = db.execute(
         text(
             """
+            WITH ranked_matches AS (
+                SELECT
+                    vmi.product_id,
+                    vmi.fit_label,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY vmi.product_id
+                        ORDER BY vms.created_at DESC, vmi.match_session_id DESC, vmi.match_item_id DESC
+                    ) AS rn
+                FROM vanity_match_item vmi
+                JOIN vanity_match_session vms ON vms.match_session_id = vmi.match_session_id
+                JOIN user_vanity uv ON uv.user_id = :user_id AND uv.product_id = vmi.product_id
+                WHERE vms.user_id = :user_id
+            )
             SELECT fit_label, COUNT(*) AS count
-            FROM vanity_match_item vmi
-            JOIN user_vanity uv ON uv.user_id = :user_id AND uv.product_id = vmi.product_id
-            WHERE vmi.match_session_id = :match_session_id
+            FROM ranked_matches
+            WHERE rn = 1
             GROUP BY fit_label
             """
         ),
-        {"match_session_id": match_session_id, "user_id": user_id},
+        {"user_id": user_id},
     ).mappings().all()
 
     summary = {key: 0 for key in DISPLAY_LABELS}
@@ -937,6 +944,154 @@ def _latest_skin_match_summary(db: Session, user_id: int) -> dict[str, Any] | No
         "match_session_id": int(session_row["match_session_id"]),
         "created_at": str(session_row["created_at"]) if session_row.get("created_at") is not None else None,
         "summary": summary,
+    }
+
+
+def _skin_match_comments_by_product(llm_explanation: dict[str, Any] | None) -> dict[int, dict[str, Any]]:
+    if not isinstance(llm_explanation, dict):
+        return {}
+    skin_match = llm_explanation.get("skin_match")
+    if not isinstance(skin_match, dict):
+        return {}
+    comments = skin_match.get("product_comments")
+    if not isinstance(comments, list):
+        return {}
+
+    by_product = {}
+    for comment in comments:
+        if not isinstance(comment, dict):
+            continue
+        try:
+            product_id = int(comment.get("product_id"))
+        except (TypeError, ValueError):
+            continue
+        if comment.get("fit_reason") or comment.get("summary") or comment.get("caution_comment"):
+            by_product[product_id] = {
+                "product_id": product_id,
+                "summary": comment.get("summary") or "",
+                "fit_reason": comment.get("fit_reason") or "",
+                "caution_comment": comment.get("caution_comment") or "",
+                "action_comment": comment.get("action_comment") or "",
+            }
+    return by_product
+
+
+def _skin_match_session_ids_for_product(db: Session, user_id: int, product_id: int) -> set[int]:
+    rows = db.execute(
+        text(
+            """
+            SELECT DISTINCT vmi.match_session_id
+            FROM vanity_match_item vmi
+            JOIN vanity_match_session vms ON vms.match_session_id = vmi.match_session_id
+            WHERE vms.user_id = :user_id AND vmi.product_id = :product_id
+            """
+        ),
+        {"user_id": user_id, "product_id": product_id},
+    ).mappings().all()
+    return {int(row["match_session_id"]) for row in rows}
+
+
+def _remove_product_from_vanity_skin_match_cache(product_id: int, session_ids: set[int] | None = None) -> None:
+    changed = False
+    for session_id, llm_explanation in list(store.vanity_skin_match_explanations.items()):
+        if session_ids is not None and int(session_id) not in session_ids:
+            continue
+        if not isinstance(llm_explanation, dict):
+            continue
+        skin_match = llm_explanation.get("skin_match")
+        if not isinstance(skin_match, dict):
+            continue
+        comments = skin_match.get("product_comments")
+        if not isinstance(comments, list):
+            continue
+
+        filtered = []
+        for comment in comments:
+            if not isinstance(comment, dict):
+                filtered.append(comment)
+                continue
+            try:
+                comment_product_id = int(comment.get("product_id"))
+            except (TypeError, ValueError):
+                filtered.append(comment)
+                continue
+            if comment_product_id != product_id:
+                filtered.append(comment)
+
+        if len(filtered) != len(comments):
+            skin_match["product_comments"] = filtered
+            store.vanity_skin_match_explanations[int(session_id)] = llm_explanation
+            changed = True
+
+    if changed:
+        save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
+
+
+def _build_latest_skin_match_llm_explanation(
+    db: Session,
+    user_id: int,
+    result_id: int,
+    product_match_results: list[dict[str, Any]],
+    product_session_ids: dict[int, int],
+) -> dict[str, Any]:
+    fallback = build_vanity_llm_explanation(product_match_results, None)
+    fallback_comments = _skin_match_comments_by_product(fallback)
+
+    comments_by_product = {}
+    missing_results = []
+    for result in product_match_results:
+        product_id = int(result["product_id"])
+        session_id = product_session_ids.get(product_id)
+        cached = store.vanity_skin_match_explanations.get(int(session_id)) if session_id is not None else None
+        comments_by_product.update(_skin_match_comments_by_product(cached))
+        if product_id not in comments_by_product:
+            missing_results.append(result)
+
+    if missing_results:
+        partial_llm = generate_vanity_llm_explanation(
+            db=db,
+            user_id=user_id,
+            result_id=result_id,
+            product_match_results=missing_results,
+        )
+        partial_comments = _skin_match_comments_by_product(partial_llm)
+        comments_by_product.update(partial_comments)
+
+        for result in missing_results:
+            product_id = int(result["product_id"])
+            session_id = product_session_ids.get(product_id)
+            if session_id is None:
+                continue
+            existing = store.vanity_skin_match_explanations.get(int(session_id))
+            if not isinstance(existing, dict):
+                existing = build_vanity_llm_explanation([result], None)
+            skin_match = existing.setdefault("skin_match", {})
+            current_comments = _skin_match_comments_by_product(existing)
+            if product_id in partial_comments:
+                current_comments[product_id] = partial_comments[product_id]
+            skin_match["product_comments"] = list(current_comments.values())
+            store.vanity_skin_match_explanations[int(session_id)] = existing
+        save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
+
+    ordered_comments = []
+    for result in product_match_results:
+        product_id = int(result["product_id"])
+        ordered_comments.append(comments_by_product.get(product_id) or fallback_comments.get(product_id) or {
+            "product_id": product_id,
+            "summary": "",
+            "fit_reason": "",
+            "caution_comment": "",
+            "action_comment": "",
+        })
+
+    return {
+        "prompt_version": "vanity_v1",
+        "generated_at": _now_string(),
+        "skin_match": {
+            "overall_summary": (fallback.get("skin_match") or {}).get("overall_summary") or "",
+            "product_comments": ordered_comments,
+        },
+        "vanity_routine": None,
     }
 
 
@@ -962,37 +1117,64 @@ def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
     item_rows = db.execute(
         text(
             """
+            WITH ranked_matches AS (
+                SELECT
+                    vmi.match_session_id,
+                    vms.result_id,
+                    vmi.match_item_id,
+                    vmi.product_id,
+                    vmi.vanity_fit_score,
+                    vmi.concern_match_score,
+                    vmi.skin_type_bonus,
+                    vmi.review_score,
+                    vmi.irritation_penalty,
+                    vmi.fit_label,
+                    vmi.recommend_action,
+                    vmi.reason_tags,
+                    vmi.caution_tags,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY vmi.product_id
+                        ORDER BY vms.created_at DESC, vmi.match_session_id DESC, vmi.match_item_id DESC
+                    ) AS rn
+                FROM vanity_match_item vmi
+                JOIN vanity_match_session vms ON vms.match_session_id = vmi.match_session_id
+                JOIN user_vanity uv ON uv.user_id = :user_id AND uv.product_id = vmi.product_id
+                WHERE vms.user_id = :user_id
+            )
             SELECT
-                vmi.product_id,
+                rm.match_session_id,
+                rm.result_id,
+                rm.product_id,
                 p.category,
                 COALESCE(p.brand_name_kor, p.brand_name, '') AS brand_name,
                 COALESCE(p.product_name_kor, p.product_name, '') AS product_name,
-                vmi.vanity_fit_score,
-                vmi.concern_match_score,
-                vmi.skin_type_bonus,
-                vmi.review_score,
-                vmi.irritation_penalty,
-                vmi.fit_label,
-                vmi.recommend_action,
-                vmi.reason_tags,
-                vmi.caution_tags
-            FROM vanity_match_item vmi
-            JOIN product p ON p.product_id = vmi.product_id
-            JOIN user_vanity uv ON uv.user_id = :user_id AND uv.product_id = vmi.product_id
-            WHERE vmi.match_session_id = :match_session_id
-            ORDER BY vmi.vanity_fit_score DESC, vmi.match_item_id
+                rm.vanity_fit_score,
+                rm.concern_match_score,
+                rm.skin_type_bonus,
+                rm.review_score,
+                rm.irritation_penalty,
+                rm.fit_label,
+                rm.recommend_action,
+                rm.reason_tags,
+                rm.caution_tags
+            FROM ranked_matches rm
+            JOIN product p ON p.product_id = rm.product_id
+            WHERE rm.rn = 1
+            ORDER BY rm.vanity_fit_score DESC, rm.match_item_id
             """
         ),
-        {"match_session_id": match_session_id, "user_id": user_id},
+        {"user_id": user_id},
     ).mappings().all()
 
     import json
 
     results = []
+    product_session_ids = {}
     summary = {key: 0 for key in DISPLAY_LABELS}
     for row in item_rows:
         fit_label = str(row["fit_label"])
         summary[fit_label] = summary.get(fit_label, 0) + 1
+        product_session_ids[int(row["product_id"])] = int(row["match_session_id"])
         results.append(
             _normalize_product_match(
                 {
@@ -1016,19 +1198,17 @@ def get_latest_skin_match(db: Session, user_id: int) -> dict[str, Any]:
             )
         )
 
-    basis = basis_skin_result(db, user_id, int(session_row["result_id"]))
-    llm_explanation = store.vanity_skin_match_explanations.get(int(match_session_id))
-    if _needs_vanity_skin_match_llm(llm_explanation, results):
-        llm_explanation = generate_vanity_llm_explanation(
-            db=db,
-            user_id=user_id,
-            result_id=basis["result_id"],
-            product_match_results=results,
-        )
-        store.vanity_skin_match_explanations[int(match_session_id)] = llm_explanation
-        save_vanity_skin_match_explanations(store.vanity_skin_match_explanations)
-    elif llm_explanation is None:
-        llm_explanation = build_vanity_llm_explanation(results, None)
+    basis_result_id = int(session_row["result_id"])
+    if item_rows:
+        basis_result_id = int(item_rows[0].get("result_id") or basis_result_id)
+    basis = basis_skin_result(db, user_id, basis_result_id)
+    llm_explanation = _build_latest_skin_match_llm_explanation(
+        db=db,
+        user_id=user_id,
+        result_id=basis["result_id"],
+        product_match_results=results,
+        product_session_ids=product_session_ids,
+    )
 
     return {
         "match_session_id": match_session_id,
