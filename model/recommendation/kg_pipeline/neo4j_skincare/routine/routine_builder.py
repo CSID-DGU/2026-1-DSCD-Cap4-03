@@ -10,6 +10,8 @@ from model.recommendation.kg_pipeline.neo4j_skincare.routine.conflict_checker im
 OPTIONAL_SLOT_BONUS = 0.01
 VALUE_PRICE_PENALTY = 0.05
 OPTIONAL_DIVERSITY_TIE_BREAK = 0.006
+BEST_MIN_PRICE = 10000
+BEST_PRICE_FILTER_WINDOW = 20
 
 
 def _routine_average_score(score_sum: float, products: list[dict]) -> float:
@@ -38,6 +40,13 @@ def _optional_diversity_bonus(item: dict, session_id: str) -> float:
 
 def _selection_score(item: dict) -> float:
     return float(item.get("_selection_score", item.get("S_rerank", 0.0)))
+
+
+def _best_price_preferred_rows(rows: list[dict], limit: int) -> list[dict]:
+    limited_rows = rows[:limit]
+    window = rows[:BEST_PRICE_FILTER_WINDOW]
+    preferred = [row for row in window if _safe_price(row.get("price")) >= BEST_MIN_PRICE]
+    return preferred[:limit] if preferred else limited_rows
 
 
 
@@ -257,9 +266,9 @@ def build_routines(
             ]
             rows.sort(key=lambda x: _selection_score(x), reverse=True)
             if _has_budget_constraint(total_budget_min, total_budget_max, slot_budget_min_map, slot_budget_max_map):
-                rows = rows[:5] if slot_type == "optional" else rows[:12]
+                rows = _best_price_preferred_rows(rows, 5 if slot_type == "optional" else 12)
             else:
-                rows = rows[:3] if slot_type == "optional" else rows[:5]
+                rows = _best_price_preferred_rows(rows, 3 if slot_type == "optional" else 5)
             if slot_type == "optional":
                 rows = [None] + rows
             elif not rows:
