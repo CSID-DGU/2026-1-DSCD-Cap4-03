@@ -316,11 +316,12 @@
 
   .vm-product-scroll {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow-x: visible;
-    padding: 0;
-    scroll-snap-type: none;
+    flex-direction: row;
+    gap: 12px;
+    overflow-x: auto;
+    padding: 4px 0 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
   }
 
   .vm-product-scroll::-webkit-scrollbar {
@@ -329,22 +330,21 @@
 
   .vm-product-card,
   .vm-add-card {
-    width: 100%;
-    flex: 0 0 auto;
+    flex: 0 0 150px;
     box-sizing: border-box;
-    scroll-snap-align: none;
+    scroll-snap-align: start;
   }
 
   .vm-product-card {
-    padding: 18px;
+    padding: 12px;
   }
 
   .vm-add-card {
-    min-height: 180px;
+    min-height: 150px;
   }
 
   .vm-product-img {
-    width: min(100%, 220px);
+    width: 100%;
     align-self: center;
   }
 
