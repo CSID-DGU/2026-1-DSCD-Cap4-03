@@ -263,7 +263,7 @@ export default function RoutineHistoryPage() {
                       {r.display_scores && Object.keys(r.display_scores).length > 0 && (
                         <div className="rh-card-scores">
                           {([
-                            { key: 'acne',         label: '진정' },
+                            { key: 'acne',         label: '트러블' },
                             { key: 'dryness',      label: '수분' },
                             { key: 'sagging',      label: '탄력' },
                             { key: 'pore',         label: '모공' },

@@ -38,10 +38,10 @@
   padding: 28px 48px 80px;
 }
 
-/* ── 3열 레이아웃 ── */
+/* ── 2열 레이아웃 ── */
 .dp-layout {
   display: grid;
-  grid-template-columns: 260px 1fr 280px;
+  grid-template-columns: 260px 1fr;
   gap: 32px;
   align-items: start;
 }

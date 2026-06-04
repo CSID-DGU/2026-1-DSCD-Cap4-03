@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import './MainPage.css';
 
 const ANALYSIS_METRICS = [
-  { label: '진정',   value: 73, color: '#ef4444' },
+  { label: '트러블', value: 73, color: '#ef4444' },
   { label: '수분',     value: 58, color: '#f59e0b' },
   { label: '탄력',     value: 48, color: '#f59e0b' },
   { label: '모공',     value: 65, color: '#f59e0b' },
@@ -94,7 +94,7 @@ function SkinSetupVisual() {
 
 /* SVG illustration: Step 02 */
 function AnalysisVisual() {
-  const LABELS = ['진정', '수분', '탄력', '모공', '색소침착', '주름'];
+  const LABELS = ['트러블', '수분', '탄력', '모공', '색소침착', '주름'];
   const VALUES = [0.73, 0.58, 0.48, 0.65, 0.42, 0.23];
   const cx = 349, cy = 192, R = 68;
   const N = 6;

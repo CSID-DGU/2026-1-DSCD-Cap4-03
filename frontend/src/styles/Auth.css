@@ -25,6 +25,26 @@
   box-sizing: border-box;
 }
 
+.auth-pw-wrap {
+  position: relative;
+  width: 100%;
+}
+.auth-input--pw {
+  padding-right: 42px;
+}
+.auth-pw-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%) translateY(5px);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
 .auth-date-wrap {
   width: 100%;
   margin-top: 10px;

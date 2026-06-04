@@ -25,7 +25,7 @@ function toGrade(score: number): Grade {
 type Grade = '좋음' | '보통' | '개선필요' | '집중케어';
 
 const TREND_METRICS = [
-  { key: 'acne',         label: '진정' },
+  { key: 'acne',         label: '트러블' },
   { key: 'dryness',      label: '수분' },
   { key: 'sagging',      label: '탄력' },
   { key: 'pore',         label: '모공' },
@@ -55,7 +55,7 @@ function buildMetrics(result: AnalysisResult) {
   };
 
   return [
-    { key: 'acne',         label: '진정',    grade: toGrade(s.acne),         displayVal: s.acne,         desc: comments.acne },
+    { key: 'acne',         label: '트러블',    grade: toGrade(s.acne),         displayVal: s.acne,         desc: comments.acne },
     { key: 'dryness',      label: '수분',    grade: toGrade(s.dryness),      displayVal: s.dryness,      desc: comments.dryness },
     { key: 'sagging',      label: '탄력',    grade: toGrade(s.sagging),      displayVal: s.sagging,      desc: comments.sagging },
     { key: 'pore',         label: '모공',    grade: toGrade(s.pore),         displayVal: s.pore,         desc: comments.pore },
