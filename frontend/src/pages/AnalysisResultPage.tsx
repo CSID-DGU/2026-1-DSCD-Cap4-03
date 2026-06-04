@@ -131,7 +131,7 @@ export default function AnalysisResultPage() {
 
   const metrics = buildMetrics(result);
   const radarData = metrics.map((m) => ({ metric: m.label, value: m.displayVal, fullMark: 100 }));
-  const imageUrl = passedImageUrl || result.image_url;
+  const imageUrl = result.image_url || passedImageUrl;
   const displayName = nickname || '내';
   const skinType = result.skin_type;
 
