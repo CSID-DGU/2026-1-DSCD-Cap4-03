@@ -9,7 +9,7 @@ import './AnalysisHistoryPage.css';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const TREND_METRICS = [
-  { key: 'acne',         label: '진정' },
+  { key: 'acne',         label: '트러블' },
   { key: 'dryness',      label: '수분' },
   { key: 'sagging',      label: '탄력' },
   { key: 'pore',         label: '모공' },
@@ -116,7 +116,7 @@ export default function AnalysisHistoryPage() {
                       {r.display_scores && Object.keys(r.display_scores).length > 0 && (
                         <div className="ah-card-scores">
                           {([
-                            { key: 'acne',         label: '진정' },
+                            { key: 'acne',         label: '트러블' },
                             { key: 'dryness',      label: '수분' },
                             { key: 'sagging',      label: '탄력' },
                             { key: 'pore',         label: '모공' },

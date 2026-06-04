@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import { authApi } from '../api/auth';
 import '../styles/Auth.css';
@@ -17,6 +18,8 @@ export default function SignupPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -61,10 +64,35 @@ export default function SignupPage() {
       <div className="auth-container">
         <h2>회원가입</h2>
         <input placeholder="이름" className="auth-input" value={form.user_name} onChange={set('user_name')} />
-        <input placeholder="닉네임" className="auth-input" value={form.nickname} onChange={set('nickname')} />
+        <input placeholder="닉네임(한글로 별명을 작성해주세요)" className="auth-input" value={form.nickname} onChange={set('nickname')} />
         <input placeholder="이메일" className="auth-input" type="email" value={form.email} onChange={set('email')} />
-        <input type="password" placeholder="비밀번호" className="auth-input" value={form.password} onChange={set('password')} />
-        <input type="password" placeholder="비밀번호 확인" className="auth-input" value={form.passwordConfirm} onChange={set('passwordConfirm')} />
+
+        <div className="auth-pw-wrap">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="비밀번호"
+            className="auth-input auth-input--pw"
+            value={form.password}
+            onChange={set('password')}
+          />
+          <button type="button" className="auth-pw-toggle" onClick={() => setShowPassword(v => !v)}>
+            {showPassword ? <EyeOff size={17} color="#9CA3AF" /> : <Eye size={17} color="#9CA3AF" />}
+          </button>
+        </div>
+
+        <div className="auth-pw-wrap">
+          <input
+            type={showPasswordConfirm ? 'text' : 'password'}
+            placeholder="비밀번호 확인"
+            className="auth-input auth-input--pw"
+            value={form.passwordConfirm}
+            onChange={set('passwordConfirm')}
+          />
+          <button type="button" className="auth-pw-toggle" onClick={() => setShowPasswordConfirm(v => !v)}>
+            {showPasswordConfirm ? <EyeOff size={17} color="#9CA3AF" /> : <Eye size={17} color="#9CA3AF" />}
+          </button>
+        </div>
+
         {error && <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: '0' }}>{error}</p>}
         <button className="btn-primary" onClick={handleSignup} disabled={loading}>
           {loading ? '가입 중...' : '회원가입'}
