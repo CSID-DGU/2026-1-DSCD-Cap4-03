@@ -211,3 +211,12 @@
   .pd-info { padding: 24px; }
   .pd-body { padding: 24px 24px 64px; }
 }
+@media (max-width: 480px) {
+  .pd-back { padding: 14px 16px; font-size: 12px; }
+  .pd-main { padding: 0 16px; }
+  .pd-img-wrap { padding: 16px; }
+  .pd-img { height: 200px; }
+  .pd-info { padding: 16px; }
+  .pd-body { padding: 16px 16px 64px; }
+  .pd-similar-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}

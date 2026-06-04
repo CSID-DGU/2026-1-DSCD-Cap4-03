@@ -505,3 +505,13 @@
   .dp-skin-col  { position: static; }
   .dp-guide-box { display: flex; flex-direction: column; gap: 0; }
 }
+@media (max-width: 480px) {
+  .dp-banner { padding: 24px 16px 20px; }
+  .dp-body { padding: 16px 16px 64px; }
+  .dp-title { font-size: clamp(20px, 6vw, 32px); }
+  .dp-sub { font-size: 13px; }
+  .dp-card { padding: 16px; }
+  .dp-crop-wrapper { height: 280px; }
+  .dp-btn-primary, .dp-btn-secondary { padding: 11px 18px; font-size: 13px; }
+  .dp-preview-img-wrap { max-width: 180px; }
+}

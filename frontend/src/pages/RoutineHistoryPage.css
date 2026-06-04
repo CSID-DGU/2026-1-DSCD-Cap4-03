@@ -255,3 +255,17 @@
   .rh-card-main { flex-wrap: wrap; }
   .rh-card-actions { width: 100%; flex-direction: row; min-width: unset; }
 }
+@media (max-width: 480px) {
+  .rh-banner { padding: 24px 16px 20px; }
+  .rh-body   { padding: 16px 16px 64px; }
+  .rh-badge  { font-size: 10px; }
+  .rh-title  { font-size: clamp(20px, 6vw, 32px); }
+  .rh-card-main { padding: 14px 12px; gap: 10px; }
+  .rh-card-date { font-size: 11px; }
+  .rh-card-scores { gap: 4px; flex-wrap: wrap; }
+  .rh-score-chip  { font-size: 10px; }
+  .rh-select-btn  { font-size: 11px; padding: 7px 10px; }
+  .rh-expanded { padding: 12px 12px; }
+  .rh-session-box { padding: 12px 14px; }
+  .rh-session-budget-value { font-size: 11px; }
+}

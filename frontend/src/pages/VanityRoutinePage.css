@@ -136,3 +136,29 @@
   .vr-banner { padding: 40px 24px 32px; }
   .vr-body { padding: 24px 24px 64px; }
 }
+@media (max-width: 480px) {
+  .vr-banner { padding: 24px 16px 20px; }
+  .vr-body   { padding: 16px 16px 64px; }
+  .vr-title  { font-size: clamp(20px, 6vw, 28px); }
+  .vr-sub    { font-size: 13px; }
+  .vr-tabs   { width: 100%; }
+  .vr-tab    { flex: 1; font-size: 12px; padding: 8px 12px; }
+  .vr-section { padding: 16px 14px; }
+  .vr-section-title { font-size: 14px; }
+  .vr-section-sub   { font-size: 12px; }
+  .vr-select-grid   { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+  .vr-result-item   { padding: 12px 12px; gap: 10px; }
+  .vr-result-step   { width: 32px; font-size: 10px; }
+  .vr-result-img-wrap, .vr-result-img { width: 44px; height: 44px; }
+  .vr-result-name   { font-size: 12px; }
+  .vr-result-guide  { font-size: 11px; }
+  .vr-result-price  { font-size: 12px; }
+  .vr-source-badge  { font-size: 9px; padding: 2px 7px; }
+  .vr-llm-overall   { font-size: 12px; padding: 12px 14px; }
+  .vr-warning-comment { font-size: 12px; }
+  .vr-run-btn       { width: 100%; padding: 13px 24px; font-size: 13px; }
+  .vr-basis-bar     { padding: 10px 12px; font-size: 12px; }
+  .vr-history-card  { padding: 14px 12px; gap: 10px; }
+  .vr-history-price { font-size: 14px; }
+  .vr-history-meta  { font-size: 11px; }
+}
