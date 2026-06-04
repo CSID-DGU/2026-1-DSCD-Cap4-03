@@ -81,9 +81,17 @@
 .sm-tag.reason  { background: #F5F3FF; color: #7c3aed; border: 1.5px solid #DDD6FE; }
 .sm-tag.caution { background: #FEF3C7; color: #d97706; border: 1.5px solid #FDE68A; }
 
-/* LLM 코멘트 */
-.sm-llm-block { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
-.sm-llm-line    { font-size: 14px; color: #4B5563; line-height: 1.65; margin: 0; }
+/* LLM 코멘트 — 카드 하단 전체 너비 */
+.sm-llm-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  padding-left: 180px; /* 이미지(160px) + gap(20px) 정렬 */
+  border-top: 1px solid #F3F4F6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sm-llm-line    { font-size: 14px; color: #4B5563; line-height: 1.7; margin: 0; }
 .sm-llm-summary { font-size: 15px; font-weight: 700; color: #111827; }
 .sm-llm-reason  { color: #16a34a; }
 .sm-llm-caution { color: #d97706; }
@@ -119,18 +127,29 @@
   .sm-card-img-col { width: 80px; height: 80px; }
   .sm-fit-score { font-size: 36px; }
   .sm-card-score-col { min-width: 64px; }
+  .sm-llm-block { padding-left: 100px; } /* 이미지(80px) + gap(20px) */
 }
 @media (max-width: 480px) {
   .sm-banner { padding: 24px 16px 20px; }
   .sm-body   { padding: 16px 16px 64px; }
-  .sm-title  { font-size: clamp(20px, 6vw, 32px); }
-  .sm-card-main { gap: 12px; }
-  .sm-card-img-col { width: 60px; height: 60px; border-radius: 8px; }
-  .sm-result-name  { font-size: 14px; }
-  .sm-llm-line     { font-size: 12px; }
-  .sm-llm-summary  { font-size: 13px; }
-  .sm-fit-score    { font-size: 28px; }
-  .sm-card-score-col { min-width: 52px; }
-  .sm-result-card  { padding: 16px 14px; }
-  .sm-basis-bar    { padding: 10px 14px; font-size: 12px; }
+  .sm-title  { font-size: clamp(20px, 6vw, 28px); }
+  .sm-sub    { font-size: 13px; }
+  .sm-result-card  { padding: 14px 14px; }
+  .sm-card-main { gap: 10px; }
+  .sm-card-img-col { width: 64px; height: 64px; border-radius: 8px; }
+  .sm-result-brand { font-size: 9px; }
+  .sm-result-name  { font-size: 13px; }
+  .sm-result-cat   { font-size: 11px; }
+  .sm-fit-label    { font-size: 10px; padding: 3px 8px; }
+  .sm-fit-score    { font-size: 26px; }
+  .sm-card-score-col { min-width: 48px; gap: 4px; }
+  .sm-tags-wrap    { margin-top: 8px; }
+  .sm-tag          { font-size: 10px; padding: 3px 9px; }
+  .sm-llm-block    { padding-left: 0; margin-top: 12px; padding-top: 12px; gap: 6px; }
+  .sm-llm-line     { font-size: 13px; line-height: 1.65; }
+  .sm-llm-summary  { font-size: 14px; }
+  .sm-basis-bar    { padding: 10px 12px; font-size: 12px; }
+  .sm-llm-overall  { font-size: 12px; padding: 12px 14px; }
+  .sm-result-header { gap: 8px; }
+  .sm-result-title  { font-size: 15px; }
 }
