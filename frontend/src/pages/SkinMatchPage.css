@@ -120,3 +120,17 @@
   .sm-fit-score { font-size: 36px; }
   .sm-card-score-col { min-width: 64px; }
 }
+@media (max-width: 480px) {
+  .sm-banner { padding: 24px 16px 20px; }
+  .sm-body   { padding: 16px 16px 64px; }
+  .sm-title  { font-size: clamp(20px, 6vw, 32px); }
+  .sm-card-main { gap: 12px; }
+  .sm-card-img-col { width: 60px; height: 60px; border-radius: 8px; }
+  .sm-result-name  { font-size: 14px; }
+  .sm-llm-line     { font-size: 12px; }
+  .sm-llm-summary  { font-size: 13px; }
+  .sm-fit-score    { font-size: 28px; }
+  .sm-card-score-col { min-width: 52px; }
+  .sm-result-card  { padding: 16px 14px; }
+  .sm-basis-bar    { padding: 10px 14px; font-size: 12px; }
+}

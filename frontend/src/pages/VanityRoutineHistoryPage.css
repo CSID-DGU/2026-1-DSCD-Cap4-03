@@ -101,3 +101,12 @@
   .vrh-body   { padding: 24px 24px 64px; }
   .vrh-card-images { width: auto; }
 }
+@media (max-width: 480px) {
+  .vrh-banner { padding: 24px 16px 20px; }
+  .vrh-body   { padding: 16px 16px 64px; }
+  .vrh-title  { font-size: clamp(20px, 6vw, 32px); }
+  .vrh-card   { padding: 14px 12px; gap: 10px; }
+  .vrh-card-date { font-size: 11px; }
+  .vrh-card-images img { width: 44px; height: 44px; }
+  .vrh-budget-chip { font-size: 10px; padding: 2px 8px; }
+}

@@ -118,3 +118,16 @@
   color: white;
   border: none;
 }
+.auth-hint {
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 4px 0 0 2px;
+  text-align: left;
+}
+.auth-hint--error { color: #ef4444; }
+.auth-hint--ok    { color: #16a34a; }
+
+@media (max-width: 480px) {
+  .auth-page { align-items: flex-start; padding: 32px 16px; }
+  .auth-container { width: 100%; padding: 28px 20px; border-radius: 12px; }
+}

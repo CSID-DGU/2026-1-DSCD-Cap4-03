@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { useAuth } from '../context/useAuth';
 import { authApi } from '../api/auth';
 import '../styles/Auth.css';
@@ -26,6 +26,10 @@ export default function SignupPage() {
 
   const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+  const pwLengthOk   = form.password.length === 0 ? null : form.password.length >= 8;
+  const pwMatchOk    = form.passwordConfirm.length === 0 ? null
+    : form.password === form.passwordConfirm;
+
   const handleSignup = async () => {
     if (!form.user_name || !form.email || !form.password) {
       setError('이름, 이메일, 비밀번호는 필수입니다.'); return;
@@ -33,7 +37,10 @@ export default function SignupPage() {
     if (!EMAIL_REGEX.test(form.email)) {
       setError('올바른 이메일 형식으로 입력해주세요. (예: example@gmail.com)'); return;
     }
-    if (form.password !== form.passwordConfirm) {
+    if (!pwLengthOk) {
+      setError('비밀번호는 8자리 이상 입력해주세요.'); return;
+    }
+    if (!pwMatchOk) {
       setError('비밀번호가 일치하지 않아요.'); return;
     }
     setError('');
@@ -79,6 +86,18 @@ export default function SignupPage() {
             {showPassword ? <EyeOff size={17} color="#9CA3AF" /> : <Eye size={17} color="#9CA3AF" />}
           </button>
         </div>
+        {pwLengthOk === false && (
+          <p className="auth-hint auth-hint--error">
+            <X size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+            비밀번호는 8자리 이상 입력해주세요.
+          </p>
+        )}
+        {pwLengthOk === true && (
+          <p className="auth-hint auth-hint--ok">
+            <Check size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+            사용 가능한 비밀번호예요.
+          </p>
+        )}
 
         <div className="auth-pw-wrap">
           <input
@@ -92,6 +111,18 @@ export default function SignupPage() {
             {showPasswordConfirm ? <EyeOff size={17} color="#9CA3AF" /> : <Eye size={17} color="#9CA3AF" />}
           </button>
         </div>
+        {pwMatchOk === false && (
+          <p className="auth-hint auth-hint--error">
+            <X size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+            비밀번호가 일치하지 않아요.
+          </p>
+        )}
+        {pwMatchOk === true && (
+          <p className="auth-hint auth-hint--ok">
+            <Check size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} />
+            비밀번호가 일치해요.
+          </p>
+        )}
 
         {error && <p style={{ color: '#ef4444', fontSize: '0.85rem', margin: '0' }}>{error}</p>}
         <button className="btn-primary" onClick={handleSignup} disabled={loading}>

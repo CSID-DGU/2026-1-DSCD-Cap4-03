@@ -187,3 +187,11 @@
   .budget-banner { padding: 40px 24px 32px; }
   .budget-body { padding: 24px 24px 64px; grid-template-columns: 1fr; }
 }
+@media (max-width: 480px) {
+  .budget-banner { padding: 24px 16px 20px; }
+  .budget-body { padding: 16px 16px 64px; }
+  .budget-title { font-size: clamp(20px, 6vw, 32px); }
+  .budget-card { padding: 16px 14px; }
+  .bgt-labels-row { font-size: 10px; }
+  .btn-budget-next { padding: 14px 40px; font-size: 14px; }
+}

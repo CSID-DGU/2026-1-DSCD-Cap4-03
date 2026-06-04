@@ -454,11 +454,15 @@
    RESPONSIVE
 ════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .mp-hero-inner { flex-direction: column; align-items: stretch; padding-bottom: 0; min-height: auto; }
-  .mp-hero-text  { padding-bottom: 40px; }
-  .mp-hero-photo-wrap { position: relative; right: auto; top: auto; bottom: auto; width: 100%; max-width: 440px; margin: 0 auto; height: 380px; }
-  .mp-cards-scatter { flex-direction: column; align-items: center; }
-  .mp-scatter-card--l, .mp-scatter-card--r { transform: none; width: 100%; max-width: 400px; margin-right: 0; }
+  .mp-hero { display: flex; flex-direction: column; }
+  .mp-hero-inner { order: 1; flex-direction: column; align-items: stretch; padding-bottom: 0; min-height: auto; position: static; }
+  .mp-hero-photo-wrap { order: 2; position: relative; right: auto; top: auto; bottom: auto; width: 70%; max-width: 320px; margin: 0 auto; height: auto; z-index: 0; }
+  .mp-hero-text  { padding-bottom: 0; }
+  .mp-hero-photo { object-fit: contain; height: auto; }
+  .mp-cards-scatter { flex-direction: row; align-items: center; justify-content: center; }
+  .mp-scatter-card { width: 260px; }
+  .mp-scatter-card--l { transform: rotate(-6deg) translateY(20px); margin-right: -60px; z-index: 1; }
+  .mp-scatter-card--r { transform: rotate(4deg) translateY(-20px); z-index: 2; }
   .mp-how-card   { flex-direction: column; padding: 40px 32px; gap: 32px; }
   .mp-how-right  { flex: none; width: 100%; height: auto; }
   .mp-how-svg    { width: 100%; height: auto; }
@@ -466,9 +470,24 @@
 @media (max-width: 640px) {
   .mp-container  { padding: 0 20px; }
   .mp-hero-inner { padding: 60px 20px 0; gap: 32px; }
-  .mp-hero-photo-wrap { height: 300px; }
   .mp-how-card   { padding: 28px 24px; }
-  .mp-scatter-card { max-width: 100%; }
+  .mp-scatter-card { width: 200px; padding: 20px 16px; }
+  .mp-scatter-card--l { margin-right: -48px; }
+  .mp-sc-metric { gap: 5px; }
+  .mp-sc-bar-bg { height: 5px; }
   .mp-showcase, .mp-how { padding: 72px 0 80px; }
   .mp-cta { padding: 80px 0; }
+}
+@media (max-width: 480px) {
+  .mp-container  { padding: 0 16px; }
+  .mp-hero-inner { padding: 40px 16px 0; gap: 24px; }
+  .mp-hero-photo-wrap { height: 220px; }
+  .mp-hero-h1 { font-size: clamp(1.6rem, 7vw, 2.4rem); }
+  .mp-hero-sub { font-size: 0.85rem; }
+  .mp-showcase, .mp-how { padding: 48px 0 56px; }
+  .mp-how-card { padding: 22px 18px; gap: 20px; }
+  .mp-how-h2 { font-size: 1.4rem; }
+  .mp-cta { padding: 56px 0; }
+  .mp-cta-h2 { font-size: 1.5rem; }
+  .mp-btn-purple { padding: 14px 28px; font-size: 0.9rem; }
 }

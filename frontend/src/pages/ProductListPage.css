@@ -79,6 +79,13 @@
 @media (max-width: 1100px) { .pl-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 800px)  { .pl-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 540px)  { .pl-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) {
+  .pl-banner { padding: 24px 16px 20px; }
+  .pl-body   { padding: 16px 16px 64px; }
+  .pl-grid   { grid-template-columns: repeat(2, 1fr); gap: 12px 10px; }
+  .pl-tabs   { gap: 0; }
+  .pl-tab    { font-size: 12px; padding: 10px 12px; }
+}
 
 /* ── 카드 ── */
 .pl-card {
