@@ -9,7 +9,7 @@ type RangeIdx = { lo: number; hi: number };
 
 const INDIVIDUAL_STEPS: Step[] = [
   { label: '0원',   value: 0     },
-  { label: '1만원', value: 10000 },
+  { label: '2만원', value: 20000 },
   { label: '3만원', value: 30000 },
   { label: '5만원', value: 50000 },
   { label: 'MAX',   value: null  },
@@ -17,8 +17,8 @@ const INDIVIDUAL_STEPS: Step[] = [
 
 const TOTAL_STEPS: Step[] = [
   { label: '0원',   value: 0      },
-  { label: '5만원', value: 50000  },
-  { label: '10만원', value: 100000 },
+  { label: '10만원', value: 100000  },
+  { label: '15만원', value: 150000 },
   { label: '20만원', value: 200000 },
   { label: 'MAX',   value: null   },
 ];

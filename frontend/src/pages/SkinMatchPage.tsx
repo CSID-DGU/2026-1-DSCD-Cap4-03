@@ -150,7 +150,7 @@ export default function SkinMatchPage() {
                           }
                         </div>
 
-                        {/* 중간: 제품 정보 + LLM */}
+                        {/* 중간: 제품 정보 + 태그 */}
                         <div className="sm-card-content">
                           <div className="sm-result-brand">{item.brand_name}</div>
                           <div className="sm-result-name">{item.product_name}</div>
@@ -169,26 +169,6 @@ export default function SkinMatchPage() {
                               </div>
                             </div>
                           )}
-
-                          {comment && (
-                            <div className="sm-llm-block">
-                              {comment.summary && (
-                                <p className="sm-llm-line sm-llm-summary">{comment.summary}</p>
-                              )}
-                              {comment.fit_reason && (
-                                <div className="sm-llm-line sm-llm-reason" style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-                                  <Check size={13} color="#16a34a" style={{ flexShrink: 0, marginTop: 3 }} />
-                                  <span>{comment.fit_reason}</span>
-                                </div>
-                              )}
-                              {comment.caution_comment && (
-                                <div className="sm-llm-line sm-llm-caution" style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-                                  <AlertTriangle size={13} color="#d97706" style={{ flexShrink: 0, marginTop: 3 }} />
-                                  <span>{comment.caution_comment}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
 
                         {/* 오른쪽: 등급 뱃지 + 큰 점수 */}
@@ -198,6 +178,27 @@ export default function SkinMatchPage() {
                         </div>
 
                       </div>
+
+                      {/* LLM 코멘트: 카드 하단 전체 너비 */}
+                      {comment && (
+                        <div className="sm-llm-block">
+                          {comment.summary && (
+                            <p className="sm-llm-line sm-llm-summary">{comment.summary}</p>
+                          )}
+                          {comment.fit_reason && (
+                            <div className="sm-llm-line sm-llm-reason" style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                              <Check size={13} color="#16a34a" style={{ flexShrink: 0, marginTop: 3 }} />
+                              <span>{comment.fit_reason}</span>
+                            </div>
+                          )}
+                          {comment.caution_comment && (
+                            <div className="sm-llm-line sm-llm-caution" style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                              <AlertTriangle size={13} color="#d97706" style={{ flexShrink: 0, marginTop: 3 }} />
+                              <span>{comment.caution_comment}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

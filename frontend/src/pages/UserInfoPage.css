@@ -198,3 +198,12 @@
   .ui-banner { padding: 40px 24px 32px; }
   .ui-body { padding: 24px 24px 64px; }
 }
+@media (max-width: 480px) {
+  .ui-banner { padding: 24px 16px 20px; }
+  .ui-body { padding: 16px 16px 64px; }
+  .ui-section { padding: 20px 16px; }
+  .ui-divider { margin: 0 16px; }
+  .ui-submit-row { padding: 20px 16px; gap: 12px; }
+  .ui-submit-btn { width: 100%; padding: 13px 24px; font-size: 14px; }
+  .ui-select-btn { padding: 8px 14px; font-size: 13px; }
+}

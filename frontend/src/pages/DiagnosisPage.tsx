@@ -4,7 +4,7 @@ import type { Area } from 'react-easy-crop';
 import { useNavigate } from 'react-router-dom';
 import { imagesApi } from '../api/images';
 import {
-  Lightbulb, Eye, Minus, Ban, Glasses,
+  Lightbulb, Eye, Minus, Ban, Glasses, Scissors,
   Camera, ZoomIn, ZoomOut, Check, Ruler, Microscope,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,6 +22,7 @@ const GUIDES: { Icon: LucideIcon; text: string }[] = [
   { Icon: Minus,     text: '무표정으로 촬영해주세요' },
   { Icon: Ban,       text: '화장 없이 생얼로 찍어주세요' },
   { Icon: Glasses,   text: '안경 및 악세사리를 제거해주세요' },
+  { Icon: Scissors,  text: '앞머리가 있다면 넘기고 찍어주세요' },
 ];
 
 type Step = 'upload' | 'crop' | 'preview';

@@ -126,7 +126,6 @@
   border-right: 1px solid #F3F4F6;
 }
 .my-info-row:nth-child(even) { border-right: none; }
-.my-info-row:nth-last-child(-n+2) { border-bottom: none; }
 .my-info-row.full {
   grid-column: 1 / -1;
   border-right: none;
@@ -331,4 +330,14 @@
   .my-banner { padding: 40px 24px 32px; }
   .my-tabs-inner { padding: 0 24px; }
   .my-body { padding: 24px 24px 64px; }
+}
+@media (max-width: 480px) {
+  .my-banner { padding: 24px 16px 20px; }
+  .my-tabs-inner { padding: 0 16px; }
+  .my-body { padding: 16px 16px 64px; }
+  .my-title { font-size: clamp(20px, 6vw, 32px); }
+  .my-tab { font-size: 12px; padding: 10px 12px; }
+  .my-info-grid { grid-template-columns: 1fr; }
+  .my-wish-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .my-section-title { font-size: 15px; }
 }

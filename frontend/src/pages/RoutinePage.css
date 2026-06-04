@@ -383,3 +383,20 @@
   .rp-body { padding: 24px 24px 64px; }
   .rp-footer { padding: 24px 24px; }
 }
+@media (max-width: 480px) {
+  .rp-hero { padding: 24px 16px; }
+  .rp-hero-title { font-size: clamp(22px, 6vw, 32px); }
+  .rp-hero-date { font-size: 12px; }
+  .rp-tabs { padding: 0 16px; gap: 6px; }
+  .rp-tab { font-size: 12px; padding: 7px 12px; }
+  .rp-body { padding: 16px 16px 64px; }
+  .rp-block-title { font-size: 15px; }
+  .rp-product-card { flex: 0 0 150px; }
+  .rp-product-name { font-size: 12px; }
+  .rp-product-brand { font-size: 10px; }
+  .rp-product-price { font-size: 13px; }
+  .rp-summary-bar { padding: 12px 16px; gap: 10px; font-size: 12px; }
+  .rp-ai-desc-box { padding: 16px 14px; }
+  .rp-ai-desc-text { font-size: 13px; }
+  .rp-budget-row { flex-wrap: wrap; gap: 6px; }
+}

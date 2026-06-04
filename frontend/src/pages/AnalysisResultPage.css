@@ -224,7 +224,33 @@
   gap: 12px;
 }
 @media (max-width: 480px) {
-  .ar-metric-grid { grid-template-columns: 1fr; }
+  .ar-metric-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ar-metric-card { padding: 10px 8px; }
+  .ar-metric-card-top { gap: 4px; }
+  .ar-metric-name { font-size: 11px; }
+  .ar-metric-val { font-size: 20px; }
+  .ar-metric-grade-badge { font-size: 9px; padding: 2px 6px; }
+  .ar-metric-desc { font-size: 11px; }
+}
+@media (max-width: 900px) {
+  .ar-hero-right { transform: none; }
+  .ar-photo-ring { width: 120px; height: 120px; }
+  .ar-photo      { width: 108px; height: 108px; border: 3px solid #fff; }
+  .ar-score-badge, .ar-age-badge { display: none; }
+}
+@media (max-width: 480px) {
+  .ar-hero { padding: 24px 16px; }
+  .ar-hero-title { font-size: 26px; }
+  .ar-hero-badge { font-size: 11px; margin-bottom: 10px; }
+  .ar-hero-date { font-size: 13px; }
+  .ar-report-section { padding: 32px 16px 40px; }
+  .ar-trend-box { padding: 20px 16px; }
+  .ar-ai-box { padding: 18px 16px; }
+  .ar-sec-title { font-size: 22px; }
+  .ar-sec-sub { font-size: 13px; }
+  .ar-cta-section { padding: 40px 16px; }
+  .ar-trend-stat { gap: 6px; }
+  .ar-trend-stat-score { font-size: 17px; }
 }
 
 .ar-metric-card {
@@ -378,4 +404,29 @@
   .ar-report-section { padding: 48px 24px 48px; }
   .ar-cta-section { padding: 48px 24px; }
   .ar-footer { padding: 24px 24px; }
+  .ar-hero-right { transform: none; }
+  .ar-photo-ring { width: 120px; height: 120px; }
+  .ar-photo      { width: 108px; height: 108px; border: 3px solid #fff; }
+  .ar-score-badge, .ar-age-badge { display: none; }
+}
+@media (max-width: 480px) {
+  .ar-hero { padding: 24px 16px; }
+  .ar-hero-title { font-size: clamp(22px, 6vw, 32px); }
+  .ar-hero-date { font-size: 12px; }
+  .ar-hero-btns { flex-direction: column; gap: 8px; }
+  .ar-btn-primary, .ar-btn-ghost { padding: 11px 20px; font-size: 13px; }
+  .ar-report-section { padding: 28px 16px 36px; }
+  .ar-sec-title { font-size: 20px; }
+  .ar-sec-sub { font-size: 12px; }
+  .ar-metric-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .ar-metric-card { padding: 10px 8px; }
+  .ar-metric-name { font-size: 11px; }
+  .ar-metric-val { font-size: 20px; }
+  .ar-metric-grade-badge { font-size: 9px; padding: 2px 5px; }
+  .ar-metric-desc { font-size: 11px; display: none; }
+  .ar-ai-box { padding: 18px 14px; }
+  .ar-ai-text { font-size: 13px; }
+  .ar-trend-box { padding: 20px 14px; margin-top: 28px; }
+  .ar-trend-title { font-size: 16px; }
+  .ar-cta-section { padding: 36px 16px; }
 }

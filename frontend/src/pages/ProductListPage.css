@@ -70,6 +70,54 @@
 .pl-tab.active { color: #7c3aed; border-bottom-color: #7c3aed; }
 .pl-tab:hover:not(.active) { color: #555; }
 
+/* ── 검색 ── */
+.pl-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.pl-search-icon {
+  position: absolute;
+  left: 14px;
+  color: #9CA3AF;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+.pl-search-input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 40px 10px 40px;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: 'Noto Sans KR', sans-serif;
+  color: #111827;
+  background: #F9FAFB;
+  outline: none;
+  transition: border-color 0.18s;
+  box-sizing: border-box;
+}
+.pl-search-input:focus { border-color: #7c3aed; background: #fff; }
+.pl-search-input::placeholder { color: #9CA3AF; }
+.pl-search-clear {
+  position: absolute;
+  left: calc(400px - 32px);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9CA3AF;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.pl-search-clear:hover { color: #374151; }
+@media (max-width: 480px) {
+  .pl-search-input { max-width: 100%; }
+  .pl-search-clear { left: unset; right: 10px; }
+}
+
 /* ── 그리드 ── */
 .pl-grid {
   display: grid;
@@ -79,6 +127,13 @@
 @media (max-width: 1100px) { .pl-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 800px)  { .pl-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 540px)  { .pl-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) {
+  .pl-banner { padding: 24px 16px 20px; }
+  .pl-body   { padding: 16px 16px 64px; }
+  .pl-grid   { grid-template-columns: repeat(2, 1fr); gap: 12px 10px; }
+  .pl-tabs   { gap: 0; }
+  .pl-tab    { font-size: 12px; padding: 10px 12px; }
+}
 
 /* ── 카드 ── */
 .pl-card {
