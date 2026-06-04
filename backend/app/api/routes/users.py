@@ -205,7 +205,6 @@ def get_my_skin_analysis(current_user: dict = Depends(get_current_user), db: Ses
                 "image_url": resolve_image_display_url(image.storage_url, image.s3_key) if image else None,
                 "display_scores": row.get("display_scores", {}),
                 "ai_comment": summary.get("summary_comment", "아직 분석 요약이 준비되지 않았습니다."),
-                "display_scores": row.get("display_scores", {}),
             }
         )
 
