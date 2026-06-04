@@ -163,24 +163,68 @@ export interface VanitySummary {
   } | null;
 }
 
+const VANITY_CACHE_TTL_MS = 30_000;
+const vanityCache = new Map<string, { expiresAt: number; value: unknown }>();
+const vanityPending = new Map<string, Promise<unknown>>();
+
+function getCachedVanity<T>(key: string, fetcher: () => Promise<T>) {
+  const now = Date.now();
+  const cached = vanityCache.get(key);
+  if (cached && cached.expiresAt > now) {
+    return Promise.resolve(cached.value as T);
+  }
+
+  const pending = vanityPending.get(key);
+  if (pending) return pending as Promise<T>;
+
+  const request = fetcher()
+    .then((value) => {
+      vanityCache.set(key, { expiresAt: Date.now() + VANITY_CACHE_TTL_MS, value });
+      return value;
+    })
+    .finally(() => {
+      vanityPending.delete(key);
+    });
+
+  vanityPending.set(key, request);
+  return request;
+}
+
+export function clearVanityCache() {
+  vanityCache.clear();
+  vanityPending.clear();
+}
+
 /* ── API ── */
 export const vanityApi = {
   // 2. My Products
   getProducts: () =>
-    api.get<{ products: VanityProduct[] }>('/vanity/products'),
+    getCachedVanity('products', () => api.get<{ products: VanityProduct[] }>('/vanity/products')),
 
   addProduct: (product_id: number) =>
-    api.post<{ vanity_id: number; product_id: number; message: string }>('/vanity/products', { product_id }),
+    api.post<{ vanity_id: number; product_id: number; message: string }>('/vanity/products', { product_id })
+      .then((result) => {
+        clearVanityCache();
+        return result;
+      }),
 
   deleteProduct: (product_id: number) =>
-    api.delete<{ message: string }>(`/vanity/products/${product_id}`),
+    api.delete<{ message: string }>(`/vanity/products/${product_id}`)
+      .then((result) => {
+        clearVanityCache();
+        return result;
+      }),
 
   // 3. Skin Match
   runSkinMatch: (body: { product_ids?: number[] }) =>
-    api.post<SkinMatchResult>('/vanity/skin-match', body),
+    api.post<SkinMatchResult>('/vanity/skin-match', body)
+      .then((result) => {
+        clearVanityCache();
+        return result;
+      }),
 
   getLatestSkinMatch: () =>
-    api.get<SkinMatchLatest>('/vanity/skin-match/latest'),
+    getCachedVanity('latest-skin-match', () => api.get<SkinMatchLatest>('/vanity/skin-match/latest')),
 
   // 4. Vanity Routine
   runRoutine: (body: {
@@ -191,20 +235,27 @@ export const vanityApi = {
     ampoule_min?: number; ampoule_max?: number;
     cream_min?: number; cream_max?: number;
   }) =>
-    api.post<VanityRoutineResult>('/vanity/routines', body),
+    api.post<VanityRoutineResult>('/vanity/routines', body)
+      .then((result) => {
+        clearVanityCache();
+        return result;
+      }),
 
   getLatestRoutine: () =>
-    api.get<VanityRoutineResult>('/vanity/routines/latest'),
+    getCachedVanity('latest-routine', () => api.get<VanityRoutineResult>('/vanity/routines/latest')),
 
   getRoutineHistory: () =>
-    api.get<{ routines: VanityRoutineHistoryItem[] }>('/vanity/routines'),
+    getCachedVanity('routine-history', () => api.get<{ routines: VanityRoutineHistoryItem[] }>('/vanity/routines')),
 
   getRoutineDetail: (recommendation_session_id: number) =>
-    api.get<VanityRoutineResult>(`/vanity/routines/${recommendation_session_id}`),
+    getCachedVanity(
+      `routine-detail:${recommendation_session_id}`,
+      () => api.get<VanityRoutineResult>(`/vanity/routines/${recommendation_session_id}`)
+    ),
 
   // 6. Main Summary
   getSummary: () =>
-    api.get<VanitySummary>('/vanity/summary'),
+    getCachedVanity('summary', () => api.get<VanitySummary>('/vanity/summary')),
 };
 
 /* ── 표시 라벨 매핑 ── */

@@ -66,20 +66,24 @@ export default function VanityMainPage() {
   const [imageMap, setImageMap]       = useState<Record<number, string>>({});
 
   const load = async () => {
+    setLoading(true);
     let summaryData: VanitySummary | null = null;
     try {
       summaryData = await vanityApi.getSummary();
       setSummary(summaryData);
     } catch { /* no-op */ }
-    try { setSkinMatchDetail(await vanityApi.getLatestSkinMatch()); } catch { /* no-op */ }
-    if (summaryData?.latest_vanity_routine?.recommendation_session_id) {
-      try {
-        setRoutineDetail(await vanityApi.getRoutineDetail(
-          summaryData.latest_vanity_routine.recommendation_session_id
-        ));
-      } catch { /* no-op */ }
-    }
     setLoading(false);
+
+    const skinMatchTask = vanityApi.getLatestSkinMatch()
+      .then(setSkinMatchDetail)
+      .catch(() => setSkinMatchDetail(null));
+
+    const routineId = summaryData?.latest_vanity_routine?.recommendation_session_id;
+    const routineTask = routineId
+      ? vanityApi.getRoutineDetail(routineId).then(setRoutineDetail).catch(() => setRoutineDetail(null))
+      : Promise.resolve(setRoutineDetail(null));
+
+    await Promise.allSettled([skinMatchTask, routineTask]);
   };
 
   useEffect(() => { load(); }, []);
