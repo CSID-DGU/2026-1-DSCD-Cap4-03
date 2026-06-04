@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productApi, type ProductSummary } from '../api/product';
-import { Heart } from 'lucide-react';
+import { Heart, Search, X } from 'lucide-react';
 import './ProductListPage.css';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
@@ -43,10 +43,12 @@ export default function ProductListPage() {
   const [wishlist, setWishlist] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     setLoading(true);
     setPage(1);
+    setSearchQuery('');
     const config = CATEGORY_CONFIG.find((c) => c.key === activeCategory)!;
     const fetch = config.apiCategories.length === 0
       ? productApi.getList()
@@ -56,6 +58,16 @@ export default function ProductListPage() {
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, [activeCategory]);
+
+  const filteredProducts = searchQuery.trim() === ''
+    ? products
+    : products.filter((p) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          p.product_name.toLowerCase().includes(q) ||
+          p.brand_name.toLowerCase().includes(q)
+        );
+      });
 
   // 초기 찜 목록 로드
   useEffect(() => {
@@ -111,13 +123,31 @@ export default function ProductListPage() {
           ))}
         </div>
 
+        <div className="pl-search-wrap">
+          <Search size={16} className="pl-search-icon" />
+          <input
+            className="pl-search-input"
+            type="text"
+            placeholder="제품명 또는 브랜드 검색"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+          />
+          {searchQuery && (
+            <button className="pl-search-clear" onClick={() => { setSearchQuery(''); setPage(1); }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
         {loading ? (
           <LoadingSpinner text="제품을 불러오는 중이에요" />
-        ) : products.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem' }}>제품이 없어요.</p>
+        ) : filteredProducts.length === 0 ? (
+          <p style={{ textAlign: 'center', color: '#9ca3af', padding: '3rem' }}>
+            {searchQuery ? `"${searchQuery}" 검색 결과가 없어요.` : '제품이 없어요.'}
+          </p>
         ) : (() => {
-          const totalPages = Math.ceil(products.length / PAGE_SIZE);
-          const paged = products.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+          const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
+          const paged = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
           return (
             <>
               <div className="pl-grid">
