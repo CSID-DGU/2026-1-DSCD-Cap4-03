@@ -69,6 +69,7 @@ frontend/*
 freeze
 requirements_min.txt
 test_img/
+.editorconfig
 rouple_seed.sql
 backend/Rouple_db_dump.sql
 deploy_check_runtime.sql
