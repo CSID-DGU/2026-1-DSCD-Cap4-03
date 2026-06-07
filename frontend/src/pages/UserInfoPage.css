@@ -1,0 +1,209 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.ui-page {
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+/* ── 배너 ── */
+.ui-banner {
+  background: #fff;
+  border-bottom: 1px solid #F3F4F6;
+  padding: 48px 80px 40px;
+}
+.ui-banner-inner { max-width: 1200px; margin: 0 auto; }
+.ui-badge {
+  display: inline-block;
+  background: none;
+  color: #7c3aed;
+  font-size: 11px; font-weight: 700;
+  padding: 0;
+  margin-bottom: 14px;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+}
+.ui-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(24px, 4vw, 38px);
+  font-weight: 800; color: #1A1A1A; margin-bottom: 8px;
+  letter-spacing: -0.05em;
+}
+.ui-sub { font-size: 14px; color: #5F5F5F; line-height: 1.7; }
+
+/* ── 바디 ── */
+.ui-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 80px 80px;
+}
+
+/* ── 카드 ── */
+.ui-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+/* ── 섹션 ── */
+.ui-section {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 0;
+  padding: 32px 40px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .ui-section { grid-template-columns: 1fr; gap: 16px; padding: 24px 20px; }
+}
+
+.ui-section-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-right: 32px;
+  padding-top: 2px;
+}
+.ui-step-num {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #7c3aed; color: #fff;
+  font-family: 'Sora', sans-serif;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ui-section-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700; color: #1A1A1A;
+  margin-bottom: 4px;
+}
+.ui-section-sub { font-size: 12px; color: #9CA3AF; line-height: 1.5; }
+
+.ui-section-body { width: 100%; }
+
+/* ── 구분선 ── */
+.ui-divider {
+  height: 1px;
+  background: #F5F3FF;
+  margin: 0 40px;
+}
+@media (max-width: 720px) { .ui-divider { margin: 0 20px; } }
+
+/* ── 성별/피부타입 버튼 그룹 ── */
+.ui-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ui-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #ffffff;
+  border: 1.5px solid #A78BFA;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: #5F5F5F;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.18s;
+}
+.ui-select-btn:hover { border-color: #7c3aed; color: #7c3aed; }
+.ui-select-btn.active {
+  background: #7c3aed; border-color: #7c3aed;
+  color: #fff;
+}
+
+/* ── 날짜 input ── */
+.ui-input {
+  padding: 11px 16px;
+  border-radius: 14px;
+  border: 1.5px solid #A78BFA;
+  font-size: 14px; color: #1A1A1A;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #F9F7FF;
+  outline: none;
+  transition: border-color 0.18s;
+  width: 200px;
+}
+.ui-input:focus { border-color: #7c3aed; }
+
+/* ── 피부 고민 그리드 ── */
+.ui-concern-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ui-concern-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: #ffffff;
+  border: 1.5px solid #A78BFA;
+  border-radius: 999px;
+  font-size: 13px; font-weight: 600; color: #5F5F5F;
+  cursor: pointer;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.18s;
+}
+.ui-concern-btn:hover { border-color: #7c3aed; color: #7c3aed; background: #F9F7FF; }
+.ui-concern-btn.active {
+  background: #7c3aed; border-color: #7c3aed; color: #fff;
+}
+.ui-concern-icon { display: none; }
+
+/* ── 제출 행 ── */
+.ui-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 28px 40px;
+  background: #F9F7FF;
+  border-top: 1px solid #F5F3FF;
+}
+@media (max-width: 720px) { .ui-submit-row { padding: 24px 20px; } }
+
+.ui-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+.ui-summary-tag {
+  background: #F9F7FF; color: #7c3aed;
+  font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 10px;
+  border: 1.5px solid #A78BFA;
+}
+.ui-summary-tag.allergy { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+
+.ui-submit-btn {
+  background: #7c3aed; color: #fff;
+  font-family: 'Sora', sans-serif;
+  font-size: 15px; font-weight: 700;
+  padding: 14px 40px; border-radius: 10px; border: none; cursor: pointer;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  transition: all 0.2s; white-space: nowrap;
+}
+.ui-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,0.12); }
+
+@media (max-width: 900px) {
+  .ui-banner { padding: 40px 24px 32px; }
+  .ui-body { padding: 24px 24px 64px; }
+}
+@media (max-width: 480px) {
+  .ui-banner { padding: 24px 16px 20px; }
+  .ui-body { padding: 16px 16px 64px; }
+  .ui-section { padding: 20px 16px; }
+  .ui-divider { margin: 0 16px; }
+  .ui-submit-row { padding: 20px 16px; gap: 12px; }
+  .ui-submit-btn { width: 100%; padding: 13px 24px; font-size: 14px; }
+  .ui-select-btn { padding: 8px 14px; font-size: 13px; }
+}

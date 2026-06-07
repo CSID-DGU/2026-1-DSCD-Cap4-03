@@ -1,0 +1,51 @@
+import { api } from './client';
+
+export interface PresignResponse {
+  upload_url: string;
+  public_url: string;
+  s3_key: string;
+  expires_in: number;
+}
+
+export interface ImageResponse {
+  image_id: number;
+  user_id: number;
+  storage_url: string;
+  s3_key: string;
+  uploaded_at: string;
+}
+
+export const imagesApi = {
+  presign: (body: { file_name: string; mime_type: string; file_size: number }) =>
+    api.post<PresignResponse>('/files/presign', body),
+
+  createImage: (body: {
+    storage_url: string;
+    s3_key: string;
+    original_file_name: string;
+    mime_type: string;
+    file_size: number;
+    crop_data: { x: number; y: number; width: number; height: number };
+    upload_status: string;
+  }) => api.post<ImageResponse>('/images', body),
+
+  /** S3 presigned URL로 blob 직접 PUT (백엔드 미경유) */
+  uploadToS3: async (uploadUrl: string, blob: Blob): Promise<void> => {
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'image/jpeg' },
+      body: blob,
+      credentials: 'omit',
+    });
+    if (!res.ok) {
+      throw new Error(`S3 업로드 실패 (${res.status}): ${await res.text().catch(() => '')}`);
+    }
+  },
+
+  /** S3 미연결 테스트용 — 파일 직접 업로드 */
+  localUpload: (blob: Blob) => {
+    const form = new FormData();
+    form.append('file', blob, 'skin.jpg');
+    return api.postMultipart<{ image_id: number }>('/files/local-upload', form);
+  },
+};

@@ -1,0 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.policy-page {
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.policy-inner {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 60px 24px 80px;
+}
+
+/* 헤더 */
+.policy-header {
+  margin-bottom: 48px;
+  padding-bottom: 32px;
+  border-bottom: 2px solid #F5F3FF;
+}
+
+.policy-badge {
+  display: inline-block;
+  padding: 0;
+  background: none;
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  font-family: 'Sora', sans-serif;
+}
+
+.policy-title {
+  font-family: 'Sora', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #1A1A1A;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.05em;
+}
+
+.policy-updated {
+  font-size: 13px;
+  color: #9CA3AF;
+  margin: 0;
+}
+
+/* 본문 */
+.policy-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.policy-intro {
+  font-size: 15px;
+  line-height: 1.85;
+  color: #5F5F5F;
+  margin: 0 0 40px 0;
+  padding: 20px 24px;
+  background: #F9F7FF;
+  border-left: 3px solid #7c3aed;
+  border-radius: 0 24px 24px 0;
+}
+
+/* 섹션 */
+.policy-section {
+  margin-bottom: 36px;
+}
+
+.policy-section h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F5F3FF;
+}
+
+.policy-section p {
+  font-size: 14px;
+  line-height: 1.85;
+  color: #5F5F5F;
+  margin: 0 0 12px 0;
+}
+
+.policy-section ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.policy-section li {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #5F5F5F;
+}
+
+/* 테이블 */
+.policy-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.policy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.policy-table th {
+  background: #F9F7FF;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 700;
+  color: #1A1A1A;
+  border: 1px solid #F5F3FF;
+}
+
+.policy-table td {
+  padding: 10px 14px;
+  color: #5F5F5F;
+  border: 1px solid #F5F3FF;
+  line-height: 1.6;
+}
+
+.policy-table tr:nth-child(even) td { background: #F9F7FF; }
+
+/* 연락처 */
+.policy-contact {
+  background: #F9F7FF;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-top: 8px;
+}
+
+.policy-contact p {
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: #5F5F5F;
+}
+.policy-contact p:last-child { margin: 0; }
+
+@media (max-width: 640px) {
+  .policy-inner { padding: 40px 16px 60px; }
+  .policy-title { font-size: 26px; }
+}

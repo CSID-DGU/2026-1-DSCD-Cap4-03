@@ -1,0 +1,81 @@
+# Virtual environments
+.venv/
+.venv-1/
+.venv311/
+backend/.venv/
+
+# Python cache
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Environment variables / secrets / local databases
+.env
+*.env
+!.env.example
+*.db
+*.sqlite
+*.sqlite3
+GPT_API_key.txt
+AWS S3 key.txt
+backend/AWS S3 key.txt
+
+# Node
+node_modules/
+
+# Vite cache
+.vite/
+
+# Claude Code local config
+.claude/
+
+# Class materials
+DSCD_수업내용/
+
+# Old or local-only work
+cosmetic_crawling/
+model/skin_analysis_resnet/
+model/recommendation/embedding_old/
+model/recommendation/embedding_pipeline/embedding_results/
+model/recommendation/embedding_test/
+model/recommendation/evaluation_outputs/
+model/recommendation/kg_pipeline/output
+model/recommendation/kg_pipeline/llm
+model/vanity/experiments/
+backend/llm_outputs/
+backend/app/db/skin_summaries.json
+backend/app/db/recommendation_explanations.json
+backend/app/db/vanity_skin_match_explanations.json
+backend/app/db/vanity_routine_explanations.json
+model/recommendation/evaluation_metrics.ipynb
+backend/uploads/
+model/llm/outputs/
+/DB/
+DEVELOPMENT_FLOW.md
+backend/API_Vanity.md
+backend/API_SPEC.md
+schema.sql
+
+# Not My Code
+model/skin_analysis/
+model/llm/
+frontend/
+!frontend/
+frontend/*
+!frontend/Dockerfile
+!frontend/nginx.conf
+
+# Local dumps / temporary outputs
+freeze
+requirements_min.txt
+test_img/
+.editorconfig
+rouple_seed.sql
+backend/Rouple_db_dump.sql
+deploy_check_runtime.sql
+deploy_create_lowercase_views.sql
+
+# AWS credentials
+rouple-Cap4.pem
+
+DEPLOY_DOCKER.md

@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+.vrh-page { min-height: 100vh; background: #fff; font-family: 'Noto Sans KR', sans-serif; }
+
+/* ── 배너 ── */
+.vrh-banner {
+  background: #fff;
+  border-bottom: 1px solid #F3F4F6;
+  padding: 48px 80px 40px;
+}
+.vrh-banner-inner { max-width: 1200px; margin: 0 auto; }
+.vrh-back-btn { background: none; border: none; color: #6B7280; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 0; margin-bottom: 16px; font-family: 'Noto Sans KR', sans-serif; transition: color 0.15s; }
+.vrh-back-btn:hover { color: #374151; }
+.vrh-badge { display: inline-block; color: #7c3aed; font-size: 11px; font-weight: 700; margin-bottom: 14px; letter-spacing: -0.05em; text-transform: uppercase; }
+.vrh-title { font-family: 'Sora', sans-serif; font-size: clamp(26px,4vw,40px); font-weight: 800; color: #111827; margin-bottom: 8px; letter-spacing: -0.05em; }
+.vrh-sub { font-size: 14px; color: #4B5563; line-height: 1.7; }
+
+/* ── 바디 ── */
+.vrh-body { max-width: 1200px; margin: 0 auto; padding: 32px 80px 80px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ── 빈 상태 ── */
+.vrh-empty { text-align: center; padding: 64px 24px; color: #6B7280; font-size: 14px; line-height: 1.7; }
+
+/* ── 기록 목록 ── */
+.vrh-list { display: flex; flex-direction: column; gap: 12px; }
+
+.vrh-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1.5px solid #F3F4F6;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.vrh-card:hover {
+  border-color: #ede9fe;
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 50px rgba(124, 58, 237, 0.10),
+    0 8px 20px rgba(0,0,0,0.06);
+}
+
+/* 왼쪽: 고정 제품 이미지 */
+.vrh-card-images { display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; align-items: center; }
+.vrh-card-img-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.vrh-card-img { width: 100%; height: 100%; object-fit: contain; }
+
+/* 오른쪽: 텍스트 */
+.vrh-card-info { flex: 1; min-width: 0; }
+.vrh-card-price { font-family: 'Sora', sans-serif; font-size: 18px; font-weight: 800; color: #7c3aed; margin-bottom: 4px; }
+.vrh-card-fixed { font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.vrh-card-meta  { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6B7280; font-weight: 600; margin-bottom: 2px; }
+
+/* ── 상세 뷰 메타 바 ── */
+.vrh-meta-bar { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px 18px; }
+.vrh-meta-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4B5563; }
+.vrh-meta-item strong { color: #7c3aed; font-family: 'Sora', sans-serif; font-weight: 700; }
+
+/* ── LLM 전체 요약 ── */
+.vrh-llm-overall { display: flex; align-items: flex-start; gap: 10px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; font-size: 13px; color: #4B5563; line-height: 1.7; }
+
+/* ── 경고 ── */
+.vrh-warning-box { background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; }
+.vrh-warning-title { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; color: #d97706; margin-bottom: 6px; }
+.vrh-warning-comment { font-size: 13px; color: #92400E; margin: 0 0 8px; line-height: 1.6; }
+.vrh-warning-list { margin: 0; padding-left: 18px; }
+.vrh-warning-list li { font-size: 12px; color: #d97706; line-height: 1.7; }
+
+/* ── 루틴 단계 ── */
+.vrh-result-list { display: flex; flex-direction: column; gap: 12px; }
+.vrh-result-item { background: #F9FAFB; border-radius: 10px; border: 1px solid #E5E7EB; padding: 16px 20px; display: flex; align-items: center; gap: 14px; }
+.vrh-result-step { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 700; color: #9CA3AF; flex-shrink: 0; width: 42px; }
+.vrh-result-img-wrap { width: 56px; height: 56px; border-radius: 8px; background: #fff; border: 1px solid #E5E7EB; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.vrh-result-img { width: 100%; height: 100%; object-fit: contain; }
+.vrh-result-info { flex: 1; min-width: 0; }
+.vrh-result-brand { font-size: 10px; color: #9CA3AF; font-weight: 600; text-transform: uppercase; }
+.vrh-result-name  { font-size: 14px; font-weight: 700; color: #111827; }
+.vrh-result-cat   { font-size: 11px; color: #6B7280; font-weight: 600; margin-top: 2px; }
+.vrh-result-guide { font-size: 12px; color: #4B5563; margin-top: 4px; line-height: 1.5; }
+.vrh-source-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 999px; flex-shrink: 0; }
+.vrh-source-badge.vanity { background: #EDE9FE; color: #7c3aed; }
+.vrh-source-badge.rec    { background: #DCFCE7; color: #16a34a; }
+.vrh-result-price { font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 700; color: #7c3aed; flex-shrink: 0; }
+
+@media (max-width: 900px) {
+  .vrh-banner { padding: 40px 24px 32px; }
+  .vrh-body   { padding: 24px 24px 64px; }
+  .vrh-card-images { width: auto; }
+}
+@media (max-width: 480px) {
+  .vrh-banner { padding: 24px 16px 20px; }
+  .vrh-body   { padding: 16px 16px 64px; }
+  .vrh-title  { font-size: clamp(20px, 6vw, 28px); }
+  .vrh-sub    { font-size: 13px; }
+  .vrh-card   { padding: 12px 12px; gap: 8px; flex-wrap: wrap; }
+  .vrh-card-images { gap: 4px; }
+  .vrh-card-img-wrap { width: 52px; height: 52px; }
+  .vrh-card-price { font-size: 15px; }
+  .vrh-card-fixed { font-size: 11px; }
+  .vrh-card-meta  { font-size: 10px; }
+  .vrh-budget-chip { font-size: 10px; padding: 2px 8px; }
+  /* 결과 상세 항목 */
+  .vrh-result-item  { padding: 10px 10px; gap: 8px; flex-wrap: wrap; }
+  .vrh-result-step  { width: 32px; font-size: 10px; }
+  .vrh-result-img-wrap { width: 44px; height: 44px; }
+  .vrh-result-name  { font-size: 13px; }
+  .vrh-result-guide { font-size: 11px; }
+  .vrh-result-price { font-size: 12px; }
+  .vrh-source-badge { font-size: 9px; padding: 2px 7px; }
+  .vrh-llm-overall  { font-size: 12px; padding: 12px 14px; }
+  .vrh-meta-bar     { padding: 12px 14px; gap: 10px; }
+  .vrh-meta-item    { font-size: 12px; }
+  .vrh-warning-comment { font-size: 12px; }
+}
