@@ -54,6 +54,7 @@ model/llm/outputs/
 DEVELOPMENT_FLOW.md
 backend/API_Vanity.md
 backend/API_SPEC.md
+schema.sql
 
 # Not My Code
 model/skin_analysis/
