@@ -1,85 +1,142 @@
-# ROUPLE
+<h1 align="center">
+  <span style="color:#7C3AED;">ROUPLE</span>
+</h1>
 
-AI-based personalized skincare routine recommendation service.
+> AI 피부 분석 기반 개인 맞춤형 스킨케어 루틴 추천 시스템  
+> AI Skin Analysis-Based Personalized Skincare Routine Recommendation System
 
-ROUPLE analyzes a user's facial image, predicts skin condition scores, recommends skincare routines with embedding and knowledge graph reasoning, and evaluates the fit of products already owned by the user.
+**ROUPLE**은 사용자의 얼굴 이미지를 분석해 피부 상태를 진단하고, 개인 피부 지표와 사용자 프로필을 기반으로 맞춤형 스킨케어 루틴을 추천하는 AI 기반 스킨케어 서비스입니다.
 
-## Overview
+---
 
-ROUPLE connects three core experiences into one skincare workflow.
+## 프로젝트 정보
 
-| Feature | Description |
+| 항목 | 내용 |
 | --- | --- |
-| Skin Report | Analyzes a face image and predicts six skin indicators. |
-| Routine Report | Recommends best/value skincare routines based on skin scores, profile, budget, and ingredient rules. |
-| Vanity Report | Evaluates owned cosmetics with Skin Match and recommends a routine using fixed owned products. |
+| 교과목 | 2026-1 동국대학교 데이터사이언스 소프트웨어 연계전공 캡스톤 디자인 |
+| 담당 교수 | 김동호 |
+| 팀명 | Cap4 |
+| 팀장 | 현민영 |
+| 서비스명 | ROUPLE |
+| 발명의 명칭 | AI 피부 분석 기반 개인 맞춤형 스킨케어 루틴 추천 시스템 |
 
-## Key Features
+## 시연 영상
 
-- Face image upload and skin analysis
-- Six skin indicators: acne, dryness, sagging, pore, pigmentation, wrinkle
-- BGE-M3 embedding-based candidate retrieval
-- Neo4j knowledge graph re-ranking
-- Rule-based ingredient conflict filtering
-- Beam Search routine generation
-- Owned product Skin Match scoring
-- LLM-generated explanations for skin reports, routines, and vanity results
-- JSON cache for LLM outputs to reduce repeated calls
-- Docker-based deployment on AWS EC2
+[ROUPLE 시연 영상 바로가기](https://www.youtube.com/watch?v=Y65TdlWhK5Q)
 
-## System Architecture
+## 팀원
+
+| 학번 | 이름 |
+| --- | --- |
+| 2021112396 | 서동현 |
+| 2022110462 | 심고은 |
+| 2022110491 | 이서은 |
+| 2022110451 | 현민영 |
+
+---
+
+## 서비스 개요
+
+기존 화장품 추천 서비스는 사용자의 피부 상태를 정량적으로 반영하기 어렵고, 추천 이유나 루틴 구성 근거가 부족하다는 한계가 있습니다. ROUPLE은 얼굴 이미지 기반 피부 분석, 화장품 성분 지식그래프, 임베딩 기반 후보 검색, LLM 설명 생성을 결합하여 사용자에게 더 개인화된 스킨케어 경험을 제공합니다.
+
+## 주요 기능
+
+| 기능 | 설명 |
+| --- | --- |
+| 스킨 리포트 | 얼굴 이미지를 분석해 6개 피부 지표를 산출하고 AI 피부 리포트를 제공합니다. |
+| 루틴 리포트 | 피부 분석 결과, 사용자 프로필, 예산 조건을 반영해 Best/Value 루틴을 추천합니다. |
+| 화장대 리포트 | 사용자가 보유한 화장품의 피부 적합도를 분석하고, 부족한 루틴 단계를 보완 추천합니다. |
+| 제품 탐색 | 카테고리별 화장품을 탐색하고 위시리스트 및 내 화장대에 등록할 수 있습니다. |
+
+## 핵심 모델 및 알고리즘
+
+### 1. 피부 분석 모델
+
+- 얼굴 이미지와 부위별 crop 이미지를 함께 활용
+- Swin-Tiny Transformer 기반 멀티태스크 모델
+- 여드름, 건조, 처짐, 모공, 색소침착, 주름의 6개 피부 지표 예측
+
+### 2. 스킨케어 루틴 추천
+
+- BGE-M3 임베딩 기반 카테고리별 Top-20 후보 제품 추출
+- Neo4j Knowledge Graph 기반 피부 고민-기능-성분-제품 관계 재정렬
+- Rule/SMILES 기반 성분 충돌 검사
+- Beam Search 기반 단계별 루틴 조합 생성
+
+### 3. 내 화장대 기반 추천
+
+- 보유 화장품과 최신 피부 분석 결과를 기반으로 Skin Match 점수 산출
+- 적합한 보유 제품은 고정 제품으로 활용
+- 부족한 루틴 단계만 신규 제품으로 보완 추천
+- LLM을 활용해 제품별 적합 이유와 사용 가이드를 생성
+
+---
+
+## 서비스 흐름
 
 ```text
-User Image
-   -> S3 Upload
-   -> FastAPI Backend
-   -> Skin Analysis Model
-   -> Six Skin Scores
-   -> Embedding Candidate Retrieval
-   -> Knowledge Graph Re-ranking
-   -> Rule Filtering + Beam Search
-   -> Routine Recommendation
-   -> LLM Explanation
+사용자 얼굴 이미지
+        ↓
+S3 이미지 업로드
+        ↓
+피부 분석 모델
+        ↓
+6개 피부 지표 산출
+        ↓
+임베딩 기반 후보 제품 검색
+        ↓
+Knowledge Graph 기반 재정렬
+        ↓
+Rule Filtering + Beam Search
+        ↓
+맞춤형 스킨케어 루틴 추천
+        ↓
+LLM 기반 설명 생성
 ```
 
 ```text
-Owned Products + Six Skin Scores
-   -> Skin Match Scoring
-   -> Fixed Product Selection
-   -> Missing Slot Detection
-   -> Embedding + KG Recommendation
-   -> Vanity Routine
-   -> LLM Explanation
+내 화장대 제품 + 최신 피부 분석 결과
+        ↓
+Skin Match 점수 산출
+        ↓
+보유 제품 적합성 판단
+        ↓
+고정 제품 및 부족 단계 탐지
+        ↓
+부족 단계 보완 추천
+        ↓
+내 화장대 기반 루틴 생성
 ```
 
-## Tech Stack
+---
 
-| Layer | Technology |
+## 기술 스택
+
+| 구분 | 기술 |
 | --- | --- |
 | Frontend | React, Vite, TypeScript |
 | Backend | FastAPI, SQLAlchemy |
 | Database | MySQL |
 | Knowledge Graph | Neo4j |
-| Image Storage | AWS S3 |
+| Storage | AWS S3 |
 | Deployment | Docker, Docker Compose, AWS EC2 |
-| Skin Analysis | Swin-Tiny Transformer based multitask model |
-| Recommendation | BGE-M3 embedding, Knowledge Graph, Beam Search |
-| LLM | Report and recommendation explanation generation |
+| Skin Analysis | Swin-Tiny Transformer |
+| Recommendation | BGE-M3, Knowledge Graph, Beam Search |
+| LLM | 피부 리포트, 루틴 설명, 화장대 설명 생성 |
 
-## Repository Structure
+## 시스템 구성
 
 ```text
-.
-├── backend/                 # FastAPI backend
-├── frontend/                # React frontend
-├── model/                   # Skin analysis, recommendation, vanity, LLM modules
-├── DB/                      # Local database loading resources
-├── scripts/                 # Utility scripts
-├── docker-compose.yml       # Deployment compose file
-└── DEPLOY_DOCKER.md         # Docker deployment guide
+frontend/   React 기반 사용자 화면
+backend/    FastAPI 기반 API 서버
+model/      피부 분석, 추천, 내 화장대, LLM 모델 로직
+DB/         로컬 데이터 적재 및 전처리 리소스
+scripts/    배포 및 시각화 보조 스크립트
 ```
 
-## Local Development
+---
+
+## 로컬 실행 방법
 
 ### Backend
 
@@ -99,9 +156,11 @@ npm install
 npm run dev -- --host 0.0.0.0
 ```
 
-## Docker Deployment
+---
 
-Build and push images from the project root.
+## Docker 배포
+
+### 이미지 빌드 및 푸시
 
 ```powershell
 docker build -f backend/Dockerfile -t myhyun1123/rouple-backend:latest .
@@ -111,7 +170,7 @@ docker build -f frontend/Dockerfile -t myhyun1123/rouple-frontend:latest .
 docker push myhyun1123/rouple-frontend:latest
 ```
 
-On EC2:
+### EC2 배포
 
 ```bash
 cd ~/rouple-deploy
@@ -120,48 +179,27 @@ docker compose up -d
 docker compose ps
 ```
 
-## Environment Variables
+---
 
-The backend requires environment variables for database, Neo4j, S3, model paths, and LLM API settings.
+## LLM 캐싱
 
-Example categories:
+LLM 결과는 재조회 시 비용과 지연을 줄이기 위해 JSON 파일로 저장합니다.
 
-```text
-MYSQL_HOST
-MYSQL_PORT
-MYSQL_USER
-MYSQL_PASSWORD
-MYSQL_DB
+- 피부 분석 요약
+- 루틴 추천 설명
+- 내 화장대 제품별 적합성 설명
+- 내 화장대 기반 루틴 설명
 
-NEO4J_URI
-NEO4J_USER
-NEO4J_PASSWORD
+---
 
-S3_BUCKET
-S3_REGION
-S3_PREFIX
+## 보안 및 주의사항
 
-SKIN_MODEL_CHECKPOINT
-EMBED_LOCAL_FILES_ONLY
-ROUPLE_CACHE_DIR
-```
+다음 파일은 Git에 커밋하지 않습니다.
 
-Do not commit real `.env`, API keys, database dumps, model weights, or private key files.
-
-## LLM Cache
-
-LLM outputs are persisted as JSON files so that repeated page visits do not trigger unnecessary LLM calls.
-
-Cached outputs include:
-
-- Skin analysis summaries
-- Routine recommendation explanations
-- Vanity skin match explanations
-- Vanity routine explanations
-
-## Notes
-
-- `schema.sql` is treated as a local-only file and ignored by Git.
-- Large seed dumps such as `rouple_seed.sql` should not be committed.
-- AWS credentials and PEM key files must remain local only.
-
+- `.env`
+- AWS Access Key
+- PEM 키 파일
+- DB dump 파일
+- 모델 가중치 및 대용량 임베딩 산출물
+- LLM 캐시 JSON
+- 로컬 전용 `schema.sql`
