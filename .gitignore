@@ -76,3 +76,5 @@ deploy_create_lowercase_views.sql
 
 # AWS credentials
 rouple-Cap4.pem
+
+DEPLOY_DOCKER.md
