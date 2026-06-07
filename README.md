@@ -1,6 +1,6 @@
-<h1 align="center">
-  <span style="color:#7C3AED;">ROUPLE</span>
-</h1>
+<h1 align="center">2026-1-DSCD-Cap4-3</h1>
+
+<h2 align="center">ROUPLE</h2>
 
 > AI 피부 분석 기반 개인 맞춤형 스킨케어 루틴 추천 시스템  
 > AI Skin Analysis-Based Personalized Skincare Routine Recommendation System
@@ -9,29 +9,20 @@
 
 ---
 
-## 프로젝트 정보
+## 팀 정보
 
-| 항목 | 내용 |
+| 팀원 | 이름 | 학과 |
 | --- | --- |
-| 교과목 | 2026-1 동국대학교 데이터사이언스 소프트웨어 연계전공 캡스톤 디자인 |
-| 담당 교수 | 김동호 |
-| 팀명 | Cap4 |
-| 팀장 | 현민영 |
-| 서비스명 | ROUPLE |
-| 발명의 명칭 | AI 피부 분석 기반 개인 맞춤형 스킨케어 루틴 추천 시스템 |
+| 팀장 | 현민영 | 통계학과 |
+| 팀원 | 이서은 | 통계학과 |
+| 팀원 | 심고은 | 통계학과 |
+| 팀원 | 서동현 | 산업시스템공학과 |
 
 ## 시연 영상
 
 [ROUPLE 시연 영상 바로가기](https://www.youtube.com/watch?v=Y65TdlWhK5Q)
 
-## 팀원
 
-| 학번 | 이름 |
-| --- | --- |
-| 2021112396 | 서동현 |
-| 2022110462 | 심고은 |
-| 2022110491 | 이서은 |
-| 2022110451 | 현민영 |
 
 ---
 
