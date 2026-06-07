@@ -1,6 +1,6 @@
-<h1 align="center">2026-1-DSCD-Cap4-3</h1>
+<h1>2026-1-DSCD-Cap4-3</h1>
 
-<h2 align="center">ROUPLE</h2>
+<h2>ROUPLE</h2>
 
 > AI 피부 분석 기반 개인 맞춤형 스킨케어 루틴 추천 시스템  
 > AI Skin Analysis-Based Personalized Skincare Routine Recommendation System
