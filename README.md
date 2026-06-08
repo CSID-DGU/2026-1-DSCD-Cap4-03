@@ -19,7 +19,7 @@
 
 ## 시연 영상
 
-[ROUPLE 시연 영상 바로가기](https://www.youtube.com/watch?v=Y65TdlWhK5Q)
+[ROUPLE 시연 영상 바로가기](https://youtu.be/jvjxUTW_4PY)
 
 
 ---
