@@ -58,7 +58,6 @@ schema.sql
 
 # Not My Code
 model/skin_analysis/
-model/llm/
 frontend/
 !frontend/
 frontend/*

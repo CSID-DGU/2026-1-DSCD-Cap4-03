@@ -15,7 +15,6 @@ KST = timezone(timedelta(hours=9))
 # ──────────────────────────────────────────────
 # 기본
 # ──────────────────────────────────────────────
-
 def now_kst() -> datetime:
     return datetime.now(KST)
 
@@ -42,9 +41,8 @@ def get_device(gpu_id: int = 0) -> torch.device:
 # ──────────────────────────────────────────────
 # 클래스 불균형
 # ──────────────────────────────────────────────
-
 def compute_class_freq(dataset, task: str = "acne") -> dict:
-    # label_cache 가 있으면 이미지 I/O 없이 바로 집계
+    # Use cached labels when available to avoid image I/O.
     counter = defaultdict(int)
     if hasattr(dataset, "label_cache"):
         for label_map in dataset.label_cache:
@@ -66,7 +64,6 @@ def compute_cb_weights(freq_dict: dict, beta: float = 0.999) -> torch.Tensor:
 # ──────────────────────────────────────────────
 # Plotting
 # ──────────────────────────────────────────────
-
 def plot_metrics(history: dict, save_path: str):
     epochs = range(1, len(history["train_loss"]) + 1)
 
@@ -107,7 +104,6 @@ def plot_metrics(history: dict, save_path: str):
 # ──────────────────────────────────────────────
 # Logger
 # ──────────────────────────────────────────────
-
 class _KSTFormatter(logging.Formatter):
     def formatTime(self, record, datefmt=None):
         ct = datetime.fromtimestamp(record.created, tz=KST)
@@ -152,7 +148,6 @@ class Logger:
 # ──────────────────────────────────────────────
 # StopWatch
 # ──────────────────────────────────────────────
-
 class StopWatch:
     def __init__(self):
         self._times:   dict  = defaultdict(float)

@@ -7,7 +7,6 @@ from config import TASK_NAMES, NUM_CLASSES, TASK_TO_FACEPART
 
 
 # ── Backbone ───────────────────────────────────────────────────────────────────
-
 class SwinStageExtractor(nn.Module):
     """
     Swin Transformer backbone that returns intermediate features from
@@ -48,7 +47,6 @@ class SwinStageExtractor(nn.Module):
 
 
 # ── Attention Modules ──────────────────────────────────────────────────────────
-
 class TSA(nn.Module):
     """Token Self-Attention."""
 
@@ -83,7 +81,6 @@ class CrossAttn(nn.Module):
 
 
 # ── Decoder ────────────────────────────────────────────────────────────────────
-
 class TaskDecoder(nn.Module):
     """TSA → CrossAttn(stage3) → CrossAttn(stage2)."""
 
@@ -101,7 +98,6 @@ class TaskDecoder(nn.Module):
 
 
 # ── Task Token Bank ────────────────────────────────────────────────────────────
-
 class TaskTokenBank(nn.Module):
     """Learnable per-task query tokens."""
 
@@ -118,7 +114,6 @@ class TaskTokenBank(nn.Module):
 
 
 # ── Main Model ─────────────────────────────────────────────────────────────────
-
 class SkinModel(nn.Module):
     """
     Multi-task skin condition classification model.

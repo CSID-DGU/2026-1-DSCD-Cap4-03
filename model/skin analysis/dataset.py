@@ -10,7 +10,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from config import (
     TASK_NAMES, NUM_CLASSES,
-    FACEPART_TO_TASKS, TASK_TO_FACEPART, GRADE_REMAP,
+    TASK_TO_FACEPART, GRADE_REMAP,
 )
 from img_crop import (
     resize_pil, to_normalized_tensor,
@@ -25,7 +25,6 @@ DEVICE_MAP = {
 
 
 # ── Augmentation ───────────────────────────────────────────────────────────────
-
 class RandomGaussianNoise:
     """
     Adds Gaussian noise to a PIL Image.
@@ -48,8 +47,7 @@ class RandomGaussianNoise:
         return f"RandomGaussianNoise(p={self.p}, mean={self.mean}, std={self.std})"
 
 
-# ── JSON Parsing Helpers ────────────────────────────────────────────────────────
-
+# ── JSON Parsing Helpers ───────────────────────────────────────────────────────
 def _find_value(obj, keys):
     """Recursively search for any of the given keys in a nested dict/list."""
     if isinstance(obj, dict):
@@ -140,7 +138,6 @@ def extract_task_label(json_obj: dict, task_name: str) -> int:
 
 
 # ── Filename Parsing ───────────────────────────────────────────────────────────
-
 def _is_front_image(image_key: str) -> bool:
     parts = image_key.split("_")
     return len(parts) >= 3 and parts[2].upper() == "F"
@@ -167,7 +164,6 @@ def _facepart_idx_from_json_path(json_path: str):
 
 
 # ── Dataset ────────────────────────────────────────────────────────────────────
-
 class SkinDataset(Dataset):
 
     def __init__(self, img_dir, label_dir, train=True, img_size=224, local_crop_size=224):
@@ -288,7 +284,6 @@ class TestDataset(Dataset):
 
 
 # ── Collate & Loader ───────────────────────────────────────────────────────────
-
 def collate_fn(batch):
     return {
         "full_face":   torch.stack([b["full_face"]   for b in batch]),
