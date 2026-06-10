@@ -74,7 +74,6 @@ TASK_LOSS_W = {t: TRAIN_CFG["task_weights"].get(t, 1.0) for t in TASK_NAMES}
 
 
 # ── Optimizer ──────────────────────────────────────────────────────────────────
-
 def build_layerwise_optimizer(model, cfg):
     """Layer-wise LR: upper backbone layers get higher LR."""
     bb     = model.backbone
@@ -101,7 +100,6 @@ def build_layerwise_optimizer(model, cfg):
 
 
 # ── CutMix ─────────────────────────────────────────────────────────────────────
-
 def _rand_bbox(H, W, lam):
     cut_ratio = np.sqrt(1.0 - lam)
     cut_h, cut_w = int(H * cut_ratio), int(W * cut_ratio)
@@ -134,7 +132,6 @@ def cutmix_batch(full_face, local_crops, gt, alpha):
 
 
 # ── Loss Helpers ───────────────────────────────────────────────────────────────
-
 def _task_loss(t, logit, label, loss_ord, loss_cb, cb_loss_map):
     if t == "acne":
         return loss_cb(logit, label)
@@ -165,7 +162,6 @@ def _weighted_loss(loss_per_task: dict) -> torch.Tensor:
 
 
 # ── Early Stopping ─────────────────────────────────────────────────────────────
-
 class EarlyStopping:
     def __init__(self, patience: int = 5):
         self.best     = float("inf")
@@ -181,7 +177,6 @@ class EarlyStopping:
 
 
 # ── Logging Helpers ────────────────────────────────────────────────────────────
-
 def _log_config(logger, device):
     logger.info("=" * 60)
     logger.info("  TRAIN CONFIG")
@@ -259,7 +254,6 @@ def _log_class_dist(logger, loader, split):
 
 
 # ── Train / Val Loops ──────────────────────────────────────────────────────────
-
 def train_epoch(model, loader, opt, loss_ord, loss_cb, cb_loss_map, device, sw):
     model.train()
     if TRAIN_CFG["freeze_backbone"]:
@@ -345,7 +339,6 @@ def val_epoch(model, loader, loss_ord, loss_cb, cb_loss_map, device, sw):
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
-
 def main():
     set_seed(TRAIN_CFG["seed"])
     device = torch.device(

@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import timezone, timedelta
 
 # ── Timezone ───────────────────────────────────────────────────────────────────
 KST = timezone(timedelta(hours=9))
@@ -72,7 +72,7 @@ GRADE_REMAP = {
     "r_cheek_pore":        {5: 4},
 }
 
-# ── Fixed BBoxes for Inference─────────────────────────────
+# ── Fixed BBoxes for Inference ─────────────────────────────────────────────────
 FACEPART_BBOX = {
     0: (50, 80, 430, 570),   # acne (얼굴 전체)
     1: (120, 80, 370, 190),   # forehead (이마)
