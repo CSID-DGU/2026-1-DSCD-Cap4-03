@@ -26,7 +26,7 @@ class OrdinalSmoothLoss(nn.Module):
         self.alpha = alpha
 
     def forward(self, logit, target):
-        B, C  = logit.shape
+        _, C  = logit.shape
         half  = self.alpha / 2.0
 
         # Build soft labels: spread alpha/2 to neighbours

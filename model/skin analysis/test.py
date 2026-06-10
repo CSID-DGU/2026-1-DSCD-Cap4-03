@@ -1,5 +1,5 @@
 """
-test.py 
+test.py
 
 input.json format:
     {
@@ -49,7 +49,6 @@ METRIC_NUM_CLASSES = {
 
 
 # ── Aggregation ────────────────────────────────────────────────────────────────
-
 def aggregate_max(probs_dict: dict, landmarks: list) -> torch.Tensor:
     """Select the landmark with the highest predicted grade (break ties by confidence)."""
     best_pred, best_conf, best_probs = -1, -1.0, None
@@ -63,12 +62,12 @@ def aggregate_max(probs_dict: dict, landmarks: list) -> torch.Tensor:
 
 
 def expected_grade(probs_np: np.ndarray, n_cls: int) -> int:
-    """Rounded expected value: Σ(i × prob_i)."""
+    """Rounded expected value: sum(i * prob_i)."""
     return int(round(float((probs_np * np.arange(n_cls, dtype=np.float32)).sum())))
 
 
 def expected_score(probs_np: np.ndarray, n_cls: int) -> float:
-    """Normalised expected value in [0, 1]: Σ(i/(K-1) × prob_i)."""
+    """Normalised expected value in [0, 1]: sum(i / (K - 1) * prob_i)."""
     if n_cls <= 1:
         return 0.0
     grades = np.arange(n_cls, dtype=np.float32) / float(n_cls - 1)
@@ -76,7 +75,6 @@ def expected_score(probs_np: np.ndarray, n_cls: int) -> float:
 
 
 # ── Preprocessing ──────────────────────────────────────────────────────────────
-
 def preprocess(image_path: str, img_size: int, local_crop_size: int, device):
     img           = Image.open(image_path).convert("RGB")
     full_tensor   = to_normalized_tensor(resize_pil(img, img_size)).unsqueeze(0).to(device)
@@ -87,7 +85,6 @@ def preprocess(image_path: str, img_size: int, local_crop_size: int, device):
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
-
 def parse_args():
     run_id  = now_kst().strftime("%y%m%d_%H")
     out_dir = os.path.join(BASE_DIR, "results", run_id)
@@ -102,7 +99,6 @@ def parse_args():
 
 
 # ── Inference ──────────────────────────────────────────────────────────────────
-
 @torch.no_grad()
 def run(args):
     device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
@@ -166,8 +162,8 @@ def run(args):
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    logger.info(f"saved → {out_path}")
-    print(json.dumps(result, indent=2, ensure_ascii=False))
+    logger.info(f"saved -> {out_path}")
+    logger.info(json.dumps(result, indent=2, ensure_ascii=False))
     return result
 
 

@@ -22,7 +22,7 @@ def to_normalized_tensor(img: Image.Image) -> torch.Tensor:
 
 
 def local_crops_to_tensor(local_imgs: list) -> torch.Tensor:
-    """List of PIL Images → (N_fp, 3, H, W) tensor."""
+    """Convert a list of PIL images to an (N_fp, 3, H, W) tensor."""
     return torch.stack([to_normalized_tensor(im) for im in local_imgs], dim=0)
 
 
@@ -31,7 +31,6 @@ def resize_pil(img: Image.Image, size: int) -> Image.Image:
 
 
 # ── BBox Parsing ───────────────────────────────────────────────────────────────
-
 def _parse_bbox(val) -> list | None:
     if val is None:
         return None
